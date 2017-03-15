@@ -1,0 +1,98 @@
+.frame-container {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background-color: transparent;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.failed {
+  background-color: #F44336;
+  color: white;
+  font-size: 90vmin;
+  text-align: center;
+  user-select: none;
+  flex-grow: 1;
+}
+
+.picker {
+  border-top: 1px solid #d9d9d9;
+  background-color: white;
+}
+
+@media (max-device-width:800px) {
+  .picker {
+  }
+}
+
+@media (min-device-width:801px) {
+  .picker {
+    margin: 8px;
+    box-shadow: 0 0 1px 1px rgba(0,0,0,0.1);
+    border: 1px solid #d9d9d9;
+    border-radius: 2px;
+  }
+}
+
+
+.picker header {
+  height: 36px;
+  line-height: 36px;
+  border-bottom: 1px solid #d9d9d9;
+  padding-left: 16px;
+}
+
+.picker header md-icon {
+  vertical-align: middle;
+}
+
+.picker .credential {
+  display: flex;
+  height: 72px;
+  flex-direction: row;
+  align-items: center;
+}
+
+.picker .credential:hover {
+  background-color: #B3E5FC;
+}
+
+.picker .credential:not(:last-child) {
+  border-bottom: 1px solid #d9d9d9;
+}
+
+.picker .credential .avatar {
+  margin-left: 16px;
+  width: 40px;
+  height: 40px;
+}
+
+.picker .credential .descriptor {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex-grow: 1;
+  margin-left: 16px;
+}
+
+.picker .credential .descriptor .first-line {
+  font-size: 14px;
+  color: rgba(0,0,0,0.87);
+}
+
+.picker .credential .descriptor .second-line {
+  font-size: 12px;
+  color: rgba(0,0,0,0.54);
+}
+
+.picker .credential .continue {
+  color: rgba(0,0,0,0.87);
+}

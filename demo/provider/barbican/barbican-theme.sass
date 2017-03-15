@@ -1,0 +1,10 @@
+@import '~@angular/material/core/theming/all-theme';
+
+@include mat-core();
+
+$barbican-app-primary: mat-palette($mat-blue-grey, 600);
+$barbican-app-accent:  mat-palette($mat-light-blue, A200, 300, A400);
+
+$barbican-app-theme: mat-light-theme($barbican-app-primary, $barbican-app-accent);
+
+@include angular-material-theme($barbican-app-theme);

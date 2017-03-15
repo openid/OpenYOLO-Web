@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "module": "es6",
+    "target": "es5",
+    "lib": [
+      "es5",
+      "es2015.core",
+      "es2015.promise",
+      "es2015.symbol",
+      "dom"
+    ],
+    "importHelpers": true,
+    "moduleResolution": "node",
+    "noImplicitAny": true,
+    "noUnusedLocals": true,
+    "removeComments": true,
+    "inlineSourceMap": true,
+    "inlineSources": true,
+    "declaration": true,
+    "outDir": "es6"
+  },
+  "include": [
+    "ts/**/*.ts",
+    "third_party/**/*.ts"
+  ],
+  "exclude": [
+    "ts/**/*_test.ts"
+  ]
+}

@@ -1,0 +1,69 @@
+<div class="centered-container">
+
+  <section class="auth-methods">
+    <header>Ask for:</header>
+    <md-button-toggle-group name="authMethods" multiple color="primary">
+      <md-button-toggle aria-label="Passwords" value="password" [(checked)]="askForPassword">
+        <md-icon svgIcon="password"></md-icon>
+      </md-button-toggle>
+      <md-button-toggle value="google" [(checked)]="askForGoogle">
+        <md-icon svgIcon="google"></md-icon>
+      </md-button-toggle>
+      <md-button-toggle value="facebook" [(checked)]="askForFacebook">
+        <md-icon svgIcon="facebook"></md-icon>
+      </md-button-toggle>
+      <md-button-toggle value="microsoft" [(checked)]="askForMicrosoft">
+        <md-icon svgIcon="microsoft"></md-icon>
+      </md-button-toggle>
+    </md-button-toggle-group>
+  </section>
+
+  <div class="action-container">
+    <button md-raised-button color="accent" (click)="sendAvailableRequest()" [disabled]="requestInProgress">
+    Available?
+  </button>
+
+    <button md-raised-button color="accent" (click)="sendRequest()" [disabled]="requestInProgress">
+    Retrieve
+  </button>
+  </div>
+
+  <div class="results">
+    <div *ngIf="requestInProgress" class="progress">
+      <md-progress-spinner mode="indeterminate"></md-progress-spinner>
+      <span>Waiting for response...</span>
+    </div>
+
+    <div *ngIf="error" class="error">
+      <h3>Request failed 😣</h3>
+      <div class="code">{{error.code}}</div>
+      <div class="message">{{error.message}}</div>
+    </div>
+
+    <div *ngIf="credentialAvailable">
+      Credential available: {{credentialAvailable}}
+    </div>
+
+    <div *ngIf="credential">
+      <h3>Returned hint:</h3>
+
+      <table class="credential-table">
+        <tr>
+          <th>ID</th>
+          <td>{{credential.id}}</td>
+        </tr>
+        <tr>
+          <th>Name:</th>
+          <td>{{credential.displayName}}</td>
+        </tr>
+        <tr>
+          <th>AM:</th>
+          <td>{{credential.authMethod}}</td>
+        </tr>
+        <tr>
+          <th>AD</th>
+          <td>{{credential.authDomain}}</td>
+        </tr>
+      </table>
+    </div>
+  </div>

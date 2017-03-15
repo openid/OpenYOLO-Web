@@ -1,0 +1,13 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "editor.formatOnSave": true,
+  "clang-format.executable": "${workspaceRoot}/node_modules/.bin/clang-format",
+  "tslint.configFile": "tslint.json",
+  "search.exclude": {
+    "**/node_modules": true,
+    "es6/**": true,
+    "es5/**": true,
+    "dev_build/**": true
+  }
+}

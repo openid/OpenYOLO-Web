@@ -1,0 +1,21 @@
+{
+  "version": "0.1.0",
+  "tasks": [
+    {
+      "taskName": "build",
+      "command": "${workspaceRoot}/node_modules/.bin/tsc",
+      "isShellCommand": true,
+      "isBackground": true,
+      "problemMatcher": "$tsc"
+    },
+    {
+      "taskName": "test",
+      "command": "yarn",
+      "args": [
+        "run",
+        "test"
+      ],
+      "isShellCommand": true
+    }
+  ]
+}

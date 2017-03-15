@@ -1,0 +1,67 @@
+
+.centered-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 16px 8px;
+}
+
+.auth-methods {
+  margin-bottom: 16px;
+}
+
+.auth-methods header {
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.auth-methods .mat-button-toggle:not(:last-child) {
+  border-right: 1px solid #999;
+}
+
+.auth-methods .mat-button-toggle:not(.mat-button-toggle-checked) {
+  background-color: #EEEEEE;
+}
+.auth-methods .mat-button-toggle-checked {
+  background-color: #C5E1A5;
+}
+
+.results {
+  margin: 16px;
+}
+
+.results .progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 16px;
+  color: rgba(0,0,0,0.54);
+}
+
+.results .progress md-progress-spinner {
+  width: 48px;
+  height: 48px;
+}
+
+.results .error h3 {
+  text-align: center;
+}
+
+.results .error div {
+  color: rgba(0, 0, 0, 0.87);
+  margin-bottom: 8px;
+}
+
+.results .error .code {
+  color: #b71c1c;
+}
+
+.results .credential-table {
+  border: 1px solid #999;
+}
+
+.results .credential-table th, .results .credential-table td {
+  text-align: left;
+  padding: 4px;
+  margin: 0;
+}

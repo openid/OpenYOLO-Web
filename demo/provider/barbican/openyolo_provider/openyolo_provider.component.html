@@ -1,0 +1,24 @@
+<div class="frame-container">
+  <div *ngIf="failed" class="failed">😵</div>
+  <section *ngIf="displayCredentials" class="picker">
+    <header>
+      <md-icon svgIcon="barbican"></md-icon>
+      Continue with:
+    </header>
+
+    <div class="options">
+      <div class="credential" *ngFor="let credential of displayCredentials" (click)="handleCredentialClick(credential)">
+        <md-icon class="avatar" *ngIf="credential.isEmail" svgIcon="email_account"></md-icon>
+        <md-icon class="avatar" *ngIf="credential.isPhone" svgIcon="phone_account"></md-icon>
+        <md-icon class="avatar" *ngIf="!credential.isEmail && !credential.isPhone" svgIcon="generic_account"></md-icon>
+
+        <div class="descriptor">
+          <div class="first-line">{{credential.firstLine}}</div>
+          <div class="second-line" *ngIf="!!credential.secondLine">{{credential.secondLine}}</div>
+        </div>
+
+        <md-icon class="continue" svgIcon="continue"></md-icon>
+      </div>
+    </div>
+  </section>
+</div>

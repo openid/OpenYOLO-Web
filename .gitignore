@@ -1,0 +1,8 @@
+coverage/
+dev_build/
+es5/
+es6/
+node_modules/
+npm-debug.log
+tslint-rules/*.js
+yarn.lock
