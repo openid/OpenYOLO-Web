@@ -15,6 +15,7 @@
  */
 
 import {Injectable} from '@angular/core';
+import {environment} from '../environments/environment';
 
 const PROVIDER_BASE_URL_KEY = 'providerBaseUrl';
 
@@ -23,14 +24,7 @@ export class SettingsService {
   getProviderBaseUrl() {
     let baseUrl = localStorage.getItem(PROVIDER_BASE_URL_KEY);
     if (!baseUrl) {
-      return this.guessProviderBaseUrl();
+      return environment.defaultProviderUrl;
     }
-  }
-
-  guessProviderBaseUrl() {
-    // in dev mode, we typically run the provider one port higher than the
-    // test app.
-    return window.location.protocol + '//' + window.location.hostname + ':' +
-        (parseInt(window.location.port, 10) + 1) + '/openyolo-provider';
   }
 }

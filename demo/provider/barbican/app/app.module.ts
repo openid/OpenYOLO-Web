@@ -22,6 +22,7 @@ import {HttpModule} from '@angular/http';
 import {MaterialModule} from '@angular/material';
 import {MdIconRegistry} from '@angular/material';
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser';
+import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {RouterModule, Routes} from '@angular/router';
 
 import {CredentialStoreService} from '../credential_store/credential_store.service';
@@ -38,6 +39,7 @@ const appRoutes: Routes = [
 @NgModule({
   declarations: [AppComponent, OpenYoloProviderComponent, ManageStoreComponent],
   imports: [
+    BrowserAnimationsModule,
     BrowserModule,
     FormsModule,
     HttpModule,

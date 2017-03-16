@@ -1,0 +1,11 @@
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+- url: /(.*\.(css|js|svg))
+  static_files: dist/\1
+  upload: dist/(.*\.(css|js|svg))
+
+- url: /.*
+  script: app.application

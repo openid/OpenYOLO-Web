@@ -21,5 +21,6 @@
 // which file can be found in `.angular-cli.json`.
 
 export const environment = {
-  production: false
+  production: false,
+  defaultProviderUrl: 'http://localhost:4201/openyolo-provider'
 };

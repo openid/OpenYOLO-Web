@@ -195,7 +195,10 @@ export class ProviderFrame {
       type: T,
       m: msg.RpcMessageDataTypes[T],
       messageHandler: (message: msg.RpcMessageDataTypes[T]) => Promise<void>) {
-    if (!this.recordRequestStart(m.id)) {
+    // TODO: a TS compiler bug appears to be causing intermittent problems
+    // with resolving RpcMessageDataTypes[T]. Cast to any until this
+    // is resolved
+    if (!this.recordRequestStart((m as any).id)) {
       return;
     }
 

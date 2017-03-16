@@ -23,6 +23,7 @@ import {MaterialModule} from '@angular/material';
 import {MdIconRegistry} from '@angular/material';
 import {BrowserModule} from '@angular/platform-browser';
 import {DomSanitizer} from '@angular/platform-browser';
+import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 
 import {HintComponent} from '../hint/hint.component';
 import {RetrieveComponent} from '../retrieve/retrieve.component';
@@ -41,11 +42,12 @@ import {SettingsService} from './settings.service';
     SettingsComponent
   ],
   imports: [
+    BrowserAnimationsModule,
     BrowserModule,
     FormsModule,
     ReactiveFormsModule,
     HttpModule,
-    MaterialModule
+    MaterialModule,
   ],
   providers: [SettingsService],
   bootstrap: [AppComponent]
