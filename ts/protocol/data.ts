@@ -123,6 +123,20 @@ export interface CredentialRequestOptions {
    * `AuthenticationMethods` for common values.
    */
   supportedAuthMethods: string[];
+
+  /**
+   * The OpenID Connect ID token providers that the client supports, with
+   * optional client/provider specific configuration parameters.
+   */
+  supportedIdTokenProviders?: TokenProvider[];
+}
+
+/**
+ * Defines a token provider by its canonical base URI.
+ */
+export interface TokenProvider {
+  uri: string;
+  [param: string]: string;
 }
 
 export interface CredentialHintOptions {
@@ -132,6 +146,12 @@ export interface CredentialHintOptions {
    * `AuthenticationMethods` for common values.
    */
   supportedAuthMethods: string[];
+
+  /**
+   * The OpenID Connect ID token providers that the client supports, with
+   * optional client/provider specific configuration parameters.
+   */
+  supportedIdTokenProviders?: TokenProvider[];
 
   /**
    * Specifies whether an "add account" option should be displayed within the
