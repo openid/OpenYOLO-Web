@@ -17,6 +17,8 @@
 import {WindowLike} from '../protocol/comms';
 import {DisplayOptions} from '../protocol/rpc_messages';
 
+import {RENDER_MODES, RenderMode} from './api';
+
 export const HIDDEN_FRAME_CLASS = 'openyolo-hidden';
 export const VISIBLE_FRAME_CLASS = 'openyolo-visible';
 
@@ -29,20 +31,27 @@ const DEFAULT_FRAME_CSS = `
   position: fixed;
   border: none;
   z-index: 9999;
+}
+
+.openyolo-visible.bottomSheet {
   bottom: 0;
   left: 0;
   width: 100%;
+  height: 320px;
 }
 
-@media (min-width:801px) {
-  .openyolo-visible {
-    position: fixed;
-    left: auto;
-    top: 16px;
-    right: 16px;
-    width: 320px;
-    height: 480px;
-  }
+.openyolo-visible.navPopout {
+  top: 0;
+  right: 0;
+  width: 320px;
+  height: 320px;
+}
+
+.openyolo-visible.fullScreen {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 `;
 
@@ -70,12 +79,14 @@ export class ProviderFrameElement {
       private clientDocument: Document,
       private instanceId: string,
       clientOrigin: string,
+      private renderMode: RenderMode,
       providerUrlBase: string) {
     injectDefaultFrameCss();
     this.frameElem = this.clientDocument.createElement('iframe');
     this.frameElem.src = `${providerUrlBase}` +
         `?client=${encodeURIComponent(clientOrigin)}` +
-        `&id=${this.instanceId}`;
+        `&id=${this.instanceId}` +
+        `&renderMode=${renderMode}`;
     this.frameElem.className = HIDDEN_FRAME_CLASS;
     this.clientDocument.body.appendChild(this.frameElem);
   }
@@ -91,8 +102,10 @@ export class ProviderFrameElement {
    * Displays the container.
    */
   display(options: DisplayOptions): void {
-    this.frameElem.className = VISIBLE_FRAME_CLASS;
-    if (options.height) {
+    this.frameElem.className = '';
+    this.frameElem.classList.add(VISIBLE_FRAME_CLASS);
+    this.frameElem.classList.add(this.renderMode);
+    if (options.height && this.renderMode !== RENDER_MODES.fullScreen) {
       this.frameElem.style.height = `${options.height}px`;
     }
   }
@@ -109,6 +122,6 @@ export class ProviderFrameElement {
    * Disposes of the container.
    */
   dispose(): void {
-    this.clientDocument.removeChild(this.frameElem);
+    this.clientDocument.body.removeChild(this.frameElem);
   }
 }

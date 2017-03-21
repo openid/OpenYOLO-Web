@@ -1,4 +1,4 @@
-<div class="frame-container">
+<div class="frame-container {{renderMode}}" (click)="dismiss()">
   <div *ngIf="failed" class="failed">😵</div>
   <section *ngIf="displayCredentials" class="picker">
     <header>

@@ -42,6 +42,7 @@ export class HintComponent implements OnInit {
 
   ngOnInit() {
     openyolo.setProviderUrlBase(this.settingsService.getProviderBaseUrl());
+    openyolo.setRenderMode(this.settingsService.getRenderMode());
   }
 
   async sendRequest() {

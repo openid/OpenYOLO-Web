@@ -16,9 +16,36 @@
 
 import {Component} from '@angular/core';
 
+import {openyolo} from '../../../../ts/api/api';
+import {RENDER_MODES} from '../../../../ts/protocol/data';
+import {SettingsService} from '../app/settings.service';
+
 @Component({
   selector: 'app-settings',
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.css']
 })
-export class SettingsComponent {}
+export class SettingsComponent {
+  providerUrl: string;
+  renderMode: string;
+  renderModes: string[];
+
+  constructor(private settingsService: SettingsService) {
+    this.providerUrl = settingsService.getProviderBaseUrl();
+    this.renderModes = [];
+    this.renderModes.push('default');
+    for (let mode of Object.getOwnPropertyNames(RENDER_MODES)) {
+      this.renderModes.push(mode);
+    }
+
+    this.renderMode = settingsService.getRenderMode() || 'default';
+  }
+
+  confirm() {
+    this.settingsService.setProviderBaseUrl(this.providerUrl);
+    this.settingsService.setRenderMode(this.renderMode);
+    openyolo.setProviderUrlBase(this.providerUrl);
+    openyolo.setRenderMode(this.renderMode);
+    openyolo.reset();
+  }
+}

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {boxEnum, indexedStrEnum} from './enums';
+import {boxEnum, indexedStrEnum, strEnum} from './enums';
 import {PasswordSpecification} from './password_spec';
 
 /**
@@ -221,6 +221,20 @@ export interface ReferencingClientConfiguration {
   type: 'reference';
   domain: string;
 }
+
+/**
+ * The defined rendering modes that the client can pass to the provider:
+ *
+ * - bottomSheet: The provider is rendered to an area that partially fills the
+ *   bottom of the screen, with a fixed width. The rendering area is either
+ *   equal to the width of the client frame, or 480px, whichever is smaller.
+ *
+ * - navPopout: The provider is rendered in a pop-up style at the top of the
+ *   screen, with a fixed width. The
+ */
+export const RENDER_MODES = strEnum('bottomSheet', 'navPopout', 'fullScreen');
+
+export type RenderMode = keyof typeof RENDER_MODES;
 
 /**
  * A set of commonly-used federated authentication methods. This list is not

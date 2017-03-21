@@ -1,1 +1,19 @@
-<span>Settings</span>
+<div>
+  <h2 md-dialog-title>API Settings</h2>
+
+  <md-dialog-content class="settings">
+    <md-input-container>
+      <input mdInput placeholder="Provider URI" [(value)]="providerUrl">
+    </md-input-container>
+
+    <md-select [(ngModel)]="renderMode" placeholder="Provider render mode">
+      <md-option *ngFor="let renderMode of renderModes" [value]="renderMode">
+        {{renderMode}}
+      </md-option>
+    </md-select>
+  </md-dialog-content>
+
+  <md-dialog-actions>
+    <button md-raised-button md-dialog-close color="accent" (click)="confirm()">Apply</button>
+  </md-dialog-actions>
+</div>

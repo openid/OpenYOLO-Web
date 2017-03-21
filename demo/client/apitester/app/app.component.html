@@ -1,7 +1,9 @@
 <md-toolbar color="primary">
   <span>OpenYOLO Test App</span>
   <span style="flex: 1 1 auto"></span>
-  <button md-icon-button aria-label="Settings"><md-icon svgIcon="settings"></md-icon></button>
+  <button md-icon-button aria-label="Settings" (click)="showSettings()">
+    <md-icon svgIcon="settings"></md-icon>
+  </button>
 </md-toolbar>
 
 <md-tab-group>

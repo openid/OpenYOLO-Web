@@ -1,0 +1,17 @@
+.settings {
+  display: flex;
+  flex-direction: column;
+}
+
+.settings > * {
+  margin-top: 16px;
+}
+
+.settings h2 {
+  margin-top: 0px;
+}
+
+.settings button {
+  margin-top: 24px;
+  align-self: flex-end;
+}
