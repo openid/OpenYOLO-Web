@@ -15,6 +15,7 @@
  */
 
 import {Credential, CredentialHintOptions, CredentialRequestOptions, ProxyLoginResponse} from '../protocol/data';
+import {RENDER_MODES, RenderMode} from '../protocol/data';
 import {OpenYoloError} from '../protocol/errors';
 import {SecureChannel} from '../protocol/secure_channel';
 import {generateId} from '../protocol/utils';
@@ -31,6 +32,8 @@ import {WrapBrowserRequest} from './wrap_browser_request';
 export * from '../protocol/data';
 export {OpenYoloError, ERROR_TYPES} from '../protocol/errors';
 import {respondToHandshake} from './verify';
+
+const MOBILE_USER_AGENT_REGEX = /android|iphone|ipod|iemobile/i;
 
 export const DEFAULT_REQUEST_TIMEOUT = 3000;
 
@@ -123,10 +126,28 @@ export interface OpenYoloApi {
  * retrieve credentials.
  */
 class OpenYoloApiImpl implements OpenYoloApi {
-  static async create(providerUrlBase: string): Promise<OpenYoloApiImpl> {
+  static async create(providerUrlBase: string, renderMode?: RenderMode):
+      Promise<OpenYoloApiImpl> {
     let instanceId = generateId();
+
+    if (!renderMode || !(renderMode in RENDER_MODES)) {
+      let isMobile = navigator.userAgent.match(MOBILE_USER_AGENT_REGEX);
+      let isNested = window.parent !== window;
+      if (isNested) {
+        renderMode = RENDER_MODES.fullScreen;
+      } else if (isMobile) {
+        renderMode = RENDER_MODES.bottomSheet;
+      } else {
+        renderMode = RENDER_MODES.navPopout;
+      }
+    }
+
     let frameManager = new ProviderFrameElement(
-        document, instanceId, window.location.origin, providerUrlBase);
+        document,
+        instanceId,
+        window.location.origin,
+        renderMode,
+        providerUrlBase);
 
     // TODO: the timeout must be split across multiple operations; might be
     // better to race two promises to make this easier.
@@ -257,6 +278,7 @@ class OpenYoloApiImpl implements OpenYoloApi {
 
 export interface OnDemandOpenYoloApi extends OpenYoloApi {
   setProviderUrlBase(providerUrlBase: string): void;
+  setRenderMode(renderMode: string): void;
   reset(): void;
 }
 
@@ -269,6 +291,7 @@ export interface OnDemandOpenYoloApi extends OpenYoloApi {
 class InitializeOnDemandApi implements OnDemandOpenYoloApi {
   private providerUrlBase: string = 'https://provider.openyolo.org';
   private implPromise: Promise<OpenYoloApiImpl> = null;
+  private renderMode: RenderMode|null = null;
 
   constructor() {
     // register the handler for ping verification automatically on module load
@@ -277,6 +300,11 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
 
   setProviderUrlBase(providerUrlBase: string) {
     this.providerUrlBase = providerUrlBase;
+    this.reset();
+  }
+
+  setRenderMode(renderMode: RenderMode|null) {
+    this.renderMode = renderMode;
     this.reset();
   }
 
@@ -295,7 +323,8 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
 
   private init() {
     if (!this.implPromise) {
-      this.implPromise = OpenYoloApiImpl.create(this.providerUrlBase);
+      this.implPromise =
+          OpenYoloApiImpl.create(this.providerUrlBase, this.renderMode);
     }
     return this.implPromise;
   }

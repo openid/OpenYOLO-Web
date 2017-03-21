@@ -15,6 +15,9 @@
  */
 
 import {Component} from '@angular/core';
+import {MdDialog} from '@angular/material';
+
+import {SettingsComponent} from '../settings/settings.component';
 
 @Component({
   selector: 'app-root',
@@ -22,5 +25,9 @@ import {Component} from '@angular/core';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'app works!';
+  constructor(public dialog: MdDialog) {}
+
+  showSettings() {
+    this.dialog.open(SettingsComponent, {width: '50%'});
+  }
 }

@@ -18,7 +18,7 @@ import {Component} from '@angular/core';
 import {AfterViewChecked, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 
-import {AffiliationProvider, AUTHENTICATION_METHODS, ClientConfigurationProvider, Credential, CredentialDataProvider, DisplayCallbacks, InteractionProvider, LocalStateProvider, PrimaryClientConfiguration, ProviderFrame} from '../../../../ts/spi/spi';
+import {AffiliationProvider, AUTHENTICATION_METHODS, ClientConfigurationProvider, Credential, CredentialDataProvider, DisplayCallbacks, InteractionProvider, LocalStateProvider, PrimaryClientConfiguration, ProviderFrame, RENDER_MODES} from '../../../../ts/spi/spi';
 import {CredentialStoreService} from '../credential_store/credential_store.service';
 
 @Component({
@@ -32,6 +32,8 @@ export class OpenYoloProviderComponent implements OnInit, OnDestroy,
   private providerFramePromise: Promise<ProviderFrame>;
 
   private renderPromiseResolvers: Function[] = [];
+
+  private renderMode: string;
 
   failed = false;
   displayCredentials: DisplayCredential[]|null;
@@ -50,7 +52,12 @@ export class OpenYoloProviderComponent implements OnInit, OnDestroy,
     this.route.queryParams.forEach((queryParams) => {
       clientAuthDomain = queryParams['client'] || null;
       clientNonce = queryParams['id'] || null;
+      this.renderMode = queryParams['renderMode'] || null;
     });
+
+    if (!this.renderMode) {
+      this.renderMode = RENDER_MODES.bottomSheet;
+    }
 
     this.providerFramePromise = ProviderFrame.initialize({
       allowDirectAuth: true,
@@ -105,12 +112,8 @@ export class OpenYoloProviderComponent implements OnInit, OnDestroy,
   async showHintPicker(hints: Credential[], displayCallbacks: DisplayCallbacks):
       Promise<Credential> {
     this.displayCredentials = hints.map((hint) => {
-
-
       return new DisplayCredential(hint);
     });
-
-    console.log(this.displayCredentials);
 
     this.pickResultPromise = new Promise<Credential>((resolve, reject) => {
       this.pickResolver = resolve;
@@ -159,6 +162,10 @@ export class OpenYoloProviderComponent implements OnInit, OnDestroy,
 
   handleCredentialClick(displayCredential: DisplayCredential) {
     this.pickResolver(displayCredential.credential);
+  }
+
+  dismiss() {
+    this.pickResolver(null);
   }
 }
 

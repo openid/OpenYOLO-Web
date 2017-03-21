@@ -41,6 +41,7 @@ import {SettingsService} from './settings.service';
     SaveComponent,
     SettingsComponent
   ],
+  entryComponents: [SettingsComponent],
   imports: [
     BrowserAnimationsModule,
     BrowserModule,
