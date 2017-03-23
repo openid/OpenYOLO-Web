@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {Credential, PrimaryClientConfiguration} from '../protocol/data';
+import {Credential, CredentialHintOptions, PrimaryClientConfiguration} from '../protocol/data';
 import {DisplayOptions} from '../protocol/rpc_messages';
 
 /**
@@ -98,10 +98,16 @@ export interface ClientConfigurationProvider {
  */
 export interface CredentialDataProvider {
   /**
-   * Retrieves all credentials, optionally filtered to the provided set of
-   * domains.
+   * Retrieves all hint credentials, based upon the provided options.
    */
-  getAllCredentials(authDomains?: string[]): Promise<Credential[]>;
+  getAllHints(options: CredentialHintOptions): Promise<Credential[]>;
+
+  /**
+   * Retrieves all credentials for the specified authentication domains
+   * (derived from the request) and the specified request options.
+   */
+  getAllCredentials(authDomains: string[], options: CredentialRequestOptions):
+      Promise<Credential[]>;
 
   /**
    * Creates or updates an existing credential. If the credential cannot be
@@ -132,6 +138,7 @@ export interface InteractionProvider {
    */
   showCredentialPicker(
       credentials: Credential[],
+      options: CredentialRequestOptions,
       displayCallbacks: DisplayCallbacks): Promise<Credential>;
 
   /**
@@ -140,8 +147,10 @@ export interface InteractionProvider {
    * returned promise should resolve with that credential. If the user does
    * not select a credential, the promise should be rejected.
    */
-  showHintPicker(hints: Credential[], displayCallbacks: DisplayCallbacks):
-      Promise<Credential>;
+  showHintPicker(
+      hints: Credential[],
+      options: CredentialHintOptions,
+      displayCallbacks: DisplayCallbacks): Promise<Credential>;
 
   /**
    * Requests the display of a confirmation screen, allowing the user to

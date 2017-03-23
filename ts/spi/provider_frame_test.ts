@@ -619,8 +619,8 @@ class TestCredentialDataProvider implements CredentialDataProvider {
   credentials: Credential[] = [];
   neverSave: {[key: string]: boolean} = {};
 
-  async getAllCredentials(authDomains?: string[]): Promise<Credential[]> {
-    if (!authDomains) {
+  async getAllCredentials(authDomains: string[]): Promise<Credential[]> {
+    if (authDomains.length < 1) {
       return this.credentials;
     }
 
@@ -635,6 +635,11 @@ class TestCredentialDataProvider implements CredentialDataProvider {
     }
 
     return filteredCredentials;
+  }
+
+  async getAllHints(options: CredentialHintOptions): Promise<Credential[]> {
+    // no filtering required in the hints case
+    return this.credentials;
   }
 
   /**
