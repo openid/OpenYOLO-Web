@@ -18,8 +18,8 @@ import {Component} from '@angular/core';
 import {AfterViewChecked, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 
-import {AffiliationProvider, AUTHENTICATION_METHODS, ClientConfigurationProvider, Credential, CredentialDataProvider, DisplayCallbacks, InteractionProvider, LocalStateProvider, PrimaryClientConfiguration, ProviderFrame, RENDER_MODES} from '../../../../ts/spi/spi';
-import {CredentialStoreService} from '../credential_store/credential_store.service';
+import {AffiliationProvider, AUTHENTICATION_METHODS, ClientConfigurationProvider, Credential, CredentialDataProvider, CredentialHintOptions, DisplayCallbacks, InteractionProvider, LocalStateProvider, PrimaryClientConfiguration, ProviderFrame, RENDER_MODES} from '../../../../ts/spi/spi';
+import {CredentialStoreService, StoredCredential} from '../credential_store/credential_store.service';
 
 @Component({
   selector: 'app-openyolo-provider',
@@ -109,8 +109,10 @@ export class OpenYoloProviderComponent implements OnInit, OnDestroy,
     });
   }
 
-  async showHintPicker(hints: Credential[], displayCallbacks: DisplayCallbacks):
-      Promise<Credential> {
+  async showHintPicker(
+      hints: Credential[],
+      options: CredentialHintOptions,
+      displayCallbacks: DisplayCallbacks): Promise<Credential> {
     this.displayCredentials = hints.map((hint) => {
       return new DisplayCredential(hint);
     });
@@ -146,6 +148,7 @@ export class OpenYoloProviderComponent implements OnInit, OnDestroy,
 
   async showCredentialPicker(
       credentials: Credential[],
+      options: CredentialRequestOptions,
       displayCallbacks: DisplayCallbacks): Promise<Credential> {
     return null;
   }
@@ -226,7 +229,9 @@ class SimpleClientConfigurationProvider implements ClientConfigurationProvider {
 class CredentialDataProviderImpl implements CredentialDataProvider {
   constructor(private credentialStoreService: CredentialStoreService) {}
 
-  async getAllCredentials(authDomains?: string[]): Promise<Credential[]> {
+  async getAllCredentials(
+      authDomains: string[],
+      options: CredentialHintOptions): Promise<Credential[]> {
     let credentials = this.credentialStoreService.getAllCredentials();
 
     let resultCredentials: Credential[] = [];
@@ -234,17 +239,16 @@ class CredentialDataProviderImpl implements CredentialDataProvider {
       if (!authDomains ||
           authDomains.findIndex(
               (authDomain) => authDomain === credential.from) !== -1) {
-        resultCredentials.push({
-          id: credential.id,
-          displayName: credential.display,
-          authMethod: AUTHENTICATION_METHODS.ID_AND_PASSWORD,
-          authDomain: credential.from,
-          password: credential.password
-        });
+        resultCredentials.push(this.translateToExternalCredential(credential));
       }
     }
 
     return resultCredentials;
+  }
+
+  async getAllHints(options: CredentialHintOptions): Promise<Credential[]> {
+    return this.credentialStoreService.getAllCredentials().map(
+        c => this.translateToExternalCredential(c));
   }
 
   async upsertCredential(credential: Credential, original?: Credential):
@@ -254,6 +258,17 @@ class CredentialDataProviderImpl implements CredentialDataProvider {
 
   async deleteCredential(credential: Credential): Promise<void> {
     return;
+  }
+
+  private translateToExternalCredential(credential: StoredCredential):
+      Credential {
+    return {
+      id: credential.id,
+      displayName: credential.display,
+      authMethod: AUTHENTICATION_METHODS.ID_AND_PASSWORD,
+      authDomain: credential.from,
+      password: credential.password
+    };
   }
 }
 

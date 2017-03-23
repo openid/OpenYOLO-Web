@@ -245,7 +245,7 @@ export class ProviderFrame {
     // user interaction is required. instruct the interaction provider to show
     // a picker for the available credentials.
     let selectionPromise = this.interactionProvider.showHintPicker(
-        hints, this.createDisplayCallbacks(requestId));
+        hints, options, this.createDisplayCallbacks(requestId));
 
     // now, wait for selection to occur, and send the selection result to the
     // client
@@ -288,7 +288,7 @@ export class ProviderFrame {
     console.info('Handling credential retrieve request');
 
     let credentials = await this.credentialDataProvider.getAllCredentials(
-        this.equivalentAuthDomains);
+        this.equivalentAuthDomains, options);
 
     // filter out the credentials which don't match the request options
     let pertinentCredentials = credentials.filter((credential) => {
@@ -325,7 +325,7 @@ export class ProviderFrame {
     // client to show the provider frame.
     console.info('User interaction required to release credential');
     let selectionPromise = this.interactionProvider.showCredentialPicker(
-        pertinentCredentials, this.createDisplayCallbacks(requestId));
+        pertinentCredentials, options, this.createDisplayCallbacks(requestId));
 
     // now, wait for selection to occur, and send the selection result to the
     // client
@@ -460,7 +460,7 @@ export class ProviderFrame {
       Promise<Credential[]> {
     // get all credentials across all domains; from this, we can filter down
     // to the set of credentials
-    let allCredentials = await this.credentialDataProvider.getAllCredentials();
+    let allCredentials = await this.credentialDataProvider.getAllHints(options);
 
     if (allCredentials.length < 1) {
       return [];
