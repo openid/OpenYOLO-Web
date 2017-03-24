@@ -1,7 +1,7 @@
 {
   "name": "@openid/openyolo",
   "description": "API to retrieve, update and generate credentials with the support of the user's chosen credential provider",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": "The OpenID Foundation",
   "license": "Apache-2.0",
   "homepage": "https://openid.net/wg/ac/",
