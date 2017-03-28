@@ -18,7 +18,7 @@ const karma_base = require('./karma_base');
 const saucelabs = require('./karma.saucelabs.js');
 
 module.exports = function(karma) {
-  let config = Object.assign(karma_base.baseConfig, {
+  var config = Object.assign(karma_base.baseConfig, {
     autoWatch: true,
     preprocessors: {
       '**/*.ts': ['karma-typescript', 'coverage'],

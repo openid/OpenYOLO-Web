@@ -437,6 +437,14 @@ export class ProviderFrame {
       copy.profilePicture = credential.profilePicture;
     }
 
+    if (credential.exchangeToken) {
+      copy.exchangeToken = credential.exchangeToken;
+    }
+
+    if (credential.idToken) {
+      copy.idToken = credential.idToken;
+    }
+
     if (!redact && 'password' in credential) {
       copy.password = credential.password;
     }

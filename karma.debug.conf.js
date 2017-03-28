@@ -17,7 +17,7 @@
 const karma_base = require('./karma_base');
 
 module.exports = function(karma) {
-  let config = Object.assign(karma_base.baseConfig, {
+  var config = Object.assign(karma_base.baseConfig, {
     browsers: ['ChromeDebug'],
     frameworks: ['jasmine', 'karma-typescript'],
     karmaTypescriptConfig:
