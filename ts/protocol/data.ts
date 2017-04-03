@@ -22,6 +22,7 @@ import {PasswordSpecification} from './password_spec';
  * credential provider.
  */
 
+
 /**
  * Represents a credential which may be usable to sign in.
  */
@@ -97,16 +98,6 @@ export interface Credential {
   proxiedAuthRequired?: boolean;
 }
 
-/**
- * A token which provides some additional verifying information related to
- * the credential, such as an verifiable assertion that the user owns the
- * email address identifier associated with a credential. Interpretation of
- * the token value is provider-specific.
- */
-export interface CredentialToken {
-  provider: string;
-  token: string;
-}
 
 /**
  * Encapsulates the response from the authentication system to a proxy login.
@@ -116,6 +107,10 @@ export interface ProxyLoginResponse {
   responseText: string;
 }
 
+/**
+ * The set of parameters passed from the client for a credential retrieval
+ * request.
+ */
 export interface CredentialRequestOptions {
   /**
    * The supported authentication methods supported by the origin, described
@@ -135,10 +130,24 @@ export interface CredentialRequestOptions {
  * Defines a token provider by its canonical base URI.
  */
 export interface TokenProvider {
+  /**
+   * The URI of the token provider. See `TOKEN_PROVIDERS` for some common
+   * values.
+   */
   uri: string;
+
+  /**
+   * The optional OpenID Connect client ID for this app, in the context of this
+   * token provider.
+   */
+  clientId?: string;
+
   [param: string]: string;
 }
 
+/**
+ * The set of parameters passed from the client for a hint retrieval request.
+ */
 export interface CredentialHintOptions {
   /**
    * The supported authentication methods supported by the origin, described
@@ -166,60 +175,6 @@ export interface CredentialHintOptions {
    * explicitly provided, `DEFAULT_PASSWORD_GENERATION_SPEC` will be used.
    */
   passwordSpec?: PasswordSpecification;
-}
-
-
-/**
- * OpenYOLO client configurations must reside at './well-known/openyolo.json'
- * and may either be a "primary" configuration, containing the required
- * properties, or a "reference" configuration, which indicates that the
- * configuration can be found at another domain.
- */
-export type ClientConfiguration =
-    PrimaryClientConfiguration | ReferencingClientConfiguration;
-
-/**
- * An OpenYOLO client configuration that contains the minimum set of properties
- * required
- */
-export interface PrimaryClientConfiguration {
-  type: 'primary';
-
-  /**
-   * Whether OpenYOLO requests should be allowed for this client.
-   * Default: false.
-   */
-  apiEnabled?: boolean;
-
-  /**
-   * Whether usage of a credential should require proxied authentication via
-   * the credential provider.
-   * Default: false.
-   */
-  requireProxyLogin?: boolean;
-
-  /**
-   * Whether credential requests should be permitted from a context where
-   * the parent frame is not the root of the window.
-   * Default: false.
-   */
-  allowNestedFrameRequests?: boolean;
-
-  /**
-   * The authentication endpoint to which credentials should be sent, when
-   * using proxied authentication.
-   */
-  authenticationEndpoint?: string;
-}
-
-/**
- * An OpenYOLO client configuration that refers to a configuration on another
- * domain. This other domain must be provably related to the current domain
- * though a bidirectional digital asset link association.
- */
-export interface ReferencingClientConfiguration {
-  type: 'reference';
-  domain: string;
 }
 
 /**
@@ -251,4 +206,15 @@ export const AUTHENTICATION_METHODS = indexedStrEnum({
   PAYPAL: boxEnum('https://www.paypal.com'),
   TWITTER: boxEnum('https://twitter.com'),
   YAHOO: boxEnum('https://login.yahoo.com')
+});
+
+/**
+ * The set of commonly-used OpenID Connect token providers. This list is not
+ * intended to be an exhaustive enumeration of all token providers.  When
+ * referencing a token provider, use the origin related to its
+ * token endpoint.
+ */
+export const TOKEN_PROVIDERS = indexedStrEnum({
+  GOOGLE: boxEnum('https://accounts.google.com'),
+  MICROSOFT: boxEnum('https://login.live.com'),
 });

@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import {AUTHENTICATION_METHODS, ClientConfiguration, Credential, CredentialHintOptions, CredentialRequestOptions, PrimaryClientConfiguration} from '../protocol/data';
+import {ClientConfiguration, PrimaryClientConfiguration} from '../protocol/client_config';
+import {AUTHENTICATION_METHODS, Credential, CredentialHintOptions, CredentialRequestOptions} from '../protocol/data';
 import {OpenYoloError} from '../protocol/errors';
 import * as msg from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';

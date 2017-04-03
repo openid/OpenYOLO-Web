@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
+import {PrimaryClientConfiguration} from '../protocol/client_config';
 import {sendMessage} from '../protocol/comms';
-import {AUTHENTICATION_METHODS, Credential, CredentialHintOptions, CredentialRequestOptions, PrimaryClientConfiguration} from '../protocol/data';
+import {AUTHENTICATION_METHODS, Credential, CredentialHintOptions, CredentialRequestOptions} from '../protocol/data';
 import {OpenYoloError} from '../protocol/errors';
 import {isOpenYoloMessageFormat} from '../protocol/messages';
 import {channelErrorMessage} from '../protocol/post_messages';
