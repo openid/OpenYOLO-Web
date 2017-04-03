@@ -15,6 +15,7 @@
  */
 
 import {WindowLike} from '../protocol/comms';
+import {PreloadRequest} from '../protocol/preload_request';
 import {DisplayOptions} from '../protocol/rpc_messages';
 
 import {RENDER_MODES, RenderMode} from './api';
@@ -80,13 +81,20 @@ export class ProviderFrameElement {
       private instanceId: string,
       clientOrigin: string,
       private renderMode: RenderMode,
-      providerUrlBase: string) {
+      providerUrlBase: string,
+      preloadRequest?: PreloadRequest) {
     injectDefaultFrameCss();
     this.frameElem = this.clientDocument.createElement('iframe');
     this.frameElem.src = `${providerUrlBase}` +
         `?client=${encodeURIComponent(clientOrigin)}` +
         `&id=${this.instanceId}` +
         `&renderMode=${renderMode}`;
+
+    if (preloadRequest) {
+      let encodedRequest = encodeURIComponent(JSON.stringify(preloadRequest));
+      this.frameElem.src += `&preloadRequest=${encodedRequest}`;
+    }
+
     this.frameElem.className = HIDDEN_FRAME_CLASS;
     this.clientDocument.body.appendChild(this.frameElem);
   }

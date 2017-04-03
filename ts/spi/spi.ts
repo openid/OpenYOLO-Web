@@ -22,3 +22,4 @@
 export {ProviderFrame} from './provider_frame';
 export * from './provider_config';
 export * from '../protocol/data';
+export * from '../protocol/client_config';

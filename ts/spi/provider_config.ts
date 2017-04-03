@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import {Credential, CredentialHintOptions, PrimaryClientConfiguration} from '../protocol/data';
+import {PrimaryClientConfiguration} from '../protocol/client_config';
+import {Credential, CredentialHintOptions} from '../protocol/data';
 import {DisplayOptions} from '../protocol/rpc_messages';
 
 /**

@@ -32,6 +32,7 @@ import {WrapBrowserRequest} from './wrap_browser_request';
 export * from '../protocol/data';
 export {OpenYoloError, ERROR_TYPES} from '../protocol/errors';
 import {respondToHandshake} from './verify';
+import {PreloadRequest, PRELOAD_REQUEST} from '../protocol/preload_request';
 
 const MOBILE_USER_AGENT_REGEX = /android|iphone|ipod|iemobile/i;
 
@@ -126,8 +127,10 @@ export interface OpenYoloApi {
  * retrieve credentials.
  */
 class OpenYoloApiImpl implements OpenYoloApi {
-  static async create(providerUrlBase: string, renderMode?: RenderMode):
-      Promise<OpenYoloApiImpl> {
+  static async create(
+      providerUrlBase: string,
+      renderMode?: RenderMode,
+      preloadRequest?: PreloadRequest): Promise<OpenYoloApiImpl> {
     let instanceId = generateId();
 
     if (!renderMode || !(renderMode in RENDER_MODES)) {
@@ -147,7 +150,8 @@ class OpenYoloApiImpl implements OpenYoloApi {
         instanceId,
         window.location.origin,
         renderMode,
-        providerUrlBase);
+        providerUrlBase,
+        preloadRequest);
 
     // TODO: the timeout must be split across multiple operations; might be
     // better to race two promises to make this easier.
@@ -321,10 +325,10 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
     });
   }
 
-  private init() {
+  private init(preloadRequest?: PreloadRequest) {
     if (!this.implPromise) {
-      this.implPromise =
-          OpenYoloApiImpl.create(this.providerUrlBase, this.renderMode);
+      this.implPromise = OpenYoloApiImpl.create(
+          this.providerUrlBase, this.renderMode, preloadRequest);
     }
     return this.implPromise;
   }
@@ -334,11 +338,13 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
   }
 
   async hint(options: CredentialHintOptions): Promise<Credential> {
-    return (await this.init()).hint(options);
+    return (await this.init({type: PRELOAD_REQUEST.hint, options}))
+        .hint(options);
   }
 
   async retrieve(options: CredentialRequestOptions): Promise<Credential> {
-    return (await this.init()).retrieve(options);
+    return (await this.init({type: PRELOAD_REQUEST.retrieve, options}))
+        .retrieve(options);
   }
 
   async save(credential: Credential): Promise<void> {
