@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 
-import {Credential, CredentialHintOptions, CredentialRequestOptions, ProxyLoginResponse} from './data';
-import {strEnum} from './enums';
-import {OpenYoloErrorData, OpenYoloExtendedError} from './errors';
-import {isBoolean, isUndefined, isValidCredential, isValidDisplayOptions, isValidError, isValidHintOptions, isValidProxyLoginResponse, isValidRequestOptions} from './validators';
+import { Credential, CredentialHintOptions, CredentialRequestOptions, ProxyLoginResponse } from './data';
+import { strEnum } from './enums';
+import { OpenYoloErrorData, OpenYoloExtendedError } from './errors';
+import { isBoolean, isUndefined, isValidCredential, isValidDisplayOptions, isValidError, isValidHintOptions, isValidProxyLoginResponse, isValidRequestOptions } from './validators';
 
 export const RPC_MESSAGE_TYPES = strEnum(
-    'retrieve',
-    'hintAvailable',
-    'hintAvailableResult',
-    'hint',
-    'save',
-    'saveResult',
-    'proxy',
-    'proxyResult',
-    'wrapBrowser',
-    'wrapBrowserResult',
-    'showProvider',
-    'none',
-    'credential',
-    'error');
+  'retrieve',
+  'hintAvailable',
+  'hintAvailableResult',
+  'hint',
+  'save',
+  'saveResult',
+  'proxy',
+  'proxyResult',
+  'wrapBrowser',
+  'wrapBrowserResult',
+  'showProvider',
+  'none',
+  'credential',
+  'error');
 
 export type RpcMessageType = keyof typeof RPC_MESSAGE_TYPES;
 
@@ -60,7 +60,7 @@ export type RpcMessageArgumentTypes = {
 };
 
 export type RpcMessageArgumentType<T extends RpcMessageType> =
-    RpcMessageArgumentTypes[T];
+  RpcMessageArgumentTypes[T];
 
 export interface RpcMessageData<T extends RpcMessageType> {
   id: string;
@@ -76,42 +76,42 @@ export interface CredentialResponseData { credential: Credential; }
 export interface ErrorMessageData { error: OpenYoloErrorData; }
 
 export interface DisplayOptions {
-  height: number;
-  width: number;
+  height?: number;
+  width?: number;
 }
 
 function rpcDataValidator(dataValidator: (data: any) => boolean) {
   return (data: any): boolean => {
     return !!data && typeof data === 'object' && 'id' in data &&
-        typeof data['id'] === 'string' && dataValidator(data['args']);
+      typeof data['id'] === 'string' && dataValidator(data['args']);
   };
 }
 
 export const RPC_MESSAGE_DATA_VALIDATORS:
-    {[K in RpcMessageType]: (data: any) => boolean} = {
-      'retrieve': rpcDataValidator(isValidRequestOptions),
-      'hintAvailable': rpcDataValidator(isValidHintOptions),
-      'hintAvailableResult': rpcDataValidator(isBoolean),
-      'hint': rpcDataValidator(isValidHintOptions),
-      'save': rpcDataValidator(isValidCredential),
-      'saveResult': rpcDataValidator(isBoolean),
-      'proxy': rpcDataValidator(isValidCredential),
-      'proxyResult': rpcDataValidator(isValidProxyLoginResponse),
-      'wrapBrowser': rpcDataValidator(isUndefined),
-      'wrapBrowserResult': rpcDataValidator(isBoolean),
-      'showProvider': rpcDataValidator(isValidDisplayOptions),
-      'none': rpcDataValidator(isUndefined),
-      'credential': rpcDataValidator(isValidCredential),
-      'error': rpcDataValidator(isValidError)
-    };
+  {[K in RpcMessageType]: (data: any) => boolean} = {
+    'retrieve': rpcDataValidator(isValidRequestOptions),
+    'hintAvailable': rpcDataValidator(isValidHintOptions),
+    'hintAvailableResult': rpcDataValidator(isBoolean),
+    'hint': rpcDataValidator(isValidHintOptions),
+    'save': rpcDataValidator(isValidCredential),
+    'saveResult': rpcDataValidator(isBoolean),
+    'proxy': rpcDataValidator(isValidCredential),
+    'proxyResult': rpcDataValidator(isValidProxyLoginResponse),
+    'wrapBrowser': rpcDataValidator(isUndefined),
+    'wrapBrowserResult': rpcDataValidator(isBoolean),
+    'showProvider': rpcDataValidator(isValidDisplayOptions),
+    'none': rpcDataValidator(isUndefined),
+    'credential': rpcDataValidator(isValidCredential),
+    'error': rpcDataValidator(isValidError)
+  };
 
 /* ****************************************************************************/
 /* ************************ MESSAGE CREATION FUNCTIONS ************************/
 /* ****************************************************************************/
 
 export function rpcMessage<T extends RpcMessageType>(
-    type: T, id: string, args: RpcMessageArgumentTypes[T]): RpcMessage<T> {
-  return {type, data: {id, args}};
+  type: T, id: string, args: RpcMessageArgumentTypes[T]): RpcMessage<T> {
+  return { type, data: { id, args } };
 }
 
 export function retrieveMessage(id: string, options: CredentialRequestOptions) {
@@ -119,7 +119,7 @@ export function retrieveMessage(id: string, options: CredentialRequestOptions) {
 }
 
 export function hintAvailableMessage(
-    id: string, options: CredentialHintOptions) {
+  id: string, options: CredentialHintOptions) {
   return rpcMessage(RPC_MESSAGE_TYPES.hintAvailable, id, options);
 }
 
@@ -136,7 +136,7 @@ export function proxyLoginMessage(id: string, credential: Credential) {
 }
 
 export function proxyLoginResponseMessage(
-    id: string, response: ProxyLoginResponse) {
+  id: string, response: ProxyLoginResponse) {
   return rpcMessage(RPC_MESSAGE_TYPES.proxyResult, id, response);
 }
 
