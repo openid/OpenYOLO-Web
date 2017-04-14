@@ -75,7 +75,10 @@ export interface CredentialResponseData { credential: Credential; }
 
 export interface ErrorMessageData { error: OpenYoloErrorData; }
 
-export interface DisplayOptions { height: number; }
+export interface DisplayOptions {
+  height?: number;
+  width?: number;
+}
 
 function rpcDataValidator(dataValidator: (data: any) => boolean) {
   return (data: any): boolean => {

@@ -113,8 +113,10 @@ export class ProviderFrameElement {
     this.frameElem.className = '';
     this.frameElem.classList.add(VISIBLE_FRAME_CLASS);
     this.frameElem.classList.add(this.renderMode);
-    if (options.height && this.renderMode !== RENDER_MODES.fullScreen) {
-      this.frameElem.style.height = `${options.height}px`;
+    if ((options.height || options.width) &&
+        this.renderMode !== RENDER_MODES.fullScreen) {
+      if (options.height) this.frameElem.style.height = `${options.height}px`;
+      if (options.width) this.frameElem.style.width = `${options.width}px`;
     }
   }
 
@@ -124,6 +126,7 @@ export class ProviderFrameElement {
   hide(): void {
     this.frameElem.className = HIDDEN_FRAME_CLASS;
     this.frameElem.style.height = '';
+    this.frameElem.style.width = '';
   }
 
   /**
