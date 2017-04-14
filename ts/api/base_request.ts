@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {OpenYoloError, OpenYoloErrorData} from '../protocol/errors';
+import {ERROR_TYPES, OpenYoloError, OpenYoloErrorData, OpenYoloExtendedError} from '../protocol/errors';
 import {RpcMessageArgumentTypes, RpcMessageDataTypes, RpcMessageType} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {generateId, PromiseResolver} from '../protocol/utils';
@@ -64,7 +64,7 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
     this.debugLog('request instantiated');
     // register a standard error handler
     this.registerHandler('error', (data: OpenYoloErrorData) => {
-      let error: Error;
+      let error: OpenYoloExtendedError;
       if (data) {
         error = OpenYoloError.createError(data);
       } else {
@@ -100,9 +100,13 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
     this.frame.hide();
   }
 
-  reject(reason: Error) {
+  reject(reason: OpenYoloExtendedError) {
     this.promiseResolver.reject(reason);
-    this.frame.hide();
+    // Do not hide the IFrame in case of concurrent request, to allow the
+    // previous one to finish.
+    if (reason.data.code !== ERROR_TYPES.illegalConcurrentRequest) {
+      this.frame.hide();
+    }
   }
 
   /**

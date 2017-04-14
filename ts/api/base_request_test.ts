@@ -109,6 +109,28 @@ describe('BaseRequest', () => {
       } catch (err) {
         expect(err).toEqual(expectedError);
         expect(request.dispose).toHaveBeenCalled();
+        expect(frame.hide).toHaveBeenCalled();
+        done();
+      }
+    });
+  });
+
+  describe('illegal concurrent request error handling', () => {
+    beforeEach(() => {
+      spyOn(request, 'dispose').and.callThrough();
+    });
+
+    it('should listen to error and dispose', async function(done) {
+      let promise = request.getPromise();
+      let expectedError = OpenYoloError.illegalConcurrentRequestError();
+      providerChannel.send(errorMessage(request.id, expectedError));
+      try {
+        await promise;
+        done.fail('Promise should not resolve');
+      } catch (err) {
+        expect(err).toEqual(expectedError);
+        expect(request.dispose).toHaveBeenCalled();
+        expect(frame.hide).not.toHaveBeenCalled();
         done();
       }
     });
