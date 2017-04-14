@@ -44,7 +44,7 @@ const DEFAULT_FRAME_CSS = `
 .openyolo-visible.navPopout {
   top: 0;
   right: 0;
-  width: 320px;
+  width: 400px;
   height: 320px;
 }
 
