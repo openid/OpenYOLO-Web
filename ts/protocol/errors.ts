@@ -111,7 +111,7 @@ export class OpenYoloError {
   static illegalConcurrentRequestError() {
     return OpenYoloError.createError({
       code: ERROR_TYPES.illegalConcurrentRequest,
-      message: 'Concurrent requests are not authorized'
+      message: 'Concurrent requests are not permitted'
     });
   }
 
