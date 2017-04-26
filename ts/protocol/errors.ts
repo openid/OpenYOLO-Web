@@ -28,6 +28,7 @@ export const ERROR_TYPES = strEnum(
     'requestFailed',
     'requestTimeout',
     'illegalState',
+    'illegalConcurrentRequest',
     'establishSecureChannelTimeout',
     'unknownRequest',
     'apiDisabled',
@@ -105,6 +106,13 @@ export class OpenYoloError {
   static illegalStateError(reason: string) {
     return OpenYoloError.createError(
         {code: ERROR_TYPES.illegalState, message: reason});
+  }
+
+  static illegalConcurrentRequestError() {
+    return OpenYoloError.createError({
+      code: ERROR_TYPES.illegalConcurrentRequest,
+      message: 'Concurrent requests are not permitted'
+    });
   }
 
   static establishSecureChannelTimeout() {
