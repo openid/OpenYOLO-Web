@@ -255,7 +255,7 @@ export class SecureChannel {
     });
     const timeout = timeoutPromise<SecureChannel>(
         OpenYoloError.ackTimeout(), ACK_TIMEOUT_MS);
-    timeout.then(() => {
+    timeout.catch((err) => {
       this.port.removeEventListener('message', ackListner);
     });
     this.port.addEventListener('message', ackListner);

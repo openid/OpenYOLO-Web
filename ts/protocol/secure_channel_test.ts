@@ -147,7 +147,11 @@ describe('SecureChannel', () => {
     describe('acknowledgement', () => {
       it('sends and waits for acknowledgement', (done) => {
         let message = msg.noneAvailableMessage('1234');
-        channel.sendAndWaitAck(message).then(done);
+        channel.sendAndWaitAck(message).then(() => {
+          expect(port.removeEventListener)
+              .toHaveBeenCalledWith('message', jasmine.any(Function));
+          done();
+        });
         // Mock the acknowledgement.
         port.dispatchEvent(createMessageEvent(ackMessage('1234')));
       });
@@ -163,6 +167,8 @@ describe('SecureChannel', () => {
               expect(expectReject).toBeTruthy('Failed before timeout');
               expect(OpenYoloError.errorIs(err, ERROR_TYPES.ackTimeout))
                   .toBeTruthy();
+              expect(port.removeEventListener)
+                  .toHaveBeenCalledWith('message', jasmine.any(Function));
               done();
             });
         // Mock an acknowledgement with a wrong ID.
