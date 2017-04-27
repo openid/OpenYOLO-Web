@@ -5,6 +5,5 @@ es6/
 node_modules/
 npm-debug.log
 tslint-rules/*.js
-yarn.lock
 demo/**/dist
 *.pyc
