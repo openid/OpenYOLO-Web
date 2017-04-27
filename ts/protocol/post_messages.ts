@@ -21,14 +21,18 @@ import {isNonEmptyString, isValidError} from './validators';
 /**
  * Top-level message envelope types defined for OpenYOLO:
  *
- * - ping: sent by the provider frame to every ancestor frame for origin
- *         verification.
- * - ack: sent by ancestor frames to the provider farme in response to a ping.
- * - ready: sent by the provider frame to the parent frame to indicate
- *          it is ready to accept requests.
- * - error: sent when establishing the message channel fails.
+ * - ack: sent be the recipient to the sender of a message to acknowledge it
+ *     has been received.
+ * - verifyPing: sent by the provider frame to every ancestor frame for origin
+ *     verification.
+ * - verifyAck: sent by ancestor frames to the provider farme in response to a
+ *     ping.
+ * - readyForConnect: sent by the provider frame to the parent frame to
+ *     indicate it is ready to accept requests.
+ * - channelError: sent when establishing the message channel fails.
  */
 export const POST_MESSAGE_TYPES = strEnum(
+    'ack',
     'verifyPing',
     'verifyAck',
     'readyForConnect',
@@ -47,12 +51,13 @@ export interface PostMessage<T extends PostMessageType> {
  * A map of message types to their data payload types.
  */
 export type PostMessageDataTypes = {
+  'ack': string,
   'readyForConnect': string,
   'verifyPing': string,
   'verifyAck': string,
   'channelReady': string,
   'channelConnect': string,
-  'channelError': OpenYoloErrorData,
+  'channelError': OpenYoloErrorData
 };
 
 export type PostMessageDataType<K extends PostMessageType> =
@@ -60,6 +65,7 @@ export type PostMessageDataType<K extends PostMessageType> =
 
 export const POST_MESSAGE_DATA_VALIDATORS:
     {[K in PostMessageType]: (value: any) => boolean} = {
+      'ack': isNonEmptyString,
       'verifyPing': isNonEmptyString,
       'verifyAck': isNonEmptyString,
       'readyForConnect': isNonEmptyString,
@@ -71,6 +77,10 @@ export const POST_MESSAGE_DATA_VALIDATORS:
 export function postMessage<T extends PostMessageType>(
     type: T, data: PostMessageDataType<T>): PostMessage<T> {
   return {type, data};
+}
+
+export function ackMessage(id: string) {
+  return postMessage(POST_MESSAGE_TYPES.ack, id);
 }
 
 export function verifyPingMessage(nonce: string) {

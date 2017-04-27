@@ -64,6 +64,7 @@ export type RpcMessageArgumentType<T extends RpcMessageType> =
 
 export interface RpcMessageData<T extends RpcMessageType> {
   id: string;
+  ack: boolean;
   args: RpcMessageArgumentTypes[T];
 }
 
@@ -111,7 +112,7 @@ export const RPC_MESSAGE_DATA_VALIDATORS:
 
 export function rpcMessage<T extends RpcMessageType>(
     type: T, id: string, args: RpcMessageArgumentTypes[T]): RpcMessage<T> {
-  return {type, data: {id, args}};
+  return {type, data: {id, args, ack: false}};
 }
 
 export function retrieveMessage(id: string, options: CredentialRequestOptions) {

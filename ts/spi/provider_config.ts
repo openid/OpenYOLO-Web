@@ -125,7 +125,7 @@ export interface CredentialDataProvider {
 }
 
 export interface DisplayCallbacks {
-  requestDisplayOptions(options: DisplayOptions): void;
+  requestDisplayOptions(options: DisplayOptions): Promise<void>;
 }
 
 /**

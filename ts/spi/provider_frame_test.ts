@@ -221,12 +221,12 @@ describe('ProviderFrame', () => {
       requestId = '' + Math.floor(Math.random() * 1000000);
 
       clientChannel.addFallbackListener((ev) => {
-        console.log(`unexpected message on client: ${ev}`);
+        console.log(`unexpected message on client: ${JSON.stringify(ev)}`);
         unexpectedClientMessages.push(ev);
       });
 
       providerChannel.addFallbackListener((ev) => {
-        console.log(`unexpected message on provider: ${ev}`);
+        console.log(`unexpected message on provider: ${JSON.stringify(ev)}`);
         unexpectedProviderMessages.push(ev);
       });
     });
@@ -295,8 +295,10 @@ describe('ProviderFrame', () => {
            (interactionProvider.showCredentialPicker as jasmine.Spy)
                .and.callFake(
                    (credentials: Credential[],
+                    options: CredentialRequestOptions,
                     displayCallbacks: DisplayCallbacks) => {
                      expect(credentials).toEqual([alicePwdCred]);
+                     expect(options).toBeDefined();
                      expect(displayCallbacks).toBeDefined();
 
                      expectFinalResult = true;
@@ -315,6 +317,29 @@ describe('ProviderFrame', () => {
                msg.retrieveMessage(requestId, passwordOnlyRequest));
          });
 
+      it('should allow to display the IFrame', async function(done) {
+        credentialDataProvider.credentials = [alicePwdCred];
+        localStateProvider.autoSignIn[TEST_AUTH_DOMAIN] = false;
+        const uiConfig = {height: 300, width: 400};
+
+        spyOn(providerChannel, 'sendAndWaitAck')
+            .and.callFake((message: any) => {
+              expect(message.data.args).toEqual(uiConfig);
+              // Simulate acknowledgement received.
+              return Promise.resolve();
+            });
+
+        (interactionProvider.showCredentialPicker as jasmine.Spy)
+            .and.callFake(
+                (credentials: Credential[],
+                 options: CredentialRequestOptions,
+                 displayCallbacks: DisplayCallbacks) => {
+                  displayCallbacks.requestDisplayOptions(uiConfig).then(done);
+                });
+
+        clientChannel.send(msg.retrieveMessage(requestId, passwordOnlyRequest));
+      });
+
       it('should interact with user and return selected credential ' +
              'when multiple options',
          async function(done) {
@@ -325,8 +350,10 @@ describe('ProviderFrame', () => {
            (interactionProvider.showCredentialPicker as jasmine.Spy)
                .and.callFake(
                    (credentials: Credential[],
+                    options: CredentialRequestOptions,
                     displayCallbacks: DisplayCallbacks) => {
                      expect(credentials).toEqual([alicePwdCred, bobPwdCred]);
+                     expect(options).toBeDefined();
                      expect(displayCallbacks).toBeDefined();
                      expectFinalResult = true;
 
@@ -353,6 +380,7 @@ describe('ProviderFrame', () => {
            (interactionProvider.showCredentialPicker as jasmine.Spy)
                .and.callFake(
                    (credentials: Credential[],
+                    options: CredentialRequestOptions,
                     displayCallbacks: DisplayCallbacks) => {
                      expectFinalResult = true;
                      return Promise.reject(OpenYoloError.canceled());
@@ -440,8 +468,11 @@ describe('ProviderFrame', () => {
 
         (interactionProvider.showHintPicker as jasmine.Spy)
             .and.callFake(
-                (hints: Credential[], displayCallbacks: DisplayCallbacks) => {
+                (hints: Credential[],
+                 options: CredentialHintOptions,
+                 displayCallbacks: DisplayCallbacks) => {
                   expect(hints).toEqual(expectedHints);
+                  expect(options).toBeDefined();
                   expect(displayCallbacks).toBeDefined();
                   expectFinalResult = true;
                   if (selection) {
