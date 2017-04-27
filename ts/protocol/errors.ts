@@ -17,6 +17,7 @@
 import {strEnum} from './enums';
 
 export const ERROR_TYPES = strEnum(
+    'ackTimeout',
     'canceled',
     'clientDisposed',
     'handshakeFailed',
@@ -50,6 +51,13 @@ export interface OpenYoloExtendedError extends Error {
 }
 
 export class OpenYoloError {
+  static ackTimeout() {
+    return OpenYoloError.createError({
+      code: ERROR_TYPES.ackTimeout,
+      message: 'Message acknowledgement timed out.'
+    });
+  }
+
   static canceled() {
     return OpenYoloError.createError(
         {code: ERROR_TYPES.canceled, message: 'User canceled'});

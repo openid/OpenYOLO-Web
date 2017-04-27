@@ -16,11 +16,16 @@
 
 import {createMessageListener, FilteringEventListener, isPermittedOrigin, RpcMessageListener, WindowLike} from './comms';
 import {OpenYoloError} from './errors';
-import {channelConnectMessage, channelReadyMessage, POST_MESSAGE_TYPES, readyForConnectMessage} from './post_messages';
-import {RpcMessage, RpcMessageType} from './rpc_messages';
+import {ackMessage, channelConnectMessage, channelReadyMessage, POST_MESSAGE_TYPES, readyForConnectMessage} from './post_messages';
+import {RpcMessage, RpcMessageDataTypes, RpcMessageType} from './rpc_messages';
 import {PromiseResolver, timeoutPromise, TimeoutPromiseResolver} from './utils';
 
 const DEFAULT_TIMEOUT_MS = 3000;
+
+/**
+ * The timeout for ack message.
+ */
+const ACK_TIMEOUT_MS = 500;
 
 export type UnknownMessageEventListener = (ev: MessageEvent) => void;
 
@@ -235,6 +240,29 @@ export class SecureChannel {
     this.port.postMessage(message);
   }
 
+  /**
+   * Sends a message and waits for acknowledgment of the recipient.
+   */
+  sendAndWaitAck<T extends RpcMessageType>(message: RpcMessage<T>):
+      Promise<void> {
+    const promiseResolver = new PromiseResolver<void>();
+    message.data.ack = true;
+    const ackListner = createMessageListener(POST_MESSAGE_TYPES.ack, (id) => {
+      if (id === message.data.id) {
+        this.port.removeEventListener('message', ackListner);
+        promiseResolver.resolve();
+      }
+    });
+    const timeout = timeoutPromise<SecureChannel>(
+        OpenYoloError.ackTimeout(), ACK_TIMEOUT_MS);
+    timeout.catch((err) => {
+      this.port.removeEventListener('message', ackListner);
+    });
+    this.port.addEventListener('message', ackListner);
+    this.send(message);
+    return Promise.race([timeout, promiseResolver.promise]);
+  }
+
   listen<T extends RpcMessageType>(
       messageType: T,
       listener: RpcMessageListener<T>): number {
@@ -242,7 +270,15 @@ export class SecureChannel {
       throw OpenYoloError.illegalStateError('invalid type or listener');
     }
 
-    let portListener = createMessageListener(messageType, listener);
+    let portListener = createMessageListener(
+        messageType,
+        (data: RpcMessageDataTypes[T], type: T, event: MessageEvent) => {
+          // If acknowledgement is required, send the message to the sender.
+          if (data.ack) {
+            this.port.postMessage(ackMessage(data.id));
+          }
+          listener(data, type, event);
+        });
     let listenerPair = {portListener, wrappedListener: listener};
     this.listeners.push(listenerPair);
     return this.listeners.length - 1;

@@ -20,7 +20,7 @@ import {createMessageEvent, createUntypedMessageEvent} from '../test_utils/messa
 import {JasmineTimeoutManager} from '../test_utils/timeout';
 
 import {ERROR_TYPES, OpenYoloError} from './errors';
-import {channelConnectMessage, channelReadyMessage, readyForConnectMessage} from './post_messages';
+import {ackMessage, channelConnectMessage, channelReadyMessage, readyForConnectMessage} from './post_messages';
 import * as msg from './rpc_messages';
 import {SecureChannel} from './secure_channel';
 
@@ -142,6 +142,52 @@ describe('SecureChannel', () => {
 
       // final listener should still be removable
       expect(channel.unlisten(listenerKey2)).toBe(listener2);
+    });
+
+    describe('acknowledgement', () => {
+      it('sends and waits for acknowledgement', (done) => {
+        let message = msg.noneAvailableMessage('1234');
+        channel.sendAndWaitAck(message).then(() => {
+          expect(port.removeEventListener)
+              .toHaveBeenCalledWith('message', jasmine.any(Function));
+          done();
+        });
+        // Mock the acknowledgement.
+        port.dispatchEvent(createMessageEvent(ackMessage('1234')));
+      });
+
+      it('sends and waits for acknowledgement until timeout', (done) => {
+        let message = msg.noneAvailableMessage('1234');
+        let expectReject = false;
+        channel.sendAndWaitAck(message).then(
+            () => {
+              done.fail('It should not resolve the promise!');
+            },
+            (err) => {
+              expect(expectReject).toBeTruthy('Failed before timeout');
+              expect(OpenYoloError.errorIs(err, ERROR_TYPES.ackTimeout))
+                  .toBeTruthy();
+              expect(port.removeEventListener)
+                  .toHaveBeenCalledWith('message', jasmine.any(Function));
+              done();
+            });
+        // Mock an acknowledgement with a wrong ID.
+        port.dispatchEvent(createMessageEvent(ackMessage('123')));
+        jasmine.clock().tick(499);
+        expectReject = true;
+        jasmine.clock().tick(1);
+      });
+
+      it('sends back ack when required', () => {
+        const listener1 = jasmine.createSpy('listener1');
+        channel.listen(msg.RPC_MESSAGE_TYPES.none, listener1);
+
+        const message = msg.noneAvailableMessage('123');
+        message.data.ack = true;
+        port.dispatchEvent(createMessageEvent(message));
+        const expectedMessage = ackMessage('123');
+        expect(port.postMessage).toHaveBeenCalledWith(expectedMessage);
+      });
     });
 
     describe('dispose', () => {

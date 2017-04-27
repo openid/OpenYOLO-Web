@@ -455,8 +455,9 @@ export class ProviderFrame {
 
   private createDisplayCallbacks(requestId: string): DisplayCallbacks {
     return {
-      requestDisplayOptions: (options: msg.DisplayOptions) => {
-        this.clientChannel.send(msg.showProviderMessage(requestId, options));
+      requestDisplayOptions: (options: msg.DisplayOptions): Promise<void> => {
+        return this.clientChannel.sendAndWaitAck(
+            msg.showProviderMessage(requestId, options));
       }
     };
   }
