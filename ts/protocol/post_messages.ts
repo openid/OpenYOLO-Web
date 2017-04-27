@@ -21,8 +21,8 @@ import {isNonEmptyString, isValidError} from './validators';
 /**
  * Top-level message envelope types defined for OpenYOLO:
  *
- * - ack: sent be the recipient to the sender of a message to acknowledge it
- *     has been received.
+ * - ack: sent by the recipientof a message to its original sender to
+ *     acknowledge it has been received.
  * - verifyPing: sent by the provider frame to every ancestor frame for origin
  *     verification.
  * - verifyAck: sent by ancestor frames to the provider farme in response to a

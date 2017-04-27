@@ -242,7 +242,6 @@ export class SecureChannel {
 
   /**
    * Sends a message and waits for acknowledgment of the recipient.
-   * @param message
    */
   sendAndWaitAck<T extends RpcMessageType>(message: RpcMessage<T>):
       Promise<void> {
@@ -256,6 +255,9 @@ export class SecureChannel {
     });
     const timeout = timeoutPromise<SecureChannel>(
         OpenYoloError.ackTimeout(), ACK_TIMEOUT_MS);
+    timeout.then(() => {
+      this.port.removeEventListener('message', ackListner);
+    });
     this.port.addEventListener('message', ackListner);
     this.send(message);
     return Promise.race([timeout, promiseResolver.promise]);
@@ -271,7 +273,7 @@ export class SecureChannel {
     let portListener = createMessageListener(
         messageType,
         (data: RpcMessageDataTypes[T], type: T, event: MessageEvent) => {
-          // If acknowledgement is required, sends the message to the recipient.
+          // If acknowledgement is required, send the message to the sender.
           if (data.ack) {
             this.port.postMessage(ackMessage(data.id));
           }

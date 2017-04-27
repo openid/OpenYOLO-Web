@@ -57,6 +57,7 @@ export class OpenYoloError {
       message: 'Message acknowledgement timed out.'
     });
   }
+
   static canceled() {
     return OpenYoloError.createError(
         {code: ERROR_TYPES.canceled, message: 'User canceled'});
