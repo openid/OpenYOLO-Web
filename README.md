@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/openid/OpenYOLO-Web.svg?branch=master)](https://travis-ci.org/openid/OpenYOLO-Web)
+
 # OpenYOLO for Web - Automatic credential management for modern browsers
 
 OpenYOLO for Web is an OpenID Foundation project to provide in-context
