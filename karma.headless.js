@@ -16,5 +16,5 @@
 
 exports.config = {
   customLaunchers: {ChromeTravis: {base: 'Chrome', flags: ['--no-sandbox']}},
-  browsers: ['ChromeTravis', 'Firefox']
+  browsers: ['ChromeTravis']
 }
