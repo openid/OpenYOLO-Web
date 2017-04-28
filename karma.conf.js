@@ -21,7 +21,7 @@ const saucelabs = require('./karma.saucelabs.js');
 module.exports = function(karma) {
   var config = Object.assign(karma_base.baseConfig, {
     autoWatch: true,
-    reporters: ['verbose', 'karma-typescript'],
+    reporters: ['verbose', 'karma-typescript', 'coverage'],
     coverageReporter: {type: 'lcov', dir: 'coverage/'},
     singleRun: true
   });
