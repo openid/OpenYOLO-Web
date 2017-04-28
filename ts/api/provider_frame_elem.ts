@@ -78,7 +78,7 @@ export class ProviderFrameElement {
 
   constructor(
       private clientDocument: Document,
-      private instanceId: string,
+      private instanceIdHash: string,
       clientOrigin: string,
       private renderMode: RenderMode,
       providerUrlBase: string,
@@ -87,7 +87,7 @@ export class ProviderFrameElement {
     this.frameElem = this.clientDocument.createElement('iframe');
     this.frameElem.src = `${providerUrlBase}` +
         `?client=${encodeURIComponent(clientOrigin)}` +
-        `&id=${this.instanceId}` +
+        `&id=${this.instanceIdHash}` +
         `&renderMode=${renderMode}`;
 
     if (preloadRequest) {

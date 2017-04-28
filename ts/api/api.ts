@@ -18,7 +18,7 @@ import {Credential, CredentialHintOptions, CredentialRequestOptions, ProxyLoginR
 import {RENDER_MODES, RenderMode} from '../protocol/data';
 import {OpenYoloError} from '../protocol/errors';
 import {SecureChannel} from '../protocol/secure_channel';
-import {generateId} from '../protocol/utils';
+import {generateId, sha256} from '../protocol/utils';
 
 import {CredentialRequest} from './credential_request';
 import {CredentialSave} from './credential_save';
@@ -132,6 +132,7 @@ class OpenYoloApiImpl implements OpenYoloApi {
       renderMode?: RenderMode,
       preloadRequest?: PreloadRequest): Promise<OpenYoloApiImpl> {
     let instanceId = generateId();
+    let instanceIdHash = await sha256(instanceId);
 
     if (!renderMode || !(renderMode in RENDER_MODES)) {
       let isMobile = navigator.userAgent.match(MOBILE_USER_AGENT_REGEX);
@@ -147,7 +148,7 @@ class OpenYoloApiImpl implements OpenYoloApi {
 
     let frameManager = new ProviderFrameElement(
         document,
-        instanceId,
+        instanceIdHash,
         window.location.origin,
         renderMode,
         providerUrlBase,
@@ -157,7 +158,7 @@ class OpenYoloApiImpl implements OpenYoloApi {
     // better to race two promises to make this easier.
 
     let channel = await SecureChannel.clientConnect(
-        window, frameManager.getContentWindow(), instanceId);
+        window, frameManager.getContentWindow(), instanceId, instanceIdHash);
 
     let request = new WrapBrowserRequest(frameManager, channel);
     let wrapBrowser = await request.dispatch();

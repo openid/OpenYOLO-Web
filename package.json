@@ -62,7 +62,9 @@
     "prepublish-demo-provider-barbican": "yarn run assemble-demo-provider-barbican",
     "publish-demo-provider-barbican": "gcloud app deploy ./demo/provider/barbican/app.yaml --project openyolo-demoprovider-barbican"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@types/text-encoding": "0.0.30"
+  },
   "devDependencies": {
     "@angular/animations": ">=4.0.0-beta <5.0.0",
     "@angular/cli": "1.0.0-rc.2",
@@ -97,6 +99,7 @@
     "rollup": "^0.41.4",
     "rollup-plugin-node-resolve": "^2.0.0",
     "rxjs": "^5.1.0",
+    "text-encoding": "^0.6.4",
     "ts-node": "~2.0.0",
     "tslib": "^1.6.0",
     "tslint": "^4.4.2",
