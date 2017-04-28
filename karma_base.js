@@ -25,10 +25,8 @@ exports.baseConfig = {
   concurrency: 1,
   files: ['ts/**/*.ts'],
   frameworks: ['jasmine', 'karma-typescript'],
-  karmaTypescriptConfig: {tsconfig: 'tsconfig.json'},
+  karmaTypescriptConfig: {tsconfig: 'tsconfig-karma.json'},
   port: 9876,
-  preprocessors: {
-    '**/*.ts': ['karma-typescript', 'coverage'],
-  },
-  reporters: ['karma-typescript', 'coverage']
+  preprocessors: {'**/*.ts': ['karma-typescript']},
+  reporters: ['karma-typescript']
 };

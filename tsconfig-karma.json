@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es6",
+    "lib": [
+      "es5",
+      "es2015.core",
+      "es2015.promise",
+      "es2015.symbol",
+      "dom"
+    ],
+    "importHelpers": true,
+    "moduleResolution": "node",
+    "noImplicitAny": true,
+    "noUnusedLocals": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "inlineSources": true,
+    "declaration": true,
+    "outDir": "karma_build"
+  },
+  "include": [
+    "ts/**/*.ts",
+    "third_party/**/*.ts"
+  ]
+}
