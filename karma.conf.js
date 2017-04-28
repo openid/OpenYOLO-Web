@@ -21,14 +21,12 @@ const saucelabs = require('./karma.saucelabs.js');
 module.exports = function(karma) {
   var config = Object.assign(karma_base.baseConfig, {
     autoWatch: true,
-    preprocessors: {
-      '**/*.ts': ['karma-typescript', 'coverage'],
-    },
     reporters: ['verbose', 'karma-typescript', 'coverage'],
     coverageReporter: {type: 'lcov', dir: 'coverage/'},
-    sauceLabs: {testName: 'OpenYOLO Web'},
-    singleRun: true,
+    singleRun: true
   });
+
+  config.karmaTypescriptConfig.coverageOptions = {exclude: /_test\.ts$/};
 
   if (process.argv.includes('--use-sauce')) {
     config.customLaunchers = saucelabs.browsers;
