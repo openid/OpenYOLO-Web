@@ -15,6 +15,7 @@
  */
 
 const karma_base = require('./karma_base');
+const headless = require('./karma.headless.js');
 const saucelabs = require('./karma.saucelabs.js');
 
 module.exports = function(karma) {
@@ -33,6 +34,9 @@ module.exports = function(karma) {
     config.customLaunchers = saucelabs.browsers;
     config.browsers = Object.keys(saucelabs.browsers);
     config.sauceLabs.testName = 'OpenYOLO Web All Unit Tests';
+  } else if (process.env.TRAVIS) {
+    config.customLaunchers = headless.config.customLaunchers;
+    config.browsers = headless.config.browsers;
   }
 
   karma.set(config);
