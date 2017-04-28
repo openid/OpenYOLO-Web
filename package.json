@@ -46,6 +46,7 @@
     "type-check": "./node_modules/.bin/tsc -p tsconfig.json --noemit",
     "test": "./node_modules/.bin/karma start",
     "test-debug": "./node_modules/.bin/karma start karma.debug.conf.js",
+    "codecov": "codecov",
     "precommit-msg": "echo 'Pre-commit checks...' && exit 0",
     "check": "yarn run type-check && yarn run lint-all && yarn run test",
     "demo-client-apitester": "./node_modules/.bin/ng serve --app demo-client-apitester --port 4200",

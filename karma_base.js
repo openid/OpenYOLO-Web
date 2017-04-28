@@ -28,7 +28,7 @@ exports.baseConfig = {
   karmaTypescriptConfig: {tsconfig: 'tsconfig.json'},
   port: 9876,
   preprocessors: {
-    '**/*.ts': ['karma-typescript'],
+    '**/*.ts': ['karma-typescript', 'coverage'],
   },
-  reporters: ['karma-typescript']
+  reporters: ['karma-typescript', 'coverage']
 };
