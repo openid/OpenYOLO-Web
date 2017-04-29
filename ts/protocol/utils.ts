@@ -29,10 +29,50 @@ export function generateId(): string {
  */
 export async function sha256(str: string): Promise<string> {
   // Transform the string into an arraybuffer.
-  const buffer = new TextEncoder('utf-8').encode(str);
+  const buffer = encodeStringToBuffer(str);
   const hash = await crypto.subtle.digest('SHA-256', buffer);
   return hex(hash);
 }
+
+function encodeStringToBuffer(str: string): ArrayBuffer {
+  if (typeof TextEncoder !== 'undefined') {
+    return new TextEncoder('utf-8').encode(str);
+  }
+  // Polyfill the encoding.
+  return new Uint8Array(stringToUtf8ByteArray(str));
+}
+
+/**
+ * Converts a JS string to a UTF-8 "byte" array.
+ * Taken from Closure Crypt library.
+ */
+function stringToUtf8ByteArray(str: string): number[] {
+  const out = [];
+  let p = 0;
+  for (let i = 0; i < str.length; i++) {
+    let c = str.charCodeAt(i);
+    if (c < 128) {
+      out[p++] = c;
+    } else if (c < 2048) {
+      out[p++] = (c >> 6) | 192;
+      out[p++] = (c & 63) | 128;
+    } else if (
+        ((c & 0xFC00) === 0xD800) && (i + 1) < str.length &&
+        ((str.charCodeAt(i + 1) & 0xFC00) === 0xDC00)) {
+      // Surrogate Pair
+      c = 0x10000 + ((c & 0x03FF) << 10) + (str.charCodeAt(++i) & 0x03FF);
+      out[p++] = (c >> 18) | 240;
+      out[p++] = ((c >> 12) & 63) | 128;
+      out[p++] = ((c >> 6) & 63) | 128;
+      out[p++] = (c & 63) | 128;
+    } else {
+      out[p++] = (c >> 12) | 224;
+      out[p++] = ((c >> 6) & 63) | 128;
+      out[p++] = (c & 63) | 128;
+    }
+  }
+  return out;
+};
 
 /**
  * Computes the hex digest of an ArrayBuffer.

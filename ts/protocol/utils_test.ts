@@ -16,10 +16,37 @@
 
 import * as utils from './utils';
 
+interface WindowWithTextEncoder extends Window {
+  TextEncoder: any;
+}
+
 describe('utils', () => {
   describe('generateId', () => {
     it('should generate a random string ID', () => {
       expect(utils.generateId()).not.toBeNull();
+    });
+  });
+
+  describe('sha256', () => {
+    const str = 'This is not a string.';
+    it('works with native TextEncoder', async function(done) {
+      if (typeof TextEncoder === 'undefined') done();
+      const hash = await utils.sha256(str);
+      expect(hash).toBeTruthy();
+      done();
+    });
+    it('works without native TextEncoder', async function(done) {
+      const textEncoderImpl = TextEncoder;
+      delete (window as WindowWithTextEncoder).TextEncoder;
+      const hash = await utils.sha256(str);
+      expect(hash).toBeTruthy();
+      (window as WindowWithTextEncoder).TextEncoder = textEncoderImpl;
+      if (typeof TextEncoder !== 'undefined') {
+        // Compare with native computation.
+        const hash2 = await utils.sha256(str);
+        expect(hash).toEqual(hash2);
+      }
+      done();
     });
   });
 });
