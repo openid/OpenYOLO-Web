@@ -3,7 +3,7 @@
 
   <md-dialog-content class="settings">
     <md-input-container>
-      <input mdInput placeholder="Provider URI" [(value)]="providerUrl">
+      <input mdInput placeholder="Provider URI" [(ngModel)]="providerUrl">
     </md-input-container>
 
     <md-select [(ngModel)]="renderMode" placeholder="Provider render mode">

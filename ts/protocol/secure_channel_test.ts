@@ -23,6 +23,7 @@ import {ERROR_TYPES, OpenYoloError} from './errors';
 import {ackMessage, channelConnectMessage, channelReadyMessage, readyForConnectMessage} from './post_messages';
 import * as msg from './rpc_messages';
 import {SecureChannel} from './secure_channel';
+import {sha256} from './utils';
 
 describe('SecureChannel', () => {
   let clientWindow: MockWindow;
@@ -46,20 +47,21 @@ describe('SecureChannel', () => {
   describe('clientConnect', () => {
     it('performs an initialization handshake', async function(done) {
       let connectNonce = '123';
+      let connectNonceHash = await sha256(connectNonce);
 
       spyOn(providerWindow, 'postMessage').and.callThrough();
 
       let connectPromise = SecureChannel.clientConnect(
-          clientWindow, providerWindow, connectNonce);
+          clientWindow, providerWindow, connectNonce, connectNonceHash);
 
       providerWindow.addEventListener('message', (ev: MessageEvent) => {
         expect(ev.data).toEqual(channelConnectMessage(connectNonce));
         // emulate the provider accepting this connection
-        clientWindow.postMessage(channelReadyMessage(connectNonce), '*');
+        clientWindow.postMessage(channelReadyMessage(connectNonceHash), '*');
       });
 
       // emulate the provider sending a "ready to connect" message
-      clientWindow.postMessage(readyForConnectMessage(connectNonce), '*');
+      clientWindow.postMessage(readyForConnectMessage(connectNonceHash), '*');
 
       // as a result, the promise should resolve
       try {
@@ -74,7 +76,8 @@ describe('SecureChannel', () => {
       let timeoutMs = 100;
       let expectReject = false;
       SecureChannel
-          .clientConnect(clientWindow, providerWindow, '1234', timeoutMs)
+          .clientConnect(
+              clientWindow, providerWindow, '1234', 'hash', timeoutMs)
           .then(
               () => {
                 done.fail('Creation should not succeed!');
@@ -208,25 +211,30 @@ describe('SecureChannel', () => {
 
   describe('providerConnect', () => {
     let id = '123';
+    let hashId: string|null = null;
     let origin = 'https://example.com';
     let permittedOrigins = [origin];
     let port: MessagePort;
 
-    beforeEach(() => {
+    beforeEach(async function(done) {
       let channel = new FakeMessageChannel();
       port = channel.port2;
       spyOn(port, 'start').and.callThrough();
       spyOn(port, 'postMessage').and.callThrough();
       spyOn(port, 'close').and.callThrough();
+      hashId = await sha256(id);
+      done();
     });
 
     it('succeeds after valid handshake', async function(done) {
-      let promise =
-          SecureChannel.providerConnect(providerWindow, permittedOrigins, id);
+      let promise = SecureChannel.providerConnect(
+          providerWindow, permittedOrigins, hashId);
 
-      // It should ignore an unknown event.
+      // It should ignore an unknown event or wrong nonce.
       providerWindow.dispatchEvent(
           createUntypedMessageEvent('unknown', origin));
+      providerWindow.postMessageFromOrigin(
+          channelConnectMessage('other'), [port], origin, clientWindow);
 
       // And then handle a valid one.
       providerWindow.postMessageFromOrigin(
@@ -245,7 +253,8 @@ describe('SecureChannel', () => {
       let expectFailNow = false;
 
       // time out after 100ms
-      SecureChannel.providerConnect(providerWindow, permittedOrigins, id, 100)
+      SecureChannel
+          .providerConnect(providerWindow, permittedOrigins, hashId, 100)
           .then(
               () => {
                 done.fail('Connection should not establish');
@@ -269,8 +278,8 @@ describe('SecureChannel', () => {
 
     it('rejects if invalid origin', async function(done) {
       let evilOrigin = 'https://evil.example.com';
-      let connectPromise =
-          SecureChannel.providerConnect(providerWindow, permittedOrigins, id);
+      let connectPromise = SecureChannel.providerConnect(
+          providerWindow, permittedOrigins, hashId);
 
       // emulate the connection initialization message from the client, from
       // an untrusted origin

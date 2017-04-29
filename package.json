@@ -35,7 +35,9 @@
     "rollup-api": "./node_modules/.bin/rollup -c rollup.api.config.js",
     "prerollup-spi": "yarn run compile-es6",
     "rollup-spi": "./node_modules/.bin/rollup -c rollup.spi.config.js",
-    "prelint": "./node_modules/.bin/tsc -p ./tslint_rules/tsconfig.json",
+    "prelint-all": "./node_modules/.bin/tsc -p ./tslint_rules/tsconfig.json",
+    "prelint-core": "./node_modules/.bin/tsc -p ./tslint_rules/tsconfig.json",
+    "prelint-demo": "./node_modules/.bin/tsc -p ./tslint_rules/tsconfig.json",
     "lint-all": "yarn run lint-core && yarn run lint-demo",
     "lint-all-fix": "yarn run lint-core-fix && yarn run lint-demo-fix",
     "lint-core": "./node_modules/.bin/tslint --project tsconfig.json",
@@ -62,7 +64,6 @@
     "prepublish-demo-provider-barbican": "yarn run assemble-demo-provider-barbican",
     "publish-demo-provider-barbican": "gcloud app deploy ./demo/provider/barbican/app.yaml --project openyolo-demoprovider-barbican"
   },
-  "dependencies": {},
   "devDependencies": {
     "@angular/animations": ">=4.0.0-beta <5.0.0",
     "@angular/cli": "1.0.0-rc.2",
@@ -77,6 +78,7 @@
     "@angular/platform-browser-dynamic": ">=4.0.0-beta <5.0.0",
     "@angular/router": ">=4.0.0-beta <5.0.0",
     "@types/jasmine": "^2.5.43",
+    "@types/text-encoding": "0.0.30",
     "@types/webappsec-credential-management": "^0.1.0",
     "clang-format": "^1.0.46",
     "codecov": "^2.1.0",
