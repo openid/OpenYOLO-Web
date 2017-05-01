@@ -246,6 +246,23 @@ describe('ProviderFrame', () => {
       clientChannel.send(msg.hintAvailableResponseMessage(requestId, false));
     });
 
+    it('rejects concurrent requests', async function(done) {
+      clientChannel.listen(msg.RPC_MESSAGE_TYPES.error, (data) => {
+        expectMessageContents(
+            data,
+            msg.errorMessage(
+                requestId, OpenYoloError.illegalConcurrentRequestError()));
+        done();
+      });
+
+      clientChannel.send(msg.retrieveMessage(
+          requestId,
+          {supportedAuthMethods: [AUTHENTICATION_METHODS.ID_AND_PASSWORD]}));
+      clientChannel.send(msg.retrieveMessage(
+          requestId,
+          {supportedAuthMethods: [AUTHENTICATION_METHODS.ID_AND_PASSWORD]}));
+    });
+
     describe('handling credential retrieval', () => {
 
       let passwordOnlyRequest: CredentialRequestOptions = {

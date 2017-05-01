@@ -218,7 +218,7 @@ export class ProviderFrame {
 
     console.error(`Concurrent request ${requestId} received, rejecting`);
     this.clientChannel.send(msg.errorMessage(
-        requestId, OpenYoloError.illegalStateError('Concurrent request')));
+        requestId, OpenYoloError.illegalConcurrentRequestError()));
     return false;
   }
 
