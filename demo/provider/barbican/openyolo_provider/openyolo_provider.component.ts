@@ -33,7 +33,7 @@ export class OpenYoloProviderComponent implements OnInit, OnDestroy,
 
   private renderPromiseResolvers: Function[] = [];
 
-  private renderMode: string;
+  renderMode: string;
 
   failed = false;
   displayCredentials: DisplayCredential[]|null;
@@ -69,7 +69,8 @@ export class OpenYoloProviderComponent implements OnInit, OnDestroy,
       credentialDataProvider:
           new CredentialDataProviderImpl(this.credentialStoreService),
       interactionProvider: this,
-      localStateProvider: new LocalStateProviderImpl(), window
+      localStateProvider: new LocalStateProviderImpl(),
+      window
     });
 
     this.providerFramePromise.catch((err) => {
