@@ -30,7 +30,7 @@ export function generateId(): string {
 export async function sha256(str: string): Promise<string> {
   // Transform the string into an arraybuffer.
   const buffer = encodeStringToBuffer(str);
-  const hash = await crypto.subtle.digest('SHA-256', buffer);
+  const hash = await window.crypto.subtle.digest('SHA-256', buffer);
   return hex(hash);
 }
 
