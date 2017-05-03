@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {strEnum} from './enums';
+import {map2Enum} from './enums';
 import {OpenYoloErrorData, OpenYoloExtendedError} from './errors';
 import {isNonEmptyString, isValidError} from './validators';
 
@@ -31,14 +31,15 @@ import {isNonEmptyString, isValidError} from './validators';
  *     indicate it is ready to accept requests.
  * - channelError: sent when establishing the message channel fails.
  */
-export const POST_MESSAGE_TYPES = strEnum(
-    'ack',
-    'verifyPing',
-    'verifyAck',
-    'readyForConnect',
-    'channelConnect',
-    'channelReady',
-    'channelError');
+export const POST_MESSAGE_TYPES = map2Enum({
+  ack: 'ack',
+  verifyPing: 'verifyPing',
+  verifyAck: 'verifyAck',
+  readyForConnect: 'readyForConnect',
+  channelConnect: 'channelConnect',
+  channelReady: 'channelReady',
+  channelError: 'channelError'
+});
 
 export type PostMessageType = keyof typeof POST_MESSAGE_TYPES;
 

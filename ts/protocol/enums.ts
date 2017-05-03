@@ -32,6 +32,11 @@ export function strEnum<T extends string>(...enumValues: T[]):
   return Object.freeze(result);
 }
 
+export function map2Enum<T extends string>(mapValues: {[K in T]: K}):
+    Readonly<{[K in T]: K}> {
+  return Object.freeze(mapValues);
+}
+
 export type StringKeyedObject = {
   [key: string]: any
 };

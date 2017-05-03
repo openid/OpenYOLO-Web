@@ -105,7 +105,7 @@ export class SecureChannel {
     } catch (err) {
       // failed to establish the connection. Close the now defunct port
       SecureChannel.debugLog(
-          'client', `credential provider rejected connection: ${err.code}`);
+          'client', `credential provider rejected connection: ${err['code']}`);
       channel.port1.close();
       throw err;
     } finally {
