@@ -15,25 +15,26 @@
  */
 
 import {Credential, CredentialHintOptions, CredentialRequestOptions, ProxyLoginResponse} from './data';
-import {strEnum} from './enums';
+import {map2Enum} from './enums';
 import {OpenYoloErrorData, OpenYoloExtendedError} from './errors';
 import {isBoolean, isUndefined, isValidCredential, isValidDisplayOptions, isValidError, isValidHintOptions, isValidProxyLoginResponse, isValidRequestOptions} from './validators';
 
-export const RPC_MESSAGE_TYPES = strEnum(
-    'retrieve',
-    'hintAvailable',
-    'hintAvailableResult',
-    'hint',
-    'save',
-    'saveResult',
-    'proxy',
-    'proxyResult',
-    'wrapBrowser',
-    'wrapBrowserResult',
-    'showProvider',
-    'none',
-    'credential',
-    'error');
+export const RPC_MESSAGE_TYPES = map2Enum({
+  retrieve: 'retrieve',
+  hintAvailable: 'hintAvailable',
+  hintAvailableResult: 'hintAvailableResult',
+  hint: 'hint',
+  save: 'save',
+  saveResult: 'saveResult',
+  proxy: 'proxy',
+  proxyResult: 'proxyResult',
+  wrapBrowser: 'wrapBrowser',
+  wrapBrowserResult: 'wrapBrowserResult',
+  showProvider: 'showProvider',
+  none: 'none',
+  credential: 'credential',
+  error: 'error'
+});
 
 export type RpcMessageType = keyof typeof RPC_MESSAGE_TYPES;
 

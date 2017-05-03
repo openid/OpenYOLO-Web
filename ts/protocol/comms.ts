@@ -71,14 +71,14 @@ export function createMessageListener<T extends MessageType>(
       console.debug('non openyolo message received');
       return false;
     }
-    if (ev.data.type !== type) return false;
+    if (ev.data['type'] !== type) return false;
 
     let validator = MESSAGE_DATA_VALIDATORS[(type as MessageType)];
-    if (!validator(ev.data.data)) {
+    if (!validator(ev.data['data'])) {
       console.debug(`message of type ${type} received with invalid data`);
       return false;
     }
-    listener(ev.data.data, ev.data.type, ev);
+    listener(ev.data['data'], ev.data['type'], ev);
     return true;
   };
 

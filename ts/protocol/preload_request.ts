@@ -29,9 +29,9 @@
  * requests.
  */
 import {CredentialHintOptions} from './data';
-import {strEnum} from './enums';
+import {map2Enum} from './enums';
 
-export const PRELOAD_REQUEST = strEnum('hint', 'retrieve');
+export const PRELOAD_REQUEST = map2Enum({hint: 'hint', retrieve: 'retrieve'});
 
 export interface HintPreloadRequest {
   type: typeof PRELOAD_REQUEST.hint;

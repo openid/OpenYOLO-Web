@@ -362,3 +362,21 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
 }
 
 export const openyolo: OnDemandOpenYoloApi = new InitializeOnDemandApi();
+
+// Export the public methods.
+const windowAsAny = window as any;
+windowAsAny['openyolo'] = openyolo;
+InitializeOnDemandApi.prototype['setProviderUrlBase'] =
+    InitializeOnDemandApi.prototype.setProviderUrlBase;
+InitializeOnDemandApi.prototype['setRenderMode'] =
+    InitializeOnDemandApi.prototype.setRenderMode;
+InitializeOnDemandApi.prototype['hintsAvailable'] =
+    InitializeOnDemandApi.prototype.hintsAvailable;
+InitializeOnDemandApi.prototype['hint'] = InitializeOnDemandApi.prototype.hint;
+InitializeOnDemandApi.prototype['retrieve'] =
+    InitializeOnDemandApi.prototype.retrieve;
+InitializeOnDemandApi.prototype['save'] = InitializeOnDemandApi.prototype.save;
+InitializeOnDemandApi.prototype['disableAutoSignIn'] =
+    InitializeOnDemandApi.prototype.disableAutoSignIn;
+InitializeOnDemandApi.prototype['proxyLogin'] =
+    InitializeOnDemandApi.prototype.proxyLogin;

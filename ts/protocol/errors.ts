@@ -14,29 +14,30 @@
  * limitations under the License.
  */
 
-import {strEnum} from './enums';
+import {map2Enum} from './enums';
 
-export const ERROR_TYPES = strEnum(
-    'ackTimeout',
-    'canceled',
-    'clientDisposed',
-    'handshakeFailed',
-    'invalidCredential',
-    'invalidData',
-    'iframeError',
-    'invalidOrigin',
-    'untrustedOrigin',
-    'requestFailed',
-    'requestTimeout',
-    'illegalState',
-    'illegalConcurrentRequest',
-    'establishSecureChannelTimeout',
-    'unknownRequest',
-    'apiDisabled',
-    'parentVerifyTimeout',
-    'parentIsNotRoot',
-    'providerInitFailed',
-    'unknown');
+export const ERROR_TYPES = map2Enum({
+  ackTimeout: 'ackTimeout',
+  canceled: 'canceled',
+  clientDisposed: 'clientDisposed',
+  handshakeFailed: 'handshakeFailed',
+  invalidCredential: 'invalidCredential',
+  invalidData: 'invalidData',
+  iframeError: 'iframeError',
+  invalidOrigin: 'invalidOrigin',
+  untrustedOrigin: 'untrustedOrigin',
+  requestFailed: 'requestFailed',
+  requestTimeout: 'requestTimeout',
+  illegalState: 'illegalState',
+  illegalConcurrentRequest: 'illegalConcurrentRequest',
+  establishSecureChannelTimeout: 'establishSecureChannelTimeout',
+  unknownRequest: 'unknownRequest',
+  apiDisabled: 'apiDisabled',
+  parentVerifyTimeout: 'parentVerifyTimeout',
+  parentIsNotRoot: 'parentIsNotRoot',
+  providerInitFailed: 'providerInitFailed',
+  unknown: 'unknown'
+});
 
 export type ErrorType = keyof typeof ERROR_TYPES;
 

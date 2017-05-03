@@ -19,7 +19,15 @@
  * implement the OpenYOLO Web protocol.
  */
 
+import {ProviderFrame} from './provider_frame';
+
 export {ProviderFrame} from './provider_frame';
 export * from './provider_config';
 export * from '../protocol/data';
 export * from '../protocol/client_config';
+
+// Export the public method.
+const windowAsAny = window as any;
+windowAsAny['openyolo_spi'] = windowAsAny['openyolo_spi'] || {};
+windowAsAny['openyolo_spi']['ProviderFrame'] = ProviderFrame;
+ProviderFrame['initialize'] = ProviderFrame.initialize;
