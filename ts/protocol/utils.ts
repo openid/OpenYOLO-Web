@@ -14,6 +14,14 @@
  * limitations under the License.
  */
 
+function getSubtleCrypto(): SubtleCrypto|null {
+  if (window.crypto) {
+    // Fix for Safari.
+    return window.crypto.subtle || (window.crypto as any)['webkitSubtle'];
+  }
+  return null;
+}
+
 /**
  * Generates a random string ID.
  */
@@ -28,6 +36,11 @@ export function generateId(): string {
  * https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest
  */
 export async function sha256(str: string): Promise<string> {
+  // To avoid issues where crypto is not available, return the ID without
+  // hashing it.
+  if (!getSubtleCrypto()) {
+    return Promise.resolve(str);
+  }
   // Transform the string into an arraybuffer.
   const buffer = encodeStringToBuffer(str);
   const hash = await window.crypto.subtle.digest('SHA-256', buffer);
