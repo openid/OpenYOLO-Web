@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-function getSubtleCrypto(): SubtleCrypto|null {
-  if (window.crypto) {
-    // Fix for Safari.
-    return window.crypto.subtle || (window.crypto as any)['webkitSubtle'];
-  }
-  return null;
+let subtleCrypto: SubtleCrypto|null = null;
+if (window.crypto) {
+  // Fix for Safari.
+  subtleCrypto = window.crypto.subtle || (window.crypto as any)['webkitSubtle'];
 }
 
 /**
@@ -38,12 +36,12 @@ export function generateId(): string {
 export async function sha256(str: string): Promise<string> {
   // To avoid issues where crypto is not available, return the ID without
   // hashing it.
-  if (!getSubtleCrypto()) {
+  if (!subtleCrypto) {
     return Promise.resolve(str);
   }
   // Transform the string into an arraybuffer.
   const buffer = encodeStringToBuffer(str);
-  const hash = await window.crypto.subtle.digest('SHA-256', buffer);
+  const hash = await subtleCrypto.digest('SHA-256', buffer);
   return hex(hash);
 }
 
