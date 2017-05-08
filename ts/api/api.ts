@@ -565,4 +565,64 @@ export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
   }
 }
 
-export const openyolo: OnDemandOpenYoloApi = new InitializeOnDemandApi();
+/**
+ * API implementation that immediately rejects all requests.
+ */
+class FakeOpenYoloApi implements OnDemandOpenYoloApi {
+  private readonly unsupportedBrowserPromise = Promise.reject(
+      OpenYoloInternalError.unsupportedBrowser().toExposedError());
+
+  setProviderUrlBase(providerUrlBase: string) {}
+  setRenderMode(renderMode: RenderMode|null) {}
+  setTimeoutsEnabled(enable: boolean) {}
+  reset() {}
+
+  hintsAvailable(options: OpenYoloCredentialHintOptions): Promise<boolean> {
+    return this.unsupportedBrowserPromise;
+  }
+
+  hint(options: OpenYoloCredentialHintOptions): Promise<OpenYoloCredential> {
+    return this.unsupportedBrowserPromise;
+  }
+
+  retrieve(options: OpenYoloCredentialRequestOptions):
+      Promise<OpenYoloCredential> {
+    return this.unsupportedBrowserPromise;
+  }
+
+  save(credential: OpenYoloCredential): Promise<void> {
+    return this.unsupportedBrowserPromise;
+  }
+
+  disableAutoSignIn(): Promise<void> {
+    return this.unsupportedBrowserPromise;
+  }
+
+  cancelLastOperation(): Promise<void> {
+    return this.unsupportedBrowserPromise;
+  }
+
+  proxyLogin(credential: OpenYoloCredential):
+      Promise<OpenYoloProxyLoginResponse> {
+    return this.unsupportedBrowserPromise;
+  }
+
+  setTimeouts(timeout: number): void {
+    // Do nothing.
+  }
+}
+
+/**
+ * Checks whether the core browser functionality required for OpenYOLO is
+ * supported in the current context.
+ */
+function isCompatibleBrowser(): boolean {
+  const hasCryptoRandomImplementation =
+      window.hasOwnProperty('crypto') && 'getRandomValues' in window.crypto;
+  const hasCryptoSubtleImplementation = window.hasOwnProperty('crypto') &&
+      ('subtle' in window.crypto || 'webkitSubtle' in window.crypto);
+  return hasCryptoRandomImplementation && hasCryptoSubtleImplementation;
+}
+
+export const openyolo: OnDemandOpenYoloApi =
+    isCompatibleBrowser() ? new InitializeOnDemandApi() : new FakeOpenYoloApi();

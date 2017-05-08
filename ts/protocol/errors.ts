@@ -33,12 +33,14 @@ export const enum InternalErrorCode {
   illegalConcurrentRequest = 'illegalConcurrentRequest',
   unknownRequest = 'unknownRequest',
   browserWrappingRequired = 'browserWrappingRequired',
+  unsupportedBrowser = 'unsupportedBrowser',
   unknownError = 'unknownError'
 }
 
 /* Exposed error types meant for apps to trigger different flows. */
 export const enum OpenYoloErrorType {
   initializationError = 'initializationError',
+  unsupportedBrowser = 'unsupportedBrowser',
   configurationError = 'configurationError',
   userCanceled = 'userCanceled',
   noCredentialsAvailable = 'noCredentialsAvailable',
@@ -272,11 +274,11 @@ export class OpenYoloInternalError implements CustomError {
     });
   }
 
-  static unknownError() {
+  static unsupportedBrowser() {
     return new OpenYoloInternalError({
-      code: InternalErrorCode.unknownError,
-      exposedErrorType: OpenYoloErrorType.unknownError,
-      message: `Unkown error.`
+      code: InternalErrorCode.unsupportedBrowser,
+      exposedErrorType: OpenYoloErrorType.unsupportedBrowser,
+      message: `Unsupported browser - API disabled`
     });
   }
 
