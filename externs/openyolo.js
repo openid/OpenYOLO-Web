@@ -66,17 +66,17 @@ let CredentialHintOptions;
 
 /**
  * @typedef {{
- *   statusCode: number;
- *   responseText: string;
+ *   statusCode: number,
+ *   responseText: string
  * }}
  */
 let ProxyLoginResponse;
 
 /**
  * @typedef {{
- *   code: string;
- *   message: string;
- *   info?: {[key: string]: string};
+ *   code: string,
+ *   message: string,
+ *   info: (?Object<string, string>|undefined)
  * }}
  */
 let OpenYoloErrorData;
