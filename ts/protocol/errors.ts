@@ -36,7 +36,8 @@ export const ERROR_TYPES = map2Enum({
   parentVerifyTimeout: 'parentVerifyTimeout',
   parentIsNotRoot: 'parentIsNotRoot',
   providerInitFailed: 'providerInitFailed',
-  unknown: 'unknown'
+  unknown: 'unknown',
+  unsupportedBrowser: 'unsupportedBrowser'
 });
 
 export type ErrorType = keyof typeof ERROR_TYPES;
@@ -166,6 +167,13 @@ export class OpenYoloError {
     return OpenYoloError.createError({
       code: ERROR_TYPES.providerInitFailed,
       message: `Provider failed to initialize`
+    });
+  }
+
+  static unsupportedBrowser() {
+    return OpenYoloError.createError({
+      code: ERROR_TYPES.unsupportedBrowser,
+      message: `Unsupported browser - OpenYOLO API disabled`
     });
   }
 
