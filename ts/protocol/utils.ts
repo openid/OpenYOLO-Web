@@ -32,6 +32,8 @@ export function generateId(): string {
 /**
  * Returns the SHA-256 hash of the string given.
  * https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest
+ *
+ * TODO(tch): Find a better fallback mechanism.
  */
 export async function sha256(str: string): Promise<string> {
   // To avoid issues where crypto is not available, return the ID without
@@ -41,8 +43,13 @@ export async function sha256(str: string): Promise<string> {
   }
   // Transform the string into an arraybuffer.
   const buffer = encodeStringToBuffer(str);
-  const hash = await subtleCrypto.digest('SHA-256', buffer);
-  return hex(hash);
+  try {
+    const hash = await subtleCrypto.digest('SHA-256', buffer);
+    return hex(hash);
+  } catch (e) {
+    // Insecure origin error. Fallback to passing the un-hashed string.
+    return Promise.resolve(str);
+  }
 }
 
 function encodeStringToBuffer(str: string): ArrayBuffer {
