@@ -35,6 +35,7 @@ describe('utils', () => {
       expect(hash).toBeTruthy();
       done();
     });
+
     it('works without native TextEncoder', async function(done) {
       const textEncoderImpl = TextEncoder;
       delete (window as WindowWithTextEncoder).TextEncoder;
@@ -48,5 +49,14 @@ describe('utils', () => {
       }
       done();
     });
+
+    it('fallbacks to returning the string if insecure origin',
+       async function(done) {
+         spyOn(window.crypto.subtle, 'digest')
+             .and.throwError('Insecure Origin!');
+         const hash = await utils.sha256(str);
+         expect(hash).toEqual(str);
+         done();
+       });
   });
 });
