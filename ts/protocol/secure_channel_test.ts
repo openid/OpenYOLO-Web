@@ -249,33 +249,6 @@ describe('SecureChannel', () => {
       }
     });
 
-    it('times out if no message received', (done) => {
-      let expectFailNow = false;
-
-      // time out after 100ms
-      SecureChannel
-          .providerConnect(providerWindow, permittedOrigins, hashId, 100)
-          .then(
-              () => {
-                done.fail('Connection should not establish');
-              },
-              (err) => {
-                expect(expectFailNow)
-                    .toBeTruthy('Connection establishment prematurely failed');
-                expect(OpenYoloError.errorIs(
-                           err, ERROR_TYPES.establishSecureChannelTimeout))
-                    .toBeTruthy();
-                done();
-              });
-
-      // push the clock to right before the timeout
-      jasmine.clock().tick(90);
-
-      // ... and then over the threshold
-      expectFailNow = true;
-      jasmine.clock().tick(10);
-    });
-
     it('rejects if invalid origin', async function(done) {
       let evilOrigin = 'https://evil.example.com';
       let connectPromise = SecureChannel.providerConnect(
