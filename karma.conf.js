@@ -22,7 +22,7 @@ module.exports = function(karma) {
   var config = Object.assign(karma_base.baseConfig, {
     autoWatch: true,
     reporters: ['verbose', 'karma-typescript', 'coverage'],
-    coverageReporter: {type: 'json', dir: 'coverage/'},
+    coverageReporter: {type: 'html', dir: 'coverage/'},
     singleRun: true
   });
 
