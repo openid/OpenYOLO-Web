@@ -22,11 +22,13 @@ module.exports = function(karma) {
   var config = Object.assign(karma_base.baseConfig, {
     autoWatch: true,
     reporters: ['verbose', 'karma-typescript', 'coverage'],
-    coverageReporter: {type: 'json', subdir: '.', file: 'coverage-final.json'},
     singleRun: true
   });
 
   config.karmaTypescriptConfig.coverageOptions = {exclude: /_test\.ts$/};
+  config.karmaTypescriptConfig.reports = {
+    json: {filename: 'coverage-final.json'}
+  };
 
   if (process.argv.includes('--use-sauce')) {
     config.customLaunchers = saucelabs.browsers;
