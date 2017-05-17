@@ -28,7 +28,7 @@ export class HintAvailableRequest extends
   /**
    * Sends the RPC to the IFrame and waits for the result.
    */
-  dispatchInternal(options: CredentialHintOptions): Promise<boolean> {
+  dispatchInternal(options: CredentialHintOptions) {
     this.registerHandler(
         RPC_MESSAGE_TYPES.hintAvailableResult, (available: boolean) => {
           this.clearTimeouts();
@@ -37,6 +37,5 @@ export class HintAvailableRequest extends
         });
 
     this.channel.send(hintAvailableMessage(this.id, options));
-    return this.getPromise();
   }
 }

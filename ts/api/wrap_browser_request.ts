@@ -26,7 +26,7 @@ export class WrapBrowserRequest extends BaseRequest<boolean, undefined> {
   /**
    * Sends the RPC to the IFrame and waits for the result.
    */
-  dispatchInternal(): Promise<boolean> {
+  dispatchInternal() {
     this.registerHandler(
         RPC_MESSAGE_TYPES.wrapBrowserResult, (wrapBrowser: boolean) => {
           this.clearTimeouts();
@@ -35,6 +35,5 @@ export class WrapBrowserRequest extends BaseRequest<boolean, undefined> {
         });
 
     this.channel.send(wrapBrowserMessage(this.id));
-    return this.getPromise();
   }
 }

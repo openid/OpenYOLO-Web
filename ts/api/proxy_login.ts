@@ -26,7 +26,7 @@ export class ProxyLogin extends BaseRequest<ProxyLoginResponse, Credential> {
   /**
    * Starts the Proxy Login flow.
    */
-  dispatchInternal(credential: Credential): Promise<ProxyLoginResponse> {
+  dispatchInternal(credential: Credential) {
     this.registerHandler(
         RPC_MESSAGE_TYPES.proxyResult, (response: ProxyLoginResponse) => {
           this.resolve(response);
@@ -34,6 +34,5 @@ export class ProxyLogin extends BaseRequest<ProxyLoginResponse, Credential> {
         });
 
     this.channel.send(proxyLoginMessage(this.id, credential));
-    return this.getPromise();
   }
 }

@@ -110,11 +110,11 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
     }
   }
 
-  debugLog(message: string) {
+  protected debugLog(message: string) {
     console.debug(`(rq-${this.id}): ` + message);
   }
 
-  getPromise(): Promise<ResultT> {
+  protected getPromise(): Promise<ResultT> {
     return this.promiseResolver.promise;
   }
 
