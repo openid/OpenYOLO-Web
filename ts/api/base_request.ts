@@ -36,7 +36,7 @@ export interface RelayRequest<T, O> {
   /**
    * Sends the specific request to the relay, with the given options.
    */
-  dispatch(options: O): Promise<T>;
+  dispatch(options: O, timeoutMs?: number): Promise<T>;
 }
 
 /**
@@ -60,9 +60,26 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
   constructor(
       protected frame: ProviderFrameElement,
       protected channel: SecureChannel,
-      public id = generateId()) {
+      public id = generateId()) {}
+
+  dispatch(options: OptionsT, timeoutMs?: number): Promise<ResultT> {
+    this.registerBaseHandlers(timeoutMs);
+    this.dispatchInternal(options);
+    return this.getPromise();
+  }
+
+  /**
+   * Method to implement in subclasses that handle the request.
+   */
+  abstract dispatchInternal(options: OptionsT): void;
+
+  /**
+   * Registers the base handlers for the request. To be called by subclasses for
+   * proper initialization.
+   */
+  private registerBaseHandlers(timeoutMs?: number) {
     this.debugLog('request instantiated');
-    // register a standard error handler
+    // Register a standard error handler
     this.registerHandler('error', (data: OpenYoloErrorData) => {
       let error: OpenYoloExtendedError;
       if (data) {
@@ -76,16 +93,22 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
       this.dispose();
     });
 
-    // register a standard handler for displaying the provider - when UI is
+    // Register a standard handler for displaying the provider - when UI is
     // shown, the timeouts are also canceled to allow the operation to proceed
     // at human pace.
     this.registerHandler('showProvider', (options) => {
       this.clearTimeouts();
-      frame.display(options);
+      this.frame.display(options);
     });
-  }
 
-  abstract dispatch(options: OptionsT): Promise<ResultT>;
+    // Register a timeout handler if required.
+    if (timeoutMs && timeoutMs > 0) {
+      this.setAndRegisterTimeout(() => {
+        this.reject(OpenYoloError.requestTimeout());
+        this.dispose();
+      }, timeoutMs);
+    }
+  }
 
   debugLog(message: string) {
     console.debug(`(rq-${this.id}): ` + message);

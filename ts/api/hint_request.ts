@@ -15,12 +15,9 @@
  */
 
 import {Credential, CredentialHintOptions} from '../protocol/data';
-import {OpenYoloError} from '../protocol/errors';
 import {hintMessage, RPC_MESSAGE_TYPES} from '../protocol/rpc_messages';
 
 import {BaseRequest} from './base_request';
-
-const TIMEOUT_MS = 5000;
 
 /**
  * Handles the get hint request, by displaying the IFrame or not to let
@@ -31,16 +28,11 @@ export class HintRequest extends
   /**
    * Starts the Hint Request flow.
    */
-  dispatch(options: CredentialHintOptions): Promise<Credential> {
+  dispatchInternal(options: CredentialHintOptions): Promise<Credential> {
     this.registerHandler(
         RPC_MESSAGE_TYPES.credential,
         (credential: Credential) => this.handleResult(credential));
     this.registerHandler(RPC_MESSAGE_TYPES.none, () => this.handleResult(null));
-
-    this.setAndRegisterTimeout(() => {
-      this.reject(OpenYoloError.requestTimeout());
-      this.dispose();
-    }, TIMEOUT_MS);
 
     this.debugLog(`Sending hint request`);
     this.channel.send(hintMessage(this.id, options));

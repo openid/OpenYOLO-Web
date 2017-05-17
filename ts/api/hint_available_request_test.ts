@@ -20,7 +20,6 @@ import {errorMessage, hintAvailableMessage, hintAvailableResponseMessage} from '
 import {SecureChannel} from '../protocol/secure_channel';
 import {FakeProviderConnection} from '../test_utils/channels';
 import {createSpyFrame} from '../test_utils/frames';
-import {JasmineTimeoutManager} from '../test_utils/timeout';
 
 import {HintAvailableRequest} from './hint_available_request';
 
@@ -29,7 +28,6 @@ describe('HintAvailableRequest', () => {
   let clientChannel: SecureChannel;
   let providerChannel: SecureChannel;
   let frame: any;
-  let timeoutManager = new JasmineTimeoutManager();
   let passwordOnlyOptions: CredentialHintOptions = {
     supportedAuthMethods: [AUTHENTICATION_METHODS.ID_AND_PASSWORD]
   };
@@ -41,23 +39,13 @@ describe('HintAvailableRequest', () => {
     frame = createSpyFrame('frameId');
     request = new HintAvailableRequest(frame, clientChannel);
     spyOn(request, 'dispose').and.callThrough();
-    timeoutManager.install();
   });
 
   afterEach(() => {
     request.dispose();
-    timeoutManager.uninstall();
   });
 
   describe('dispatch', () => {
-    it('should timeout in 1 sec and resolve with false', done => {
-      request.dispatch(passwordOnlyOptions).then(result => {
-        expect(result).toBe(false);
-        done();
-      });
-      jasmine.clock().tick(1001);
-    });
-
     it('should send a RPC message to the frame', () => {
       spyOn(clientChannel, 'send').and.callThrough();
       request.dispatch(passwordOnlyOptions);

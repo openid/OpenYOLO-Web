@@ -19,7 +19,6 @@ import {credentialResultMessage, noneAvailableMessage, retrieveMessage, showProv
 import {SecureChannel} from '../protocol/secure_channel';
 import {FakeProviderConnection} from '../test_utils/channels';
 import {createSpyFrame} from '../test_utils/frames';
-import {JasmineTimeoutManager} from '../test_utils/timeout';
 
 import {CredentialRequest} from './credential_request';
 import {ProviderFrameElement} from './provider_frame_elem';
@@ -30,7 +29,7 @@ describe('CredentialRequest', () => {
   let clientChannel: SecureChannel;
   let providerChannel: SecureChannel;
   let frame: ProviderFrameElement;
-  let timeoutManager = new JasmineTimeoutManager();
+  const options: CredentialRequestOptions = {supportedAuthMethods: []};
 
   beforeEach(() => {
     connection = new FakeProviderConnection();
@@ -40,20 +39,13 @@ describe('CredentialRequest', () => {
     providerChannel = connection.providerChannel;
     request = new CredentialRequest(frame, clientChannel);
     spyOn(request, 'dispose').and.callThrough();
-    timeoutManager.install();
   });
 
   afterEach(() => {
     request.dispose();
-    timeoutManager.uninstall();
   });
 
   describe('dispatch', () => {
-    it('should timeout in 5 sec', done => {
-      request.dispatch().then(() => done.fail(), () => done());
-      jasmine.clock().tick(5001);
-    });
-
     it('should send a RPC message through the channel', () => {
       spyOn(clientChannel, 'send').and.callThrough();
       let options: CredentialRequestOptions = {
@@ -67,13 +59,13 @@ describe('CredentialRequest', () => {
 
   describe('response handling', () => {
     it('should display the frame if there are credentials', () => {
-      request.dispatch();
+      request.dispatch(options);
       providerChannel.send(showProviderMessage(request.id, {height: 200}));
       expect(frame.display).toHaveBeenCalled();
     });
 
     it('should resolve with nothing if no credential', async function(done) {
-      let dispatchPromise = request.dispatch();
+      let dispatchPromise = request.dispatch(options);
       providerChannel.send(noneAvailableMessage(request.id));
       try {
         let result = await dispatchPromise;
@@ -91,7 +83,7 @@ describe('CredentialRequest', () => {
         authMethod: AUTHENTICATION_METHODS.ID_AND_PASSWORD,
         displayName: 'Google'
       };
-      let requestPromise = request.dispatch();
+      let requestPromise = request.dispatch(options);
       providerChannel.send(credentialResultMessage(request.id, credential));
       try {
         let result = await requestPromise;
@@ -104,7 +96,7 @@ describe('CredentialRequest', () => {
     });
 
     it('should return null when no credentials', async function(done) {
-      let resultPromise = request.dispatch();
+      let resultPromise = request.dispatch(options);
       providerChannel.send(noneAvailableMessage(request.id));
       try {
         let result = await resultPromise;
@@ -116,7 +108,7 @@ describe('CredentialRequest', () => {
     });
 
     it('should ignore when different id', () => {
-      request.dispatch();
+      request.dispatch(options);
       let credential = {
         id: 'alice@gmail.com',
         authMethod: AUTHENTICATION_METHODS.ID_AND_PASSWORD,
