@@ -79,7 +79,7 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
    */
   private registerBaseHandlers(timeoutMs?: number) {
     this.debugLog('request instantiated');
-    // Register a standard error handler
+    // Register a standard error handler.
     this.registerHandler('error', (data: OpenYoloErrorData) => {
       let error: OpenYoloExtendedError;
       if (data) {

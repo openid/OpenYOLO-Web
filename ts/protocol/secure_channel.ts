@@ -18,7 +18,7 @@ import {createMessageListener, FilteringEventListener, isPermittedOrigin, RpcMes
 import {OpenYoloError} from './errors';
 import {ackMessage, channelConnectMessage, channelReadyMessage, POST_MESSAGE_TYPES, readyForConnectMessage} from './post_messages';
 import {RpcMessage, RpcMessageDataTypes, RpcMessageType} from './rpc_messages';
-import {PromiseResolver, sha256, timeoutPromise, TimeoutPromiseResolver} from './utils';
+import {PromiseResolver, sha256, timeoutPromise} from './utils';
 
 const DEFAULT_TIMEOUT_MS = 3000;
 
@@ -145,12 +145,9 @@ export class SecureChannel {
   static async providerConnect(
       providerWindow: WindowLike,
       permittedOrigins: string[],
-      connectionNonce: string,
-      timeoutMs?: number): Promise<SecureChannel> {
+      connectionNonce: string): Promise<SecureChannel> {
     let port: MessagePort|null = null;
-    let promiseResolver = new TimeoutPromiseResolver<SecureChannel>(
-        OpenYoloError.establishSecureChannelTimeout(),
-        (timeoutMs && timeoutMs > 0) ? timeoutMs : DEFAULT_TIMEOUT_MS);
+    let promiseResolver = new PromiseResolver<SecureChannel>();
 
     let listener = createMessageListener(
         'channelConnect', async function(nonce: string, type, ev) {
