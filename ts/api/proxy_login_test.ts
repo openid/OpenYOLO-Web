@@ -20,7 +20,6 @@ import {errorMessage, proxyLoginMessage, proxyLoginResponseMessage} from '../pro
 import {SecureChannel} from '../protocol/secure_channel';
 import {FakeProviderConnection} from '../test_utils/channels';
 import {createSpyFrame} from '../test_utils/frames';
-import {JasmineTimeoutManager} from '../test_utils/timeout';
 
 import {ProxyLogin} from './proxy_login';
 
@@ -29,7 +28,6 @@ describe('ProxyLogin', () => {
   let clientChannel: SecureChannel;
   let providerChannel: SecureChannel;
   let frame: any;
-  let timeoutManager = new JasmineTimeoutManager();
   let credential: Credential = {
     id: 'user@example.com',
     displayName: 'User',
@@ -46,17 +44,10 @@ describe('ProxyLogin', () => {
     frame = createSpyFrame('frameId');
     request = new ProxyLogin(frame, clientChannel);
     spyOn(request, 'dispose').and.callThrough();
-    timeoutManager.install();
   });
 
   afterEach(() => {
     request.dispose();
-    timeoutManager.uninstall();
-  });
-
-  it('sets a 10 sec timeout', done => {
-    request.dispatch(credential).then(() => done.fail(), () => done());
-    jasmine.clock().tick(10001);
   });
 
   describe('dispatch', () => {
