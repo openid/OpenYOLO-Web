@@ -28,7 +28,7 @@ export class HintRequest extends
   /**
    * Starts the Hint Request flow.
    */
-  dispatchInternal(options: CredentialHintOptions): Promise<Credential> {
+  dispatchInternal(options: CredentialHintOptions) {
     this.registerHandler(
         RPC_MESSAGE_TYPES.credential,
         (credential: Credential) => this.handleResult(credential));
@@ -36,7 +36,6 @@ export class HintRequest extends
 
     this.debugLog(`Sending hint request`);
     this.channel.send(hintMessage(this.id, options));
-    return this.getPromise();
   }
 
   /**

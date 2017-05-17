@@ -141,10 +141,10 @@ describe('BaseRequest', () => {
 
     it('listens to error and disposes', async function(done) {
       const expectedError = OpenYoloError.illegalStateError('ERROR!');
-      request.dispatch(undefined);
+      const promise = request.dispatch(undefined);
       providerChannel.send(errorMessage(request.id, expectedError));
       try {
-        await request.getPromise();
+        await promise;
         done.fail('Promise should not resolve');
       } catch (err) {
         expect(err).toEqual(expectedError);
@@ -157,10 +157,10 @@ describe('BaseRequest', () => {
     it('listens to illegalConcurrentError and disposes but not hide the iframe',
        async function(done) {
          const expectedError = OpenYoloError.illegalConcurrentRequestError();
-         request.dispatch(undefined);
+         const promise = request.dispatch(undefined);
          providerChannel.send(errorMessage(request.id, expectedError));
          try {
-           await request.getPromise();
+           await promise;
            done.fail('Promise should not resolve');
          } catch (err) {
            expect(err).toEqual(expectedError);

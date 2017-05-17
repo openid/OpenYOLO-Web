@@ -187,15 +187,13 @@ class OpenYoloApiImpl implements OpenYoloApi {
 
     // Check whether the client should wrap the browser's navigator.credentials.
     const request = new WrapBrowserRequest(frameManager, channel);
+    const timeoutMs =
+        areTimeoutsDisabled ? undefined : TIMEOUTS.wrapBrowserRequest;
     const wrapBrowser =
-        await request
-            .dispatch(
-                undefined,
-                areTimeoutsDisabled ? undefined : TIMEOUTS.wrapBrowserRequest)
-            .catch((error) => {
-              // Ignore timeout errors or other.
-              return false;
-            });
+        await request.dispatch(undefined, timeoutMs).catch((error) => {
+          // Ignore errors.
+          return false;
+        });
 
     return new OpenYoloApiImpl(
         frameManager, channel, wrapBrowser, areTimeoutsDisabled);
@@ -212,22 +210,20 @@ class OpenYoloApiImpl implements OpenYoloApi {
   async hintsAvailable(options: CredentialHintOptions): Promise<boolean> {
     this.checkNotDisposed();
     const request = new HintAvailableRequest(this.frameManager, this.channel);
-    return request
-        .dispatch(
-            options,
-            this.areTimeoutsDisabled ? undefined :
-                                       TIMEOUTS.hintAvailableRequest)
-        .catch((error) => {
-          // Ignore errors.
-          return false;
-        });
+    const timeoutMs =
+        this.areTimeoutsDisabled ? undefined : TIMEOUTS.hintAvailableRequest;
+    return request.dispatch(options, timeoutMs).catch((error) => {
+      // Ignore errors.
+      return false;
+    });
   }
 
   async hint(options: CredentialHintOptions): Promise<Credential> {
     this.checkNotDisposed();
     const request = new HintRequest(this.frameManager, this.channel);
-    return request.dispatch(
-        options, this.areTimeoutsDisabled ? undefined : TIMEOUTS.hintRequest);
+    const timeoutMs =
+        this.areTimeoutsDisabled ? undefined : TIMEOUTS.hintRequest;
+    return request.dispatch(options, timeoutMs);
   }
 
   async retrieve(options: CredentialRequestOptions): Promise<Credential> {
@@ -248,9 +244,9 @@ class OpenYoloApiImpl implements OpenYoloApi {
   private retrieveUsingChannel(options: CredentialRequestOptions):
       Promise<Credential> {
     const request = new CredentialRequest(this.frameManager, this.channel);
-    return request.dispatch(
-        options,
-        this.areTimeoutsDisabled ? undefined : TIMEOUTS.credentialRequest);
+    const timeoutMs =
+        this.areTimeoutsDisabled ? undefined : TIMEOUTS.credentialRequest;
+    return request.dispatch(options, timeoutMs);
   }
 
   async save(credential: Credential): Promise<void> {
@@ -269,9 +265,9 @@ class OpenYoloApiImpl implements OpenYoloApi {
 
   private async saveUsingChannel(credential: Credential) {
     let request = new CredentialSave(this.frameManager, this.channel);
-    return request.dispatch(
-        credential,
-        this.areTimeoutsDisabled ? undefined : TIMEOUTS.credentialSave);
+    const timeoutMs =
+        this.areTimeoutsDisabled ? undefined : TIMEOUTS.credentialSave;
+    return request.dispatch(credential, timeoutMs);
   }
 
   async disableAutoSignIn(): Promise<void> {
@@ -324,8 +320,9 @@ class OpenYoloApiImpl implements OpenYoloApi {
 
   private async proxyLoginUsingChannel(credential: Credential) {
     let request = new ProxyLogin(this.frameManager, this.channel);
-    return request.dispatch(
-        credential, this.areTimeoutsDisabled ? undefined : TIMEOUTS.proxyLogin);
+    const timeoutMs =
+        this.areTimeoutsDisabled ? undefined : TIMEOUTS.proxyLogin;
+    return request.dispatch(credential, timeoutMs);
   }
 }
 
@@ -346,11 +343,10 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
   private providerUrlBase: string = 'https://provider.openyolo.org';
   private implPromise: Promise<OpenYoloApiImpl> = null;
   private renderMode: RenderMode|null = null;
-  /** Prefer a default boolean value of false rather than true. */
   private areTimeoutsDisabled: boolean = false;
 
   constructor() {
-    // register the handler for ping verification automatically on module load
+    // Register the handler for ping verification automatically on module load.
     respondToHandshake(window);
   }
 

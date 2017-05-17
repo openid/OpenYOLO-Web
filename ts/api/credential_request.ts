@@ -28,7 +28,7 @@ export class CredentialRequest extends
   /**
    * Starts the Credential Request flow.
    */
-  dispatchInternal(options: CredentialRequestOptions): Promise<Credential> {
+  dispatchInternal(options: CredentialRequestOptions) {
     // the final outcome will either be a credential, or a notification that
     // none are available / none was selected by the user.
     this.registerHandler(
@@ -38,7 +38,6 @@ export class CredentialRequest extends
 
     // send the request
     this.channel.send(retrieveMessage(this.id, options));
-    return this.getPromise();
   }
 
   /**
