@@ -43,9 +43,8 @@ export class ProviderFrame {
    * Performs the initial validation of the execution context, and then
    * instantiates a {@link ProviderFrame} instance.
    */
-  static async initialize(
-      providerConfig: ProviderConfiguration,
-      establishTimeoutMs?: number): Promise<ProviderFrame> {
+  static async initialize(providerConfig: ProviderConfiguration):
+      Promise<ProviderFrame> {
     let secureChannel: SecureChannel|null;
     try {
       // fetch the client configuration, and ensure that the API is explicitly
@@ -80,8 +79,7 @@ export class ProviderFrame {
       secureChannel = await SecureChannel.providerConnect(
           providerConfig.window,
           [providerConfig.clientAuthDomain],
-          providerConfig.clientNonce,
-          establishTimeoutMs);
+          providerConfig.clientNonce);
 
       // success! create the frame manager to handle subsequent requests
       return new ProviderFrame(

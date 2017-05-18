@@ -18,17 +18,15 @@ import {RPC_MESSAGE_TYPES, wrapBrowserMessage} from '../protocol/rpc_messages';
 
 import {BaseRequest} from './base_request';
 
-const DEFAULT_TIMEOUT_MS = 1000;
-
 /**
- * Handles the check for whether hints are available or not. It does not require
- * any user interaction, and if fails, just return as if there was no hints.
+ * Handles the check for whether the browser navigator.credentials should be
+ * used in some flows.
  */
 export class WrapBrowserRequest extends BaseRequest<boolean, undefined> {
   /**
    * Sends the RPC to the IFrame and waits for the result.
    */
-  dispatch(timeoutMs?: number): Promise<boolean> {
+  dispatchInternal() {
     this.registerHandler(
         RPC_MESSAGE_TYPES.wrapBrowserResult, (wrapBrowser: boolean) => {
           this.clearTimeouts();
@@ -36,12 +34,6 @@ export class WrapBrowserRequest extends BaseRequest<boolean, undefined> {
           this.dispose();
         });
 
-    this.setAndRegisterTimeout(() => {
-      this.resolve(false);
-      this.dispose();
-    }, (timeoutMs && timeoutMs > 0) ? timeoutMs : DEFAULT_TIMEOUT_MS);
-
     this.channel.send(wrapBrowserMessage(this.id));
-    return this.getPromise();
   }
 }

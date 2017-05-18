@@ -21,7 +21,6 @@ import {errorMessage, saveMessage, saveResultMessage} from '../protocol/rpc_mess
 import {SecureChannel} from '../protocol/secure_channel';
 import {FakeProviderConnection} from '../test_utils/channels';
 import {createSpyFrame} from '../test_utils/frames';
-import {JasmineTimeoutManager} from '../test_utils/timeout';
 
 import {CredentialSave} from './credential_save';
 
@@ -30,7 +29,6 @@ describe('CredentialSave', () => {
   let providerChannel: SecureChannel;
   let request: CredentialSave;
   let frame: any;
-  let timeoutManager = new JasmineTimeoutManager();
   let credential: Credential = {
     id: 'user@example.com',
     authMethod: AUTHENTICATION_METHODS.ID_AND_PASSWORD,
@@ -45,12 +43,10 @@ describe('CredentialSave', () => {
     frame = createSpyFrame('frameId');
     request = new CredentialSave(frame, clientChannel);
     spyOn(request, 'dispose').and.callThrough();
-    timeoutManager.install();
   });
 
   afterEach(() => {
     request.dispose();
-    timeoutManager.uninstall();
   });
 
   describe('dispatch', () => {

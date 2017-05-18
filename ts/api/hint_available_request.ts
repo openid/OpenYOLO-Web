@@ -19,8 +19,6 @@ import {hintAvailableMessage, RPC_MESSAGE_TYPES} from '../protocol/rpc_messages'
 
 import {BaseRequest} from './base_request';
 
-const DEFAULT_TIMEOUT_MS = 1000;
-
 /**
  * Handles the check for whether hints are available or not. It does not require
  * any user interaction, and if fails, just return as if there was no hints.
@@ -30,8 +28,7 @@ export class HintAvailableRequest extends
   /**
    * Sends the RPC to the IFrame and waits for the result.
    */
-  dispatch(options: CredentialHintOptions, timeoutMs?: number):
-      Promise<boolean> {
+  dispatchInternal(options: CredentialHintOptions) {
     this.registerHandler(
         RPC_MESSAGE_TYPES.hintAvailableResult, (available: boolean) => {
           this.clearTimeouts();
@@ -39,12 +36,6 @@ export class HintAvailableRequest extends
           this.dispose();
         });
 
-    this.setAndRegisterTimeout(() => {
-      this.resolve(false);
-      this.dispose();
-    }, (timeoutMs && timeoutMs > 0) ? timeoutMs : DEFAULT_TIMEOUT_MS);
-
     this.channel.send(hintAvailableMessage(this.id, options));
-    return this.getPromise();
   }
 }

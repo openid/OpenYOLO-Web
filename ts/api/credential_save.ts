@@ -21,7 +21,7 @@ import {RPC_MESSAGE_TYPES, saveMessage} from '../protocol/rpc_messages';
 import {BaseRequest} from './base_request';
 
 export class CredentialSave extends BaseRequest<void, Credential> {
-  dispatch(credential: Credential): Promise<void> {
+  dispatchInternal(credential: Credential) {
     this.registerHandler(RPC_MESSAGE_TYPES.saveResult, (saved: boolean) => {
       if (saved) {
         this.resolve();
@@ -32,6 +32,5 @@ export class CredentialSave extends BaseRequest<void, Credential> {
     });
 
     this.channel.send(saveMessage(this.id, credential));
-    return this.getPromise();
   }
 }
