@@ -427,6 +427,8 @@ InitializeOnDemandApi.prototype['setProviderUrlBase'] =
     InitializeOnDemandApi.prototype.setProviderUrlBase;
 InitializeOnDemandApi.prototype['setRenderMode'] =
     InitializeOnDemandApi.prototype.setRenderMode;
+InitializeOnDemandApi.prototype['setTimeoutsEnabled'] =
+    InitializeOnDemandApi.prototype.setTimeoutsEnabled;
 InitializeOnDemandApi.prototype['hintsAvailable'] =
     InitializeOnDemandApi.prototype.hintsAvailable;
 InitializeOnDemandApi.prototype['hint'] = InitializeOnDemandApi.prototype.hint;
