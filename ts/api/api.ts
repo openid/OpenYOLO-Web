@@ -125,7 +125,7 @@ export interface OpenYoloApi {
 /**
  * Defines the different timeouts for every request.
  */
-const TIMEOUTS: {[key: string]: number} = {
+const DEFAULT_TIMEOUTS: {[key: string]: number} = {
   credentialRequest: 3000,
   credentialSave: 3000,
   hintAvailableRequest: 1000,
@@ -188,7 +188,7 @@ class OpenYoloApiImpl implements OpenYoloApi {
     // Check whether the client should wrap the browser's navigator.credentials.
     const request = new WrapBrowserRequest(frameManager, channel);
     const timeoutMs =
-        areTimeoutsDisabled ? undefined : TIMEOUTS.wrapBrowserRequest;
+        areTimeoutsDisabled ? undefined : DEFAULT_TIMEOUTS.wrapBrowserRequest;
     const wrapBrowser =
         await request.dispatch(undefined, timeoutMs).catch((error) => {
           // Ignore errors.
@@ -210,8 +210,9 @@ class OpenYoloApiImpl implements OpenYoloApi {
   async hintsAvailable(options: CredentialHintOptions): Promise<boolean> {
     this.checkNotDisposed();
     const request = new HintAvailableRequest(this.frameManager, this.channel);
-    const timeoutMs =
-        this.areTimeoutsDisabled ? undefined : TIMEOUTS.hintAvailableRequest;
+    const timeoutMs = this.areTimeoutsDisabled ?
+        undefined :
+        DEFAULT_TIMEOUTS.hintAvailableRequest;
     return request.dispatch(options, timeoutMs).catch((error) => {
       // Ignore errors.
       return false;
@@ -222,7 +223,7 @@ class OpenYoloApiImpl implements OpenYoloApi {
     this.checkNotDisposed();
     const request = new HintRequest(this.frameManager, this.channel);
     const timeoutMs =
-        this.areTimeoutsDisabled ? undefined : TIMEOUTS.hintRequest;
+        this.areTimeoutsDisabled ? undefined : DEFAULT_TIMEOUTS.hintRequest;
     return request.dispatch(options, timeoutMs);
   }
 
@@ -244,8 +245,9 @@ class OpenYoloApiImpl implements OpenYoloApi {
   private retrieveUsingChannel(options: CredentialRequestOptions):
       Promise<Credential> {
     const request = new CredentialRequest(this.frameManager, this.channel);
-    const timeoutMs =
-        this.areTimeoutsDisabled ? undefined : TIMEOUTS.credentialRequest;
+    const timeoutMs = this.areTimeoutsDisabled ?
+        undefined :
+        DEFAULT_TIMEOUTS.credentialRequest;
     return request.dispatch(options, timeoutMs);
   }
 
@@ -266,7 +268,7 @@ class OpenYoloApiImpl implements OpenYoloApi {
   private async saveUsingChannel(credential: Credential) {
     let request = new CredentialSave(this.frameManager, this.channel);
     const timeoutMs =
-        this.areTimeoutsDisabled ? undefined : TIMEOUTS.credentialSave;
+        this.areTimeoutsDisabled ? undefined : DEFAULT_TIMEOUTS.credentialSave;
     return request.dispatch(credential, timeoutMs);
   }
 
@@ -321,7 +323,7 @@ class OpenYoloApiImpl implements OpenYoloApi {
   private async proxyLoginUsingChannel(credential: Credential) {
     let request = new ProxyLogin(this.frameManager, this.channel);
     const timeoutMs =
-        this.areTimeoutsDisabled ? undefined : TIMEOUTS.proxyLogin;
+        this.areTimeoutsDisabled ? undefined : DEFAULT_TIMEOUTS.proxyLogin;
     return request.dispatch(credential, timeoutMs);
   }
 }
@@ -329,7 +331,7 @@ class OpenYoloApiImpl implements OpenYoloApi {
 export interface OnDemandOpenYoloApi extends OpenYoloApi {
   setProviderUrlBase(providerUrlBase: string): void;
   setRenderMode(renderMode: string): void;
-  enableTimeouts(enable: boolean): void;
+  setTimeoutsEnabled(enable: boolean): void;
   reset(): void;
 }
 
@@ -360,7 +362,7 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
     this.reset();
   }
 
-  enableTimeouts(enable: boolean) {
+  setTimeoutsEnabled(enable: boolean) {
     this.areTimeoutsDisabled = !enable;
     this.reset();
   }

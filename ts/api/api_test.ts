@@ -196,7 +196,7 @@ describe('OpenYolo API', () => {
             .and.throwError('Should not use the with timeout method!');
         spyOn(SecureChannel, 'clientConnectNoTimeout')
             .and.returnValue(Promise.resolve(secureChannelSpy));
-        openyolo.enableTimeouts(false);
+        openyolo.setTimeoutsEnabled(false);
       });
 
       describe('hintsAvailable', () => {
