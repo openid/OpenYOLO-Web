@@ -160,7 +160,7 @@ export class ProviderFrame {
 
     this.addRpcListener(
         msg.RPC_MESSAGE_TYPES.hintAvailable,
-        (m) => this.handleHintsAvailableRequest(m.id, m.args));
+        (m) => this.handleHintAvailableRequest(m.id, m.args));
 
     this.addRpcListener(
         msg.RPC_MESSAGE_TYPES.save,
@@ -174,13 +174,6 @@ export class ProviderFrame {
         (ev) => this.handleUnknownMessage(ev));
   }
 
-  // NOTE: TS 2.1.6 appears to have a compiler bug where it does not identify
-  // that msg.RpcMessageDataTypes[T] has an id field. TS 2.2.1 does not have
-  // this issue, but the angular cli gets confused and fails to compile on
-  // the first run. To work around this problem we currently use "any"
-  // to bypass the issue.
-  // TODO: re-test this with the next release of the angular cli to see if
-  // the any wrapping can be removed.
   private addRpcListener<T extends msg.RpcMessageType>(
       type: T,
       messageHandler: (message: msg.RpcMessageDataTypes[T]) => Promise<void>) {
@@ -194,10 +187,7 @@ export class ProviderFrame {
       type: T,
       m: msg.RpcMessageDataTypes[T],
       messageHandler: (message: msg.RpcMessageDataTypes[T]) => Promise<void>) {
-    // TODO: a TS compiler bug appears to be causing intermittent problems
-    // with resolving RpcMessageDataTypes[T]. Cast to any until this
-    // is resolved
-    if (!this.recordRequestStart((m as any).id)) {
+    if (!this.recordRequestStart(m.id)) {
       return;
     }
 
@@ -273,12 +263,14 @@ export class ProviderFrame {
     }
   }
 
-  private async handleHintsAvailableRequest(
+  private async handleHintAvailableRequest(
       id: string,
       options: CredentialHintOptions) {
-    // TODO: implement
-    return this.handleUnimplementedRequest(
-        id, msg.RPC_MESSAGE_TYPES.hintAvailable);
+    console.info('Handling hintAvailable request');
+
+    let hints = await this.getHints(options);
+    this.clientChannel.send(
+        msg.hintAvailableResponseMessage(id, hints.length > 0));
   }
 
   private async handleGetCredentialRequest(
