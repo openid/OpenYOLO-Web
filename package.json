@@ -111,7 +111,7 @@
     "typescript": "^2.3.2",
     "typescript-formatter": "^4.1.1",
     "web-animations-js": "^2.2.2",
-    "zone.js": "^0.7.6"
+    "zone.js": "^0.8.11"
   },
   "optionalDependencies": {
     "karma-firefox-launcher": "^1.0.0",

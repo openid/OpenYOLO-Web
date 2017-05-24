@@ -465,14 +465,61 @@ describe('ProviderFrame', () => {
          });
     });
 
+    // tests can use this to emulate user interaction in the credential picker
+    const pwdOrFbHintOptions: CredentialHintOptions = {
+      supportedAuthMethods: [
+        AUTHENTICATION_METHODS.ID_AND_PASSWORD,
+        AUTHENTICATION_METHODS.FACEBOOK
+      ]
+    };
+
+    describe('handling hintAvailable', () => {
+
+      it('should return false when the store is empty', async function(done) {
+        credentialDataProvider.credentials = [];
+
+        clientChannel.listen(
+            msg.RPC_MESSAGE_TYPES.hintAvailableResult, (res) => {
+              expect(res.args).toBe(false);
+              done();
+            });
+
+        clientChannel.send(
+            msg.hintAvailableMessage(requestId, pwdOrFbHintOptions));
+      });
+
+      it('should return false if no data matches', async function(done) {
+        // the hint options specify password or facebook credentials, and this
+        // credential is for google sign-in. So, we expect no hints to be
+        // generated.
+        credentialDataProvider.credentials = [carlGoogCred];
+
+        clientChannel.listen(
+            msg.RPC_MESSAGE_TYPES.hintAvailableResult, (res) => {
+              expect(res.args).toBe(false);
+              done();
+            });
+
+        clientChannel.send(
+            msg.hintAvailableMessage(requestId, pwdOrFbHintOptions));
+      });
+
+      it('should return true if hint available', async function(done) {
+        credentialDataProvider.credentials = [elisaOtherDomainCred];
+
+        clientChannel.listen(
+            msg.RPC_MESSAGE_TYPES.hintAvailableResult, (res) => {
+              expect(res.args).toBe(true);
+              done();
+            });
+
+        clientChannel.send(
+            msg.hintAvailableMessage(requestId, pwdOrFbHintOptions));
+      });
+    });
+
     describe('handling hint retrieval', () => {
-      // tests can use this to emulate user interaction in the credential picker
-      let pwdOrFbHintOptions: CredentialHintOptions = {
-        supportedAuthMethods: [
-          AUTHENTICATION_METHODS.ID_AND_PASSWORD,
-          AUTHENTICATION_METHODS.FACEBOOK
-        ]
-      };
+
 
       // creates a message listener that expects a pick message to be received,
       // and verifies the set of credentials sent to the interaction manager
