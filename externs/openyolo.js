@@ -244,8 +244,8 @@ let InteractionProvider = function() {};
  * @return {!Promise<undefined>}
  * @export
  */
-InteractionProvider.prototype.showAutoSignIn(
-    credential, displayCallbacks) = function() {};
+InteractionProvider.prototype.showAutoSignIn = function(
+    credential, displayCallbacks) {};
 
 /**
  * @param {!Array<!Credential>} credentials
