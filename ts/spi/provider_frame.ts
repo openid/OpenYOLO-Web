@@ -313,8 +313,12 @@ export class ProviderFrame {
           this.clientAuthDomain);
       console.log(`single credential, auto sign in = ${autoSignInEnabled}`);
       if (autoSignInEnabled) {
+        const credential = pertinentCredentials[0];
+        // Display the auto sign in screen and send the message.
+        await this.interactionProvider.showAutoSignIn(
+            credential, this.createDisplayCallbacks(requestId));
         this.clientChannel.send(msg.credentialResultMessage(
-            requestId, this.storeForProxyLogin(pertinentCredentials[0])));
+            requestId, this.storeForProxyLogin(credential)));
         return;
       }
     }

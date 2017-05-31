@@ -160,6 +160,12 @@ export class OpenYoloProviderComponent implements OnInit, OnDestroy,
     return false;
   }
 
+  async showAutoSignIn(
+      credential: Credential,
+      displayCallbacks: DisplayCallbacks): Promise<undefined> {
+    return;
+  }
+
   async dispose(): Promise<void> {
     return;
   }

@@ -65,6 +65,7 @@ describe('ProviderFrame', () => {
       'showCredentialPicker',
       'showHintPicker',
       'showSaveConfirmation',
+      'showAutoSignIn',
       'dispose'
     ]);
     localStateProvider = new TestLocalStateProvider();
@@ -280,6 +281,14 @@ describe('ProviderFrame', () => {
       it('should return a credential directly if no other options',
          async function(done) {
            credentialDataProvider.credentials = [alicePwdCred];
+
+           (interactionProvider.showAutoSignIn as jasmine.Spy)
+               .and.callFake(
+                   (credential: Credential,
+                    displayCallbacks: DisplayCallbacks) => {
+                     expect(credential).toBe(alicePwdCred);
+                     return Promise.resolve();
+                   });
 
            clientChannel.listen(msg.RPC_MESSAGE_TYPES.credential, (data) => {
              expectMessageContents(

@@ -164,6 +164,13 @@ export interface InteractionProvider {
       displayCallbacks: DisplayCallbacks): Promise<boolean>;
 
   /**
+   * Requests the display of an auto sign in screen. The promise should always
+   * resolve, as no action is required.
+   */
+  showAutoSignIn(credential: Credential, displayCallbacks: DisplayCallbacks):
+      Promise<undefined>;
+
+  /**
    * Requests the immediate tear down of any presently active UI.
    */
   dispose(): void;
