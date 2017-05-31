@@ -239,6 +239,15 @@ DisplayCallbacks.prototype.requestDisplayOptions = function(options) {};
 let InteractionProvider = function() {};
 
 /**
+ * @param {!Credential} credential
+ * @param {!DisplayCallbacks} displayCallbacks
+ * @return {!Promise<undefined>}
+ * @export
+ */
+InteractionProvider.prototype.showAutoSignIn(
+    credential, displayCallbacks) = function() {};
+
+/**
  * @param {!Array<!Credential>} credentials
  * @param {!CredentialRequestOptions} options
  * @param {!DisplayCallbacks} displayCallbacks
