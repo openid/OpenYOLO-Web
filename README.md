@@ -1,3 +1,5 @@
+![OpenYOLO for Web](https://rawgit.com/openid/OpenYOLO-Web/master/openyolo_web_lockup.svg)
+
 [![Build Status](https://travis-ci.org/openid/OpenYOLO-Web.svg?branch=master)](https://travis-ci.org/openid/OpenYOLO-Web)
 [![codecov](https://codecov.io/gh/openid/OpenYOLO-Web/branch/master/graph/badge.svg)](https://codecov.io/gh/openid/OpenYOLO-Web)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/93cd22606780424fa148c3b23cf9d87d)](https://www.codacy.com/app/iainmcgin/OpenYOLO-Web?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=openid/OpenYOLO-Web&amp;utm_campaign=Badge_Grade)
