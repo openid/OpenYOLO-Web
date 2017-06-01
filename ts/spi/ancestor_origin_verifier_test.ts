@@ -187,7 +187,7 @@ describe('AncestorOriginVerifier', () => {
            providerFrame.dispatchEvent(createMessageEvent(
                verifyAckMessage(ev.data.data),
                parentOrigin,
-               null,
+               undefined,
                new MockWindow()));
          });
 

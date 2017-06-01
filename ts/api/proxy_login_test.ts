@@ -33,7 +33,6 @@ describe('ProxyLogin', () => {
     displayName: 'User',
     password: 'password',
     authMethod: AUTHENTICATION_METHODS.ID_AND_PASSWORD,
-    profilePicture: null,
     proxiedAuthRequired: false
   };
 

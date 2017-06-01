@@ -24,7 +24,7 @@ import {BaseRequest} from './base_request';
  * the user selects a hint, if any is available.
  */
 export class HintRequest extends
-    BaseRequest<Credential, CredentialHintOptions|undefined> {
+    BaseRequest<Credential|null, CredentialHintOptions|undefined> {
   /**
    * Starts the Hint Request flow.
    */

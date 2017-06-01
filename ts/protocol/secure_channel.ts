@@ -49,7 +49,7 @@ export class SecureChannel {
       connectionNonce: string,
       connectionNonceHash: string,
       timeoutMs?: number): Promise<SecureChannel> {
-    timeoutMs = (timeoutMs > 0) ? timeoutMs : DEFAULT_TIMEOUT_MS;
+    timeoutMs = (timeoutMs && timeoutMs > 0) ? timeoutMs : DEFAULT_TIMEOUT_MS;
 
     let timeout = timeoutPromise<SecureChannel>(
         OpenYoloError.establishSecureChannelTimeout(), timeoutMs);
@@ -319,8 +319,8 @@ export class SecureChannel {
   dispose(): void {
     this.debugLog('disposing channel');
     this.port.removeEventListener('message', this.mainListener);
-    this.listeners = null;
-    this.fallbackListeners = null;
+    this.listeners = [];
+    this.fallbackListeners = [];
     this.port.close();
   }
 }

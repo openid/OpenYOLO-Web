@@ -211,7 +211,7 @@ describe('SecureChannel', () => {
 
   describe('providerConnect', () => {
     let id = '123';
-    let hashId: string|null = null;
+    let hashId: string = '';
     let origin = 'https://example.com';
     let permittedOrigins = [origin];
     let port: MessagePort;

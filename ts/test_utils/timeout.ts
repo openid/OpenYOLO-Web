@@ -28,12 +28,12 @@ export class JasmineTimeoutManager {
   private lastTimeout: number;
   private timeout: number;
 
-  constructor(desiredTimeout?: number) {
+  constructor(desiredTimeout: number = DEFAULT_TIMEOUT) {
     this.timeout =
         this.isValidTimeout(desiredTimeout) ? desiredTimeout : DEFAULT_TIMEOUT;
   }
 
-  install(newTimeout?: number) {
+  install(newTimeout: number = DEFAULT_TIMEOUT) {
     this.lastTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
     jasmine.DEFAULT_TIMEOUT_INTERVAL =
         this.isValidTimeout(newTimeout) ? newTimeout : this.timeout;

@@ -24,10 +24,11 @@ describe('NavigatorCredentials', () => {
     // Only test browsers with navigator.credentials implemented (Chrome).
     return;
   }
+  let cmApi = navigator.credentials!;
   let navigatorCredentials: NavigatorCredentials;
 
   beforeEach(() => {
-    navigatorCredentials = new NavigatorCredentials();
+    navigatorCredentials = new NavigatorCredentials(cmApi);
   });
 
   describe('retrieve', () => {
@@ -40,19 +41,17 @@ describe('NavigatorCredentials', () => {
         type: 'federated',
         id: 'user@example.com'
       };
-      spyOn(navigator.credentials, 'get')
-          .and.returnValue(Promise.resolve(federatedCredential));
+      spyOn(cmApi, 'get').and.returnValue(Promise.resolve(federatedCredential));
       let options: OpenYoloCredentialRequestOptions = {
         supportedAuthMethods: [AUTHENTICATION_METHODS.GOOGLE]
       };
       navigatorCredentials.retrieve(options).then(credential => {
-        expect(navigator.credentials.get)
-            .toHaveBeenCalledWith(jasmine.objectContaining({
-              password: false,
-              federated:
-                  {providers: [AUTHENTICATION_METHODS.GOOGLE], protocols: []},
-              unmediated: false
-            }));
+        expect(cmApi.get).toHaveBeenCalledWith(jasmine.objectContaining({
+          password: false,
+          federated:
+              {providers: [AUTHENTICATION_METHODS.GOOGLE], protocols: []},
+          unmediated: false
+        }));
         expect(credential).toEqual({
           id: 'user@example.com',
           authMethod: AUTHENTICATION_METHODS.GOOGLE,
@@ -74,18 +73,16 @@ describe('NavigatorCredentials', () => {
         passwordName: 'password',
         additionalData: null
       };
-      spyOn(navigator.credentials, 'get')
-          .and.returnValue(Promise.resolve(passwordCredential));
+      spyOn(cmApi, 'get').and.returnValue(Promise.resolve(passwordCredential));
       let options: OpenYoloCredentialRequestOptions = {
         supportedAuthMethods: [AUTHENTICATION_METHODS.ID_AND_PASSWORD]
       };
       navigatorCredentials.retrieve(options).then(credential => {
-        expect(navigator.credentials.get)
-            .toHaveBeenCalledWith(jasmine.objectContaining({
-              password: true,
-              federated: {providers: [], protocols: []},
-              unmediated: false
-            }));
+        expect(cmApi.get).toHaveBeenCalledWith(jasmine.objectContaining({
+          password: true,
+          federated: {providers: [], protocols: []},
+          unmediated: false
+        }));
         expect(credential).toEqual(jasmine.objectContaining({
           id: 'user@example.com',
           authMethod: AUTHENTICATION_METHODS.ID_AND_PASSWORD,
@@ -98,7 +95,7 @@ describe('NavigatorCredentials', () => {
     });
 
     it('returns nothing', done => {
-      spyOn(navigator.credentials, 'get').and.returnValue(Promise.resolve());
+      spyOn(cmApi, 'get').and.returnValue(Promise.resolve());
       navigatorCredentials.retrieve().then(credential => {
         expect(credential).toBeUndefined();
         done();
@@ -107,8 +104,7 @@ describe('NavigatorCredentials', () => {
 
     it('fails', done => {
       let expectedError = new Error('ERROR!');
-      spyOn(navigator.credentials, 'get')
-          .and.returnValue(Promise.reject(expectedError));
+      spyOn(cmApi, 'get').and.returnValue(Promise.reject(expectedError));
       navigatorCredentials.retrieve().then(
           () => {
             done.fail('Unexpected success!');
@@ -131,7 +127,7 @@ describe('NavigatorCredentials', () => {
         password: 'password'
       };
       let fakeSavedCred = {};
-      spyOn(navigator.credentials, 'store').and.callFake((cred: any) => {
+      spyOn(cmApi, 'store').and.callFake((cred: any) => {
         expect(cred instanceof PasswordCredential).toBe(true);
         expect(cred.id).toEqual('user@example.com');
         expect(cred.name).toEqual('Name');
@@ -150,7 +146,7 @@ describe('NavigatorCredentials', () => {
         proxiedAuthRequired: false  // Does not matter but required.
       };
       let fakeSavedCred = {};
-      spyOn(navigator.credentials, 'store').and.callFake((cred: any) => {
+      spyOn(cmApi, 'store').and.callFake((cred: any) => {
         expect(cred instanceof FederatedCredential).toBe(true);
         expect(cred.id).toEqual('user@example.com');
         expect(cred.provider).toEqual(AUTHENTICATION_METHODS.GOOGLE);
@@ -163,8 +159,7 @@ describe('NavigatorCredentials', () => {
 
     it('fails', done => {
       let expectedError = new Error('ERROR!');
-      spyOn(navigator.credentials, 'store')
-          .and.returnValue(Promise.reject(expectedError));
+      spyOn(cmApi, 'store').and.returnValue(Promise.reject(expectedError));
       let credential: OpenYoloCredential = {
         id: 'user@example.com',
         authMethod: AUTHENTICATION_METHODS.GOOGLE,
@@ -214,7 +209,7 @@ describe('NavigatorCredentials', () => {
           return Promise.resolve('Signed in!');
         }
       };
-      let getSpy = spyOn(navigator.credentials, 'get');
+      let getSpy = spyOn(cmApi, 'get');
       getSpy.and.returnValue(Promise.resolve(otherCredential));
       // We cannot test for the value of credentials passed to fetch method, as
       // once the Request object is created (with the `credentials` param), its
@@ -239,8 +234,7 @@ describe('NavigatorCredentials', () => {
 
     it('fetches return status different than 200 reject the promise', done => {
       let expectedResponse = {status: 400};
-      spyOn(navigator.credentials, 'get')
-          .and.returnValue(Promise.resolve(credential));
+      spyOn(cmApi, 'get').and.returnValue(Promise.resolve(credential));
       spyOn(window, 'fetch').and.returnValue(Promise.resolve(expectedResponse));
       navigatorCredentials.retrieve().then(cred => {
         navigatorCredentials.proxyLogin(cred).then(

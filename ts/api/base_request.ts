@@ -141,15 +141,12 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
       handler: RpcMessageHandler<T>): void {
     let filter =
         (data: RpcMessageDataTypes[T], t: T, e: MessageEvent): boolean => {
-          // TODO: a TS compiler bug appears to be causing intermittent problems
-          // with resolving RpcMessageDataTypes[T]. Cast to any until this
-          // is resolved
-          let anyData = (data as any);
-          if (anyData.id !== this.id) {
+          if (data.id !== this.id) {
             return false;
           }
 
-          handler(anyData.args, type, e);
+          handler(data.args, type, e);
+          return true;
         };
     filter.toString = () => `${type} message handler`;
     this.listenerKeys.push(this.channel.listen(type, filter));

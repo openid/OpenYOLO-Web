@@ -24,7 +24,7 @@ import {BaseRequest} from './base_request';
  * the user selects a credential, if any is available.
  */
 export class CredentialRequest extends
-    BaseRequest<Credential, CredentialRequestOptions|undefined> {
+    BaseRequest<Credential|null, CredentialRequestOptions|undefined> {
   /**
    * Starts the Credential Request flow.
    */
@@ -43,7 +43,7 @@ export class CredentialRequest extends
   /**
    * Handles the initial response from a credential request.
    */
-  private handleResult(credential: Credential): void {
+  private handleResult(credential: Credential|null): void {
     this.clearTimeouts();
     this.resolve(credential);
     this.dispose();

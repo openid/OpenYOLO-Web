@@ -49,7 +49,7 @@ describe('verify', () => {
       let event = createMessageEvent(
           verifyPingMessage('123'),
           'https://provider.example.com',
-          null,
+          undefined,
           providerFrame);
       rootFrame.dispatchEvent(event);
       expect(providerFrameMessageSpy)
@@ -62,7 +62,7 @@ describe('verify', () => {
       let event = createMessageEvent(
           verifyPingMessage('123'),
           'https://provider.example.com',
-          null,
+          undefined,
           providerFrame);
       rootFrame.dispatchEvent(event);
       rootFrame.dispatchEvent(event);

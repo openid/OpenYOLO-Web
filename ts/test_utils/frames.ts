@@ -34,7 +34,7 @@ export class MockWindow implements WindowLike {
 
   postMessage(data: any, targetOrigin: string, transfer?: MessagePort[]): void {
     this.postMessageFromOrigin(
-        data, transfer, 'https://default.mockwindoworigin.com', this);
+        data, transfer || null, 'https://default.mockwindoworigin.com', this);
   };
 
   postMessageFromOrigin(
@@ -42,7 +42,8 @@ export class MockWindow implements WindowLike {
       ports: MessagePort[]|null,
       sourceOrigin: string,
       sourceWindow: WindowLike) {
-    let event = createMessageEvent(data, sourceOrigin, ports, sourceWindow);
+    let event = createMessageEvent(
+        data, sourceOrigin, ports || undefined, sourceWindow);
     this.dispatchEvent(event);
   }
 
