@@ -529,15 +529,10 @@ describe('ProviderFrame', () => {
       // message, otherwise a pick cancel message is expected.
       function expectPickFromHints(
           expectedHints: Credential[],
-          selection?: Credential,
-          expectedResult?: msg.RpcMessage<'credential'>|
-          msg.RpcMessage<'none'>) {
+          selection: Credential|null,
+          expectedResult: msg.RpcMessage<'credential'>|msg.RpcMessage<'none'>) {
         let promiseResolver = new PromiseResolver<void>();
         let expectFinalResult = false;
-
-        if (!expectedResult) {
-          expectedResult = msg.noneAvailableMessage(requestId);
-        }
 
         (interactionProvider.showHintPicker as jasmine.Spy)
             .and.callFake(
@@ -643,7 +638,9 @@ describe('ProviderFrame', () => {
            };
 
            credentialDataProvider.credentials = [alicePwdCred, aliceFbCred];
-           expectPickFromHints([aliceFbCred]).then(done);
+           expectPickFromHints(
+               [aliceFbCred], null, msg.noneAvailableMessage(requestId))
+               .then(done);
            clientChannel.send(msg.hintMessage(requestId, pwdOrFbHintOptions));
          });
 
@@ -656,7 +653,9 @@ describe('ProviderFrame', () => {
         };
 
         credentialDataProvider.credentials = [deliaFbCred, deliaFbCredWithName];
-        expectPickFromHints([deliaFbCredWithName]).then(done);
+        expectPickFromHints(
+            [deliaFbCredWithName], null, msg.noneAvailableMessage(requestId))
+            .then(done);
         clientChannel.send(msg.hintMessage(requestId, pwdOrFbHintOptions));
       });
 
@@ -671,7 +670,11 @@ describe('ProviderFrame', () => {
 
            credentialDataProvider.credentials =
                [deliaFbCred, deliaFbCredWithPicture];
-           expectPickFromHints([deliaFbCredWithPicture]).then(done);
+           expectPickFromHints(
+               [deliaFbCredWithPicture],
+               null,
+               msg.noneAvailableMessage(requestId))
+               .then(done);
            clientChannel.send(msg.hintMessage(requestId, pwdOrFbHintOptions));
          });
 
@@ -691,7 +694,11 @@ describe('ProviderFrame', () => {
           bobPwdCred
         ];
 
-        expectPickFromHints([bobPwdCred, deliaFbCred, alicePwdCred]).then(done);
+        expectPickFromHints(
+            [bobPwdCred, deliaFbCred, alicePwdCred],
+            null,
+            msg.noneAvailableMessage(requestId))
+            .then(done);
         clientChannel.send(msg.hintMessage(requestId, pwdOrFbHintOptions));
       });
     });
@@ -713,10 +720,12 @@ class TestAffiliationProvider implements AffiliationProvider {
 class TestClientConfigurationProvider implements ClientConfigurationProvider {
   configMap: {[key: string]: ClientConfiguration} = {};
 
-  async getConfiguration(authDomain: string): Promise<ClientConfiguration> {
+  async getConfiguration(authDomain: string):
+      Promise<ClientConfiguration|null> {
     if (authDomain in this.configMap) {
       return this.configMap[authDomain];
     }
+    return null;
   }
 }
 
@@ -797,7 +806,7 @@ class TestCredentialDataProvider implements CredentialDataProvider {
    * Deletes the provided credential from the store. If delete is not
    * permitted for this credential, the returned promise will be rejected.
    */
-  deleteCredential(credential: Credential): Promise<void> {
+  async deleteCredential(credential: Credential): Promise<void> {
     let existing = this.credentials.findIndex(
         (c) => c.authDomain === credential.authDomain &&
             c.id === credential.id && c.authMethod === credential.authMethod);

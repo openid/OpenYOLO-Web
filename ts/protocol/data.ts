@@ -141,8 +141,6 @@ export interface TokenProvider {
    * token provider.
    */
   clientId?: string;
-
-  [param: string]: string;
 }
 
 /**

@@ -125,7 +125,7 @@ describe('validators', () => {
       Object.keys(AUTHENTICATION_METHODS).reduce((result, authMethodKey) => {
         result.push([AUTHENTICATION_METHODS[authMethodKey], true]);
         return result;
-      }, []);
+      }, [] as ValidatorTest[]);
 
   validatorSuiteArr(
       'defined authentication methods',

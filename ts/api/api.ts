@@ -137,8 +137,8 @@ const DEFAULT_TIMEOUTS: {[key: string]: number} = {
 /**
  * Sanitzes the input for renderMode, selecting the default one if invalid.
  */
-function verifyOrDetectRenderMode(renderMode?: RenderMode): RenderMode {
-  if (renderMode in RENDER_MODES) {
+function verifyOrDetectRenderMode(renderMode: RenderMode|null): RenderMode {
+  if (renderMode && renderMode in RENDER_MODES) {
     return renderMode;
   }
   const isNested = window.parent !== window;
@@ -160,7 +160,7 @@ function verifyOrDetectRenderMode(renderMode?: RenderMode): RenderMode {
 class OpenYoloApiImpl implements OpenYoloApi {
   static async create(
       providerUrlBase: string,
-      renderMode?: RenderMode,
+      renderMode: RenderMode|null,
       areTimeoutsDisabled?: boolean,
       preloadRequest?: PreloadRequest): Promise<OpenYoloApiImpl> {
     // Sanitize input.
@@ -196,7 +196,7 @@ class OpenYoloApiImpl implements OpenYoloApi {
         });
 
     return new OpenYoloApiImpl(
-        frameManager, channel, wrapBrowser, areTimeoutsDisabled);
+        frameManager, channel, wrapBrowser, !!areTimeoutsDisabled);
   }
 
   private disposed: boolean = false;
@@ -219,7 +219,7 @@ class OpenYoloApiImpl implements OpenYoloApi {
     });
   }
 
-  async hint(options: CredentialHintOptions): Promise<Credential> {
+  async hint(options: CredentialHintOptions): Promise<Credential|null> {
     this.checkNotDisposed();
     const request = new HintRequest(this.frameManager, this.channel);
     const timeoutMs =
@@ -227,7 +227,7 @@ class OpenYoloApiImpl implements OpenYoloApi {
     return request.dispatch(options, timeoutMs);
   }
 
-  async retrieve(options: CredentialRequestOptions): Promise<Credential> {
+  async retrieve(options: CredentialRequestOptions): Promise<Credential|null> {
     this.checkNotDisposed();
     if (this.wrapBrowser) {
       return this.retrieveUsingBrowser(options);
@@ -243,7 +243,7 @@ class OpenYoloApiImpl implements OpenYoloApi {
   }
 
   private retrieveUsingChannel(options: CredentialRequestOptions):
-      Promise<Credential> {
+      Promise<Credential|null> {
     const request = new CredentialRequest(this.frameManager, this.channel);
     const timeoutMs = this.areTimeoutsDisabled ?
         undefined :
@@ -279,7 +279,6 @@ class OpenYoloApiImpl implements OpenYoloApi {
     } else {
       this.disableAutoSignInUsingChannel();
     }
-    return null;
   }
 
   isDisposed(): boolean {
@@ -311,9 +310,9 @@ class OpenYoloApiImpl implements OpenYoloApi {
   async proxyLogin(credential: Credential): Promise<ProxyLoginResponse> {
     if (this.wrapBrowser) {
       this.proxyLoginUsingBrowser();
-    } else {
-      return this.proxyLoginUsingChannel(credential);
     }
+
+    return this.proxyLoginUsingChannel(credential);
   }
 
   private async proxyLoginUsingBrowser() {
@@ -330,7 +329,7 @@ class OpenYoloApiImpl implements OpenYoloApi {
 
 export interface OnDemandOpenYoloApi extends OpenYoloApi {
   setProviderUrlBase(providerUrlBase: string): void;
-  setRenderMode(renderMode: string): void;
+  setRenderMode(renderMode: RenderMode|null): void;
   setTimeoutsEnabled(enable: boolean): void;
   reset(): void;
 }
@@ -343,7 +342,7 @@ export interface OnDemandOpenYoloApi extends OpenYoloApi {
  */
 class InitializeOnDemandApi implements OnDemandOpenYoloApi {
   private providerUrlBase: string = 'https://provider.openyolo.org';
-  private implPromise: Promise<OpenYoloApiImpl> = null;
+  private implPromise: Promise<OpenYoloApiImpl>|null = null;
   private renderMode: RenderMode|null = null;
   private areTimeoutsDisabled: boolean = false;
 
@@ -395,12 +394,12 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
     return (await this.init()).hintsAvailable(options);
   }
 
-  async hint(options: CredentialHintOptions): Promise<Credential> {
+  async hint(options: CredentialHintOptions): Promise<Credential|null> {
     return (await this.init({type: PRELOAD_REQUEST.hint, options}))
         .hint(options);
   }
 
-  async retrieve(options: CredentialRequestOptions): Promise<Credential> {
+  async retrieve(options: CredentialRequestOptions): Promise<Credential|null> {
     return (await this.init({type: PRELOAD_REQUEST.retrieve, options}))
         .retrieve(options);
   }

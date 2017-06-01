@@ -43,7 +43,7 @@ function convertRequestOptions(options?: OpenYoloCredentialRequestOptions):
     authMethods.splice(passwordIndex, 1);
   }
   // Pass in the remaining providers options, if any.
-  convertedOptions.federated.providers = authMethods;
+  convertedOptions.federated!.providers = authMethods;
   return convertedOptions;
 }
 
@@ -59,8 +59,8 @@ function convertCredentialToOpenYolo(credential: PasswordCredential|
   let convertedCredential: OpenYoloCredential = {
     id: credential.id,
     authMethod: authMethod,
-    displayName: credential.name,
-    profilePicture: credential.iconURL,
+    displayName: credential.name || undefined,
+    profilePicture: credential.iconURL || undefined,
     // navigator.credentials do not pass the password directly, so proxyLogin
     // has to be used.
     proxiedAuthRequired: credential.type === 'password'
@@ -81,7 +81,7 @@ function convertCredentialFromOpenYolo(credential: OpenYoloCredential):
       name: credential.displayName,
       iconURL: credential.profilePicture,
       password: credential.password
-    });
+    } as PasswordCredentialData);
     return convertedCredential;
   } else {
     let convertedCredential = new FederatedCredential({
@@ -141,14 +141,16 @@ class CredentialsMap {
 export class NavigatorCredentials implements OpenYoloApi {
   private credentialsMap: CredentialsMap = new CredentialsMap();
 
+  constructor(private cmApi: CredentialsContainer) {}
+
   disableAutoSignIn(): Promise<void> {
-    return navigator.credentials.requireUserMediation();
+    return this.cmApi.requireUserMediation();
   }
 
   retrieve(options?: OpenYoloCredentialRequestOptions):
       Promise<OpenYoloCredential> {
     let convertedOptions = convertRequestOptions(options);
-    return navigator.credentials.get(convertedOptions).then((cred) => {
+    return this.cmApi.get(convertedOptions).then((cred) => {
       if (!cred) return;
       this.credentialsMap.insert(cred);
       return convertCredentialToOpenYolo(
@@ -158,7 +160,7 @@ export class NavigatorCredentials implements OpenYoloApi {
 
   save(credential: OpenYoloCredential): Promise<void> {
     let convertedCredential = convertCredentialFromOpenYolo(credential);
-    return navigator.credentials.store(convertedCredential).then((cred) => {
+    return this.cmApi.store(convertedCredential).then((cred) => {
       // Return nothing as per OpenYolo specs.
       return;
     });

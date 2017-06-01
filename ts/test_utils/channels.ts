@@ -75,7 +75,9 @@ export class FakeMessagePort implements MessagePort {
       type: string,
       listener?: EventListenerOrEventListenerObject,
       useCapture?: boolean): void {
-    this.listeners.remove(type, listener);
+    if (listener) {
+      this.listeners.remove(type, listener);
+    }
   }
 }
 

@@ -45,7 +45,6 @@ export class ProviderFrame {
    */
   static async initialize(providerConfig: ProviderConfiguration):
       Promise<ProviderFrame> {
-    let secureChannel: SecureChannel|null;
     try {
       // fetch the client configuration, and ensure that the API is explicitly
       // enabled
@@ -76,7 +75,7 @@ export class ProviderFrame {
       }
 
       // establish a communication channel with the client
-      secureChannel = await SecureChannel.providerConnect(
+      let secureChannel = await SecureChannel.providerConnect(
           providerConfig.window,
           [providerConfig.clientAuthDomain],
           providerConfig.clientNonce);
@@ -100,10 +99,6 @@ export class ProviderFrame {
       sendMessage(
           providerConfig.window.parent,
           channelErrorMessage(OpenYoloError.providerInitFailed()));
-
-      if (secureChannel) {
-        secureChannel.dispose();
-      }
 
       throw err;
     }
@@ -170,8 +165,10 @@ export class ProviderFrame {
         msg.RPC_MESSAGE_TYPES.proxy,
         (m) => this.handleProxyLoginRequest(m.id, m.args));
 
-    this.clientChannel.addFallbackListener(
-        (ev) => this.handleUnknownMessage(ev));
+    this.clientChannel.addFallbackListener((ev) => {
+      this.handleUnknownMessage(ev);
+      return false;
+    });
   }
 
   private addRpcListener<T extends msg.RpcMessageType>(
@@ -356,7 +353,7 @@ export class ProviderFrame {
         msg.errorMessage(id, OpenYoloError.unknownRequest(type)));
   }
 
-  private handleUnknownMessage(ev: MessageEvent): boolean {
+  private handleUnknownMessage(ev: MessageEvent) {
     if (!isOpenYoloMessageFormat(ev.data)) {
       console.warn(
           'Message with invalid format received on secure channel, ' +
