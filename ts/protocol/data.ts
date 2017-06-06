@@ -141,6 +141,11 @@ export interface TokenProvider {
    * token provider.
    */
   clientId?: string;
+
+  /**
+   * The optional nonce value to include in any generated ID token.
+   */
+  nonce?: string;
 }
 
 /**

@@ -162,7 +162,7 @@ export class OpenYoloProviderComponent implements OnInit, OnDestroy,
 
   async showAutoSignIn(
       credential: Credential,
-      displayCallbacks: DisplayCallbacks): Promise<undefined> {
+      displayCallbacks: DisplayCallbacks): Promise<any> {
     return;
   }
 

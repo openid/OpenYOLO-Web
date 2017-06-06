@@ -18,6 +18,28 @@
     </md-button-toggle-group>
   </section>
 
+  <div class="id-token-options">
+    <header>Supported token providers:</header>
+    <md-checkbox [(ngModel)]="requestGoogleIdToken" [disabled]="requestInProgress">Google</md-checkbox>
+    <md-input-container>
+      <input mdInput placeholder="Google ID token nonce" [(value)]="googleIdTokenNonce">
+    </md-input-container>
+
+    <md-checkbox [(ngModel)]="requestCustomIdToken" [disabled]="requestInProgress">Custom:</md-checkbox>
+
+    <div class="custom-id-token-options" *ngIf="requestCustomIdToken">
+      <md-input-container>
+        <input mdInput type="text" placeholder="Custom Token Provider URI" [(ngModel)]="customProviderUri">
+      </md-input-container>
+      <md-input-container>
+        <input mdInput type="text" placeholder="Client ID" [(ngModel)]="customProviderClientId">
+      </md-input-container>
+      <md-input-container>
+        <input mdInput type="text" placeholder="Nonce" [(ngModel)]="customProviderNonce">
+      </md-input-container>
+    </div>
+  </div>
+
   <div class="action-container">
     <button md-raised-button color="accent" (click)="sendAvailableRequest()" [disabled]="requestInProgress">
     Available?
@@ -64,6 +86,9 @@
           <th>AD</th>
           <td>{{credential.authDomain}}</td>
         </tr>
+        <tr>
+          <th>ID token</th>
+          <td [innerHTML]="decodedIdToken"></td>
       </table>
     </div>
   </div>

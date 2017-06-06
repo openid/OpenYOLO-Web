@@ -168,7 +168,7 @@ export interface InteractionProvider {
    * resolve, as no action is required.
    */
   showAutoSignIn(credential: Credential, displayCallbacks: DisplayCallbacks):
-      Promise<undefined>;
+      Promise<any>;
 
   /**
    * Requests the immediate tear down of any presently active UI.
