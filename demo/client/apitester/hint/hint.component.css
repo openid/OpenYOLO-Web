@@ -26,6 +26,26 @@
   background-color: #C5E1A5;
 }
 
+.id-token-options {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 32px;
+}
+
+.id-token-options header {
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.id-token-options md-input-container {
+  margin: 8px 0;
+}
+
+.custom-id-token-options {
+  display: flex;
+  flex-direction: column;
+}
+
 .results {
   margin: 16px;
 }
@@ -58,6 +78,12 @@
 
 .results .credential-table {
   border: 1px solid #999;
+  max-width: 75vw;
+}
+
+.results .credential-table td {
+  max-width: 50vw;
+  overflow-wrap: break-word;
 }
 
 .results .credential-table th, .results .credential-table td {

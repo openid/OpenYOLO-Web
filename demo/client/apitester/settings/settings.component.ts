@@ -16,7 +16,7 @@
 
 import {Component} from '@angular/core';
 
-import {openyolo} from '../../../../ts/api/api';
+import {openyolo, RenderMode} from '../../../../ts/api/api';
 import {RENDER_MODES} from '../../../../ts/protocol/data';
 import {SettingsService} from '../app/settings.service';
 
@@ -45,7 +45,15 @@ export class SettingsComponent {
     this.settingsService.setProviderBaseUrl(this.providerUrl);
     this.settingsService.setRenderMode(this.renderMode);
     openyolo.setProviderUrlBase(this.providerUrl);
-    openyolo.setRenderMode(this.renderMode);
+    openyolo.setRenderMode(this.getRenderMode());
     openyolo.reset();
+  }
+
+  private getRenderMode(): RenderMode|null {
+    if (this.renderMode in RENDER_MODES) {
+      return (this.renderMode as RenderMode);
+    }
+
+    return null;
   }
 }
