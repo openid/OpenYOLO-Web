@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-import {AUTHENTICATION_METHODS, Credential as OpenYoloCredential, CredentialHintOptions, CredentialRequestOptions as OpenYoloCredentialRequestOptions, ProxyLoginResponse} from '../protocol/data';
-import {OpenYoloError} from '../protocol/errors';
+import { AUTHENTICATION_METHODS, Credential as OpenYoloCredential, CredentialHintOptions, CredentialRequestOptions as OpenYoloCredentialRequestOptions, ProxyLoginResponse } from '../protocol/data';
+import { OpenYoloError } from '../protocol/errors';
 
-import {OpenYoloApi} from './api';
+import { OpenYoloApi } from './api';
 
 /**
  * Converts Open Yolo request options to the navigator.credentials options.
  */
 function convertRequestOptions(options?: OpenYoloCredentialRequestOptions):
-    CredentialRequestOptions|undefined {
+  CredentialRequestOptions | undefined {
   if (!options) return;
 
   // Default options.
   let convertedOptions: CredentialRequestOptions = {
     password: false,
-    federated: {providers: [], protocols: []},
+    federated: { providers: [], protocols: [] },
     unmediated: false
   };
 
@@ -37,7 +37,7 @@ function convertRequestOptions(options?: OpenYoloCredentialRequestOptions):
   let authMethods = options.supportedAuthMethods.slice();
   // Parse the password auth method if present.
   let passwordIndex =
-      authMethods.indexOf(AUTHENTICATION_METHODS.ID_AND_PASSWORD);
+    authMethods.indexOf(AUTHENTICATION_METHODS.ID_AND_PASSWORD);
   if (passwordIndex !== -1) {
     convertedOptions.password = true;
     authMethods.splice(passwordIndex, 1);
@@ -50,11 +50,11 @@ function convertRequestOptions(options?: OpenYoloCredentialRequestOptions):
 /**
  * Convert navigator.credentials Credential to Open Yolo Credential.
  */
-function convertCredentialToOpenYolo(credential: PasswordCredential|
-                                     FederatedCredential): OpenYoloCredential {
+function convertCredentialToOpenYolo(credential: PasswordCredential |
+  FederatedCredential): OpenYoloCredential {
   let authMethod = credential.type === 'federated' ?
-      (credential as FederatedCredential).provider :
-      AUTHENTICATION_METHODS.ID_AND_PASSWORD;
+    (credential as FederatedCredential).provider :
+    AUTHENTICATION_METHODS.ID_AND_PASSWORD;
 
   let convertedCredential: OpenYoloCredential = {
     id: credential.id,
@@ -73,7 +73,7 @@ function convertCredentialToOpenYolo(credential: PasswordCredential|
  * Convert Open Yolo Credential to navigator.credentials Credential.
  */
 function convertCredentialFromOpenYolo(credential: OpenYoloCredential):
-    Credential {
+  Credential {
   if (credential.authMethod === AUTHENTICATION_METHODS.ID_AND_PASSWORD) {
     let convertedCredential = new PasswordCredential({
       id: credential.id,
@@ -100,7 +100,7 @@ function convertCredentialFromOpenYolo(credential: OpenYoloCredential):
  * be used.
  */
 class CredentialsMap {
-  private map: {[key: string]: Credential} = {};
+  private map: { [key: string]: Credential } = {};
 
   /**
    * Inserts a Credential in the map. Uses `id::type` as uniqueness key.
@@ -126,7 +126,7 @@ class CredentialsMap {
    */
   static getKeyFromOpenYoloCredential(credential: OpenYoloCredential): string {
     let type =
-        credential.authMethod === AUTHENTICATION_METHODS.ID_AND_PASSWORD ?
+      credential.authMethod === AUTHENTICATION_METHODS.ID_AND_PASSWORD ?
         'password' :
         'federated';
     return `${credential.id}::${type}`;
@@ -141,20 +141,20 @@ class CredentialsMap {
 export class NavigatorCredentials implements OpenYoloApi {
   private credentialsMap: CredentialsMap = new CredentialsMap();
 
-  constructor(private cmApi: CredentialsContainer) {}
+  constructor(private cmApi: CredentialsContainer) { }
 
   disableAutoSignIn(): Promise<void> {
     return this.cmApi.requireUserMediation();
   }
 
   retrieve(options?: OpenYoloCredentialRequestOptions):
-      Promise<OpenYoloCredential> {
+    Promise<OpenYoloCredential> {
     let convertedOptions = convertRequestOptions(options);
     return this.cmApi.get(convertedOptions).then((cred) => {
       if (!cred) return;
       this.credentialsMap.insert(cred);
       return convertCredentialToOpenYolo(
-          cred as FederatedCredential | PasswordCredential);
+        cred as FederatedCredential | PasswordCredential);
     });
   }
 
@@ -175,23 +175,27 @@ export class NavigatorCredentials implements OpenYoloApi {
     return Promise.resolve(false);
   }
 
+  cancel() {
+    // does nothing.
+  }
+
   proxyLogin(credential: OpenYoloCredential): Promise<ProxyLoginResponse> {
     // TODO(tch): Fetch the URL from configuration.
     let url = `${window.location.protocol}//${window.location.host}/signin`;
     const cred = this.credentialsMap.retrieve(
-        CredentialsMap.getKeyFromOpenYoloCredential(credential));
+      CredentialsMap.getKeyFromOpenYoloCredential(credential));
     if (!cred || cred.type !== 'password') {
       return Promise.reject(new Error('Invalid credential!'));
     }
 
     return new Promise<ProxyLoginResponse>((resolve, reject) => {
-      fetch(url, {method: 'POST', credentials: cred}).then(resp => {
+      fetch(url, { method: 'POST', credentials: cred }).then(resp => {
         if (resp.status !== 200) {
           reject(
-              OpenYoloError.requestFailed(`Error: status code ${resp.status}`));
+            OpenYoloError.requestFailed(`Error: status code ${resp.status}`));
         }
         resp.text().then(responseText => {
-          resolve({statusCode: resp.status, responseText: responseText});
+          resolve({ statusCode: resp.status, responseText: responseText });
         });
       });
     });

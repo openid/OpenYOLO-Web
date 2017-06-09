@@ -14,25 +14,26 @@
  * limitations under the License.
  */
 
-import {Credential, CredentialHintOptions, CredentialRequestOptions, ProxyLoginResponse} from '../protocol/data';
-import {RENDER_MODES, RenderMode} from '../protocol/data';
-import {OpenYoloError} from '../protocol/errors';
-import {PRELOAD_REQUEST, PreloadRequest} from '../protocol/preload_request';
-import {SecureChannel} from '../protocol/secure_channel';
-import {generateId, sha256} from '../protocol/utils';
+import { Credential, CredentialHintOptions, CredentialRequestOptions, ProxyLoginResponse } from '../protocol/data';
+import { RENDER_MODES, RenderMode } from '../protocol/data';
+import { OpenYoloError } from '../protocol/errors';
+import { PRELOAD_REQUEST, PreloadRequest } from '../protocol/preload_request';
+import { SecureChannel } from '../protocol/secure_channel';
+import { generateId, sha256 } from '../protocol/utils';
 
-import {CredentialRequest} from './credential_request';
-import {CredentialSave} from './credential_save';
-import {HintAvailableRequest} from './hint_available_request';
-import {HintRequest} from './hint_request';
-import {ProviderFrameElement} from './provider_frame_elem';
-import {ProxyLogin} from './proxy_login';
-import {respondToHandshake} from './verify';
-import {WrapBrowserRequest} from './wrap_browser_request';
+import { BaseRequest } from './base_request';
+import { CredentialRequest } from './credential_request';
+import { CredentialSave } from './credential_save';
+import { HintAvailableRequest } from './hint_available_request';
+import { HintRequest } from './hint_request';
+import { ProviderFrameElement } from './provider_frame_elem';
+import { ProxyLogin } from './proxy_login';
+import { respondToHandshake } from './verify';
+import { WrapBrowserRequest } from './wrap_browser_request';
 
 // re-export all the data types
 export * from '../protocol/data';
-export {OpenYoloError, ERROR_TYPES} from '../protocol/errors';
+export { OpenYoloError, ERROR_TYPES } from '../protocol/errors';
 
 const MOBILE_USER_AGENT_REGEX = /android|iphone|ipod|iemobile/i;
 
@@ -120,12 +121,17 @@ export interface OpenYoloApi {
    *    A promise for the response data from the authentication system.
    */
   proxyLogin(credential: Credential): Promise<ProxyLoginResponse>;
+
+  /**
+   * Cancels a pending request.
+   */
+  cancel(): void;
 }
 
 /**
  * Defines the different timeouts for every request.
  */
-const DEFAULT_TIMEOUTS: {[key: string]: number} = {
+const DEFAULT_TIMEOUTS: { [key: string]: number } = {
   credentialRequest: 3000,
   credentialSave: 3000,
   hintAvailableRequest: 1000,
@@ -137,7 +143,7 @@ const DEFAULT_TIMEOUTS: {[key: string]: number} = {
 /**
  * Sanitzes the input for renderMode, selecting the default one if invalid.
  */
-function verifyOrDetectRenderMode(renderMode: RenderMode|null): RenderMode {
+function verifyOrDetectRenderMode(renderMode: RenderMode | null): RenderMode {
   if (renderMode && renderMode in RENDER_MODES) {
     return renderMode;
   }
@@ -159,75 +165,78 @@ function verifyOrDetectRenderMode(renderMode: RenderMode|null): RenderMode {
  */
 class OpenYoloApiImpl implements OpenYoloApi {
   static async create(
-      providerUrlBase: string,
-      renderMode: RenderMode|null,
-      areTimeoutsDisabled?: boolean,
-      preloadRequest?: PreloadRequest): Promise<OpenYoloApiImpl> {
+    providerUrlBase: string,
+    renderMode: RenderMode | null,
+    areTimeoutsDisabled?: boolean,
+    preloadRequest?: PreloadRequest): Promise<OpenYoloApiImpl> {
     // Sanitize input.
     renderMode = verifyOrDetectRenderMode(renderMode);
 
     const instanceId = generateId();
     const instanceIdHash = await sha256(instanceId);
     const frameManager = new ProviderFrameElement(
-        document,
-        instanceIdHash,
-        window.location.origin,
-        renderMode,
-        providerUrlBase,
-        preloadRequest);
+      document,
+      instanceIdHash,
+      window.location.origin,
+      renderMode,
+      providerUrlBase,
+      preloadRequest);
 
-    let channel: SecureChannel|null = null;
+    let channel: SecureChannel | null = null;
     if (areTimeoutsDisabled) {
       channel = await SecureChannel.clientConnectNoTimeout(
-          window, frameManager.getContentWindow(), instanceId, instanceIdHash);
+        window, frameManager.getContentWindow(), instanceId, instanceIdHash);
     } else {
       channel = await SecureChannel.clientConnect(
-          window, frameManager.getContentWindow(), instanceId, instanceIdHash);
+        window, frameManager.getContentWindow(), instanceId, instanceIdHash);
     }
 
     // Check whether the client should wrap the browser's navigator.credentials.
     const request = new WrapBrowserRequest(frameManager, channel);
     const timeoutMs =
-        areTimeoutsDisabled ? undefined : DEFAULT_TIMEOUTS.wrapBrowserRequest;
+      areTimeoutsDisabled ? undefined : DEFAULT_TIMEOUTS.wrapBrowserRequest;
     const wrapBrowser =
-        await request.dispatch(undefined, timeoutMs).catch((error) => {
-          // Ignore errors.
-          return false;
-        });
+      await request.dispatch(undefined, timeoutMs).catch((error) => {
+        // Ignore errors.
+        return false;
+      });
 
     return new OpenYoloApiImpl(
-        frameManager, channel, wrapBrowser, !!areTimeoutsDisabled);
+      frameManager, channel, wrapBrowser, !!areTimeoutsDisabled);
   }
 
+  private currentRequest: BaseRequest<any, any> | null = null;
   private disposed: boolean = false;
 
   constructor(
-      private frameManager: ProviderFrameElement,
-      private channel: SecureChannel,
-      private wrapBrowser: boolean,
-      private areTimeoutsDisabled: boolean) {}
+    private frameManager: ProviderFrameElement,
+    private channel: SecureChannel,
+    private wrapBrowser: boolean,
+    private areTimeoutsDisabled: boolean) {}
 
   async hintsAvailable(options: CredentialHintOptions): Promise<boolean> {
     this.checkNotDisposed();
     const request = new HintAvailableRequest(this.frameManager, this.channel);
+    this.currentRequest = request;
     const timeoutMs = this.areTimeoutsDisabled ?
-        undefined :
-        DEFAULT_TIMEOUTS.hintAvailableRequest;
+      undefined :
+      DEFAULT_TIMEOUTS.hintAvailableRequest;
     return request.dispatch(options, timeoutMs).catch((error) => {
       // Ignore errors.
       return false;
     });
   }
 
-  async hint(options: CredentialHintOptions): Promise<Credential|null> {
+  async hint(options: CredentialHintOptions): Promise<Credential | null> {
     this.checkNotDisposed();
     const request = new HintRequest(this.frameManager, this.channel);
+    this.currentRequest = request;
     const timeoutMs =
-        this.areTimeoutsDisabled ? undefined : DEFAULT_TIMEOUTS.hintRequest;
+      this.areTimeoutsDisabled ? undefined : DEFAULT_TIMEOUTS.hintRequest;
     return request.dispatch(options, timeoutMs);
   }
 
-  async retrieve(options: CredentialRequestOptions): Promise<Credential|null> {
+  async retrieve(options: CredentialRequestOptions): Promise<Credential | null> {
     this.checkNotDisposed();
     if (this.wrapBrowser) {
       return this.retrieveUsingBrowser(options);
@@ -237,17 +246,18 @@ class OpenYoloApiImpl implements OpenYoloApi {
   }
 
   private async retrieveUsingBrowser(options: CredentialRequestOptions):
-      Promise<Credential> {
+    Promise<Credential> {
     // TODO: implement
     return Promise.reject('not implemented');
   }
 
   private retrieveUsingChannel(options: CredentialRequestOptions):
-      Promise<Credential|null> {
+    Promise<Credential | null> {
     const request = new CredentialRequest(this.frameManager, this.channel);
+    this.currentRequest = request;
     const timeoutMs = this.areTimeoutsDisabled ?
-        undefined :
-        DEFAULT_TIMEOUTS.credentialRequest;
+      undefined :
+      DEFAULT_TIMEOUTS.credentialRequest;
     return request.dispatch(options, timeoutMs);
   }
 
@@ -267,8 +277,9 @@ class OpenYoloApiImpl implements OpenYoloApi {
 
   private async saveUsingChannel(credential: Credential) {
     let request = new CredentialSave(this.frameManager, this.channel);
+    this.currentRequest = request;
     const timeoutMs =
-        this.areTimeoutsDisabled ? undefined : DEFAULT_TIMEOUTS.credentialSave;
+      this.areTimeoutsDisabled ? undefined : DEFAULT_TIMEOUTS.credentialSave;
     return request.dispatch(credential, timeoutMs);
   }
 
@@ -322,14 +333,20 @@ class OpenYoloApiImpl implements OpenYoloApi {
   private async proxyLoginUsingChannel(credential: Credential) {
     let request = new ProxyLogin(this.frameManager, this.channel);
     const timeoutMs =
-        this.areTimeoutsDisabled ? undefined : DEFAULT_TIMEOUTS.proxyLogin;
+      this.areTimeoutsDisabled ? undefined : DEFAULT_TIMEOUTS.proxyLogin;
     return request.dispatch(credential, timeoutMs);
+  }
+
+  cancel() {
+    if (this.currentRequest) {
+      this.currentRequest.cancel();
+    }
   }
 }
 
 export interface OnDemandOpenYoloApi extends OpenYoloApi {
   setProviderUrlBase(providerUrlBase: string): void;
-  setRenderMode(renderMode: RenderMode|null): void;
+  setRenderMode(renderMode: RenderMode | null): void;
   setTimeoutsEnabled(enable: boolean): void;
   reset(): void;
 }
@@ -342,8 +359,8 @@ export interface OnDemandOpenYoloApi extends OpenYoloApi {
  */
 class InitializeOnDemandApi implements OnDemandOpenYoloApi {
   private providerUrlBase: string = 'https://provider.openyolo.org';
-  private implPromise: Promise<OpenYoloApiImpl>|null = null;
-  private renderMode: RenderMode|null = null;
+  private implPromise: Promise<OpenYoloApiImpl> | null = null;
+  private renderMode: RenderMode | null = null;
   private areTimeoutsDisabled: boolean = false;
 
   constructor() {
@@ -356,7 +373,7 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
     this.reset();
   }
 
-  setRenderMode(renderMode: RenderMode|null) {
+  setRenderMode(renderMode: RenderMode | null) {
     this.renderMode = renderMode;
     this.reset();
   }
@@ -382,10 +399,10 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
   private init(preloadRequest?: PreloadRequest) {
     if (!this.implPromise) {
       this.implPromise = OpenYoloApiImpl.create(
-          this.providerUrlBase,
-          this.renderMode,
-          this.areTimeoutsDisabled,
-          preloadRequest);
+        this.providerUrlBase,
+        this.renderMode,
+        this.areTimeoutsDisabled,
+        preloadRequest);
     }
     return this.implPromise;
   }
@@ -394,14 +411,14 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
     return (await this.init()).hintsAvailable(options);
   }
 
-  async hint(options: CredentialHintOptions): Promise<Credential|null> {
-    return (await this.init({type: PRELOAD_REQUEST.hint, options}))
-        .hint(options);
+  async hint(options: CredentialHintOptions): Promise<Credential | null> {
+    return (await this.init({ type: PRELOAD_REQUEST.hint, options }))
+      .hint(options);
   }
 
-  async retrieve(options: CredentialRequestOptions): Promise<Credential|null> {
-    return (await this.init({type: PRELOAD_REQUEST.retrieve, options}))
-        .retrieve(options);
+  async retrieve(options: CredentialRequestOptions): Promise<Credential | null> {
+    return (await this.init({ type: PRELOAD_REQUEST.retrieve, options }))
+      .retrieve(options);
   }
 
   async save(credential: Credential): Promise<void> {
@@ -415,6 +432,12 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
   async proxyLogin(credential: Credential): Promise<ProxyLoginResponse> {
     return (await this.init()).proxyLogin(credential);
   }
+
+  cancel() {
+    if (this.implPromise) {
+      this.implPromise.then((impl: OpenYoloApiImpl) => impl.cancel());
+    }
+  }
 }
 
 export const openyolo: OnDemandOpenYoloApi = new InitializeOnDemandApi();
@@ -423,18 +446,20 @@ export const openyolo: OnDemandOpenYoloApi = new InitializeOnDemandApi();
 const windowAsAny = window as any;
 windowAsAny['openyolo'] = openyolo;
 InitializeOnDemandApi.prototype['setProviderUrlBase'] =
-    InitializeOnDemandApi.prototype.setProviderUrlBase;
+  InitializeOnDemandApi.prototype.setProviderUrlBase;
 InitializeOnDemandApi.prototype['setRenderMode'] =
-    InitializeOnDemandApi.prototype.setRenderMode;
+  InitializeOnDemandApi.prototype.setRenderMode;
 InitializeOnDemandApi.prototype['setTimeoutsEnabled'] =
-    InitializeOnDemandApi.prototype.setTimeoutsEnabled;
+  InitializeOnDemandApi.prototype.setTimeoutsEnabled;
 InitializeOnDemandApi.prototype['hintsAvailable'] =
-    InitializeOnDemandApi.prototype.hintsAvailable;
+  InitializeOnDemandApi.prototype.hintsAvailable;
 InitializeOnDemandApi.prototype['hint'] = InitializeOnDemandApi.prototype.hint;
 InitializeOnDemandApi.prototype['retrieve'] =
-    InitializeOnDemandApi.prototype.retrieve;
+  InitializeOnDemandApi.prototype.retrieve;
 InitializeOnDemandApi.prototype['save'] = InitializeOnDemandApi.prototype.save;
 InitializeOnDemandApi.prototype['disableAutoSignIn'] =
-    InitializeOnDemandApi.prototype.disableAutoSignIn;
+  InitializeOnDemandApi.prototype.disableAutoSignIn;
 InitializeOnDemandApi.prototype['proxyLogin'] =
-    InitializeOnDemandApi.prototype.proxyLogin;
+  InitializeOnDemandApi.prototype.proxyLogin;
+InitializeOnDemandApi.prototype['cancel'] =
+  InitializeOnDemandApi.prototype.cancel;

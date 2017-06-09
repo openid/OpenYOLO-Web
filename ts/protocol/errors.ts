@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {map2Enum} from './enums';
+import { map2Enum } from './enums';
 
 export const ERROR_TYPES = map2Enum({
   ackTimeout: 'ackTimeout',
@@ -44,7 +44,7 @@ export type ErrorType = keyof typeof ERROR_TYPES;
 export interface OpenYoloErrorData {
   code: ErrorType;
   message: string;
-  info?: {[key: string]: string};
+  info?: { [key: string]: string };
 }
 
 export interface OpenYoloExtendedError extends Error {
@@ -59,9 +59,14 @@ export class OpenYoloError {
     });
   }
 
+  static operationCancelled() {
+    return OpenYoloError.createError(
+      { code: ERROR_TYPES.canceled, message: 'Canceled operation' });
+  }
+
   static canceled() {
     return OpenYoloError.createError(
-        {code: ERROR_TYPES.canceled, message: 'User canceled'});
+      { code: ERROR_TYPES.canceled, message: 'User canceled' });
   }
 
   static clientDisposed() {
@@ -73,7 +78,7 @@ export class OpenYoloError {
 
   static handshake(reason: string) {
     return OpenYoloError.createError(
-        {code: ERROR_TYPES.handshakeFailed, message: reason});
+      { code: ERROR_TYPES.handshakeFailed, message: reason });
   }
 
   static invalidCredential() {
@@ -92,7 +97,7 @@ export class OpenYoloError {
 
   static iframe(cause: string) {
     return OpenYoloError.createError(
-        {code: ERROR_TYPES.iframeError, message: `IFrame error: ${cause}`});
+      { code: ERROR_TYPES.iframeError, message: `IFrame error: ${cause}` });
   }
 
   static untrustedOrigin(origin: string) {
@@ -104,17 +109,17 @@ export class OpenYoloError {
 
   static requestFailed(message: string) {
     return OpenYoloError.createError(
-        {code: ERROR_TYPES.requestFailed, message});
+      { code: ERROR_TYPES.requestFailed, message });
   }
 
   static requestTimeout() {
     return OpenYoloError.createError(
-        {code: ERROR_TYPES.requestTimeout, message: 'Request timed out'});
+      { code: ERROR_TYPES.requestTimeout, message: 'Request timed out' });
   }
 
   static illegalStateError(reason: string) {
     return OpenYoloError.createError(
-        {code: ERROR_TYPES.illegalState, message: reason});
+      { code: ERROR_TYPES.illegalState, message: reason });
   }
 
   static illegalConcurrentRequestError() {
@@ -140,12 +145,12 @@ export class OpenYoloError {
 
   static apiDisabled() {
     return OpenYoloError.createError(
-        {code: ERROR_TYPES.apiDisabled, message: 'API is disabled'});
+      { code: ERROR_TYPES.apiDisabled, message: 'API is disabled' });
   }
 
   static unknown() {
     return OpenYoloError.createError(
-        {code: ERROR_TYPES.unknown, message: 'Unknown error'});
+      { code: ERROR_TYPES.unknown, message: 'Unknown error' });
   }
 
   static ancestorVerifyTimeout() {
