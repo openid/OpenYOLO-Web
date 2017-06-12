@@ -51,7 +51,7 @@ page.
 ## Using the OpenYOLO API / SPI
 
 The OpenYOLO API is currently available
-[through npm](https://npmjs.com/openid/openyolo), so can be added as a
+[through npm](https://www.npmjs.com/package/@openid/openyolo), so can be added as a
 dependency to your own npm based project:
 
 ```
