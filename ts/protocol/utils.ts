@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-let subtleCrypto: SubtleCrypto|null = null;
+import { OpenYoloError } from './errors';
+
+let subtleCrypto: SubtleCrypto | null = null;
 if (window.crypto) {
   // Fix for Safari.
   subtleCrypto = window.crypto.subtle || (window.crypto as any)['webkitSubtle'];
@@ -75,8 +77,8 @@ function stringToUtf8ByteArray(str: string): number[] {
       out[p++] = (c >> 6) | 192;
       out[p++] = (c & 63) | 128;
     } else if (
-        ((c & 0xFC00) === 0xD800) && (i + 1) < str.length &&
-        ((str.charCodeAt(i + 1) & 0xFC00) === 0xDC00)) {
+      ((c & 0xFC00) === 0xD800) && (i + 1) < str.length &&
+      ((str.charCodeAt(i + 1) & 0xFC00) === 0xDC00)) {
       // Surrogate Pair
       c = 0x10000 + ((c & 0x03FF) << 10) + (str.charCodeAt(++i) & 0x03FF);
       out[p++] = (c >> 18) | 240;
@@ -132,8 +134,8 @@ export function stringValidator(value: any): boolean {
  */
 export class PromiseResolver<T> {
   readonly promise: Promise<T>;
-  protected resolveFn: ((result?: T) => void)|null;
-  protected rejectFn: ((error: Error) => void)|null;
+  protected resolveFn: ((result?: T) => void) | null;
+  protected rejectFn: ((error: Error) => void) | null;
 
   constructor() {
     this.promise = new Promise((resolve, reject) => {
@@ -185,6 +187,15 @@ export class TimeoutPromiseResolver<T> extends PromiseResolver<T> {
       return;
     }
     this.reject(this.timeoutError);
+  }
+}
+
+/**
+ * Is a cancellable PromiseResolver.
+ */
+export class CancellablePromise<T> extends PromiseResolver<T> {
+  cancel() {
+    this.reject(OpenYoloError.operationCancelled());
   }
 }
 

@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import {OpenYoloError} from '../protocol/errors';
-import {errorMessage, noneAvailableMessage, RPC_MESSAGE_TYPES, showProviderMessage} from '../protocol/rpc_messages';
-import {SecureChannel} from '../protocol/secure_channel';
-import {FakeProviderConnection} from '../test_utils/channels';
-import {createSpyFrame} from '../test_utils/frames';
-import {createUntypedMessageEvent} from '../test_utils/messages';
-import {JasmineTimeoutManager} from '../test_utils/timeout';
+import { OpenYoloError } from '../protocol/errors';
+import { errorMessage, noneAvailableMessage, RPC_MESSAGE_TYPES, showProviderMessage } from '../protocol/rpc_messages';
+import { SecureChannel } from '../protocol/secure_channel';
+import { FakeProviderConnection } from '../test_utils/channels';
+import { createSpyFrame } from '../test_utils/frames';
+import { createUntypedMessageEvent } from '../test_utils/messages';
+import { JasmineTimeoutManager } from '../test_utils/timeout';
 
-import {BaseRequest} from './base_request';
-import {ProviderFrameElement} from './provider_frame_elem';
+import { BaseRequest } from './base_request';
+import { ProviderFrameElement } from './provider_frame_elem';
 
 class ImplementedBaseRequest extends BaseRequest<string, undefined> {
   dispatchInternal() {}
@@ -67,7 +67,7 @@ describe('BaseRequest', () => {
     it('should unlisten when disposed', () => {
       // Listener for a different message type.
       request.registerHandler(
-          RPC_MESSAGE_TYPES.credential, jasmine.createSpy('messageSpy'));
+        RPC_MESSAGE_TYPES.credential, jasmine.createSpy('messageSpy'));
       request.dispose();
       expect(unlistenSpy).toHaveBeenCalledTimes(2);
     });
@@ -78,7 +78,7 @@ describe('BaseRequest', () => {
     });
 
     it('should filter invalid type', () => {
-      let event = createUntypedMessageEvent({'type': 'unknownType'});
+      let event = createUntypedMessageEvent({ 'type': 'unknownType' });
       connection.clientPort.postMessage(event);
       expect(handlerSpy).not.toHaveBeenCalled();
     });
@@ -90,48 +90,48 @@ describe('BaseRequest', () => {
   });
 
   describe('timeouts handling', () => {
-    it('timeouts if too long', async function(done) {
+    it('timeouts if too long', async function (done) {
       request.dispatch(undefined, 100)
-          .then(
-              () => {
-                done.fail('Should not be a success!');
-              },
-              (error) => {
-                expect(OpenYoloError.errorIs(error, 'requestTimeout'))
-                    .toBe(true);
-                done();
-              });
+        .then(
+        (result) => {
+          done.fail('Should not be a success !');
+        },
+        (error) => {
+          expect(OpenYoloError.errorIs(error, 'requestTimeout'))
+            .toBe(true);
+          done();
+        });
       jasmine.clock().tick(101);
     });
 
-    it('does not timeout if disabled', async function(done) {
+    it('does not timeout if disabled', async function (done) {
       request.dispatch(undefined).then(
+        () => {
+          done.fail('Should not be a success!');
+        },
+        (error) => {
+          done.fail('Should not timeout!');
+        });
+      jasmine.clock().tick(Infinity);
+      done();
+    });
+
+    it('clears timeouts when showProvider message is received',
+      async function (done) {
+        request.dispatch(undefined, 100)
+          .then(
           () => {
             done.fail('Should not be a success!');
           },
           (error) => {
             done.fail('Should not timeout!');
           });
-      jasmine.clock().tick(Infinity);
-      done();
-    });
-
-    it('clears timeouts when showProvider message is received',
-       async function(done) {
-         request.dispatch(undefined, 100)
-             .then(
-                 () => {
-                   done.fail('Should not be a success!');
-                 },
-                 (error) => {
-                   done.fail('Should not timeout!');
-                 });
-         const displayOptions = {height: 100};
-         providerChannel.send(showProviderMessage(request.id, displayOptions));
-         jasmine.clock().tick(Infinity);
-         expect(frame.display).toHaveBeenCalledWith(displayOptions);
-         done();
-       });
+        const displayOptions = { height: 100 };
+        providerChannel.send(showProviderMessage(request.id, displayOptions));
+        jasmine.clock().tick(Infinity);
+        expect(frame.display).toHaveBeenCalledWith(displayOptions);
+        done();
+      });
   });
 
   describe('error handling', () => {
@@ -139,7 +139,7 @@ describe('BaseRequest', () => {
       spyOn(request, 'dispose').and.callThrough();
     });
 
-    it('listens to error and disposes', async function(done) {
+    it('listens to error and disposes', async function (done) {
       const expectedError = OpenYoloError.illegalStateError('ERROR!');
       const promise = request.dispatch(undefined);
       providerChannel.send(errorMessage(request.id, expectedError));
@@ -155,20 +155,20 @@ describe('BaseRequest', () => {
     });
 
     it('listens to illegalConcurrentError and disposes but not hide the iframe',
-       async function(done) {
-         const expectedError = OpenYoloError.illegalConcurrentRequestError();
-         const promise = request.dispatch(undefined);
-         providerChannel.send(errorMessage(request.id, expectedError));
-         try {
-           await promise;
-           done.fail('Promise should not resolve');
-         } catch (err) {
-           expect(err).toEqual(expectedError);
-           expect(request.dispose).toHaveBeenCalled();
-           expect(frame.hide).not.toHaveBeenCalled();
-           done();
-         }
-       });
+      async function (done) {
+        const expectedError = OpenYoloError.illegalConcurrentRequestError();
+        const promise = request.dispatch(undefined);
+        providerChannel.send(errorMessage(request.id, expectedError));
+        try {
+          await promise;
+          done.fail('Promise should not resolve');
+        } catch (err) {
+          expect(err).toEqual(expectedError);
+          expect(request.dispose).toHaveBeenCalled();
+          expect(frame.hide).not.toHaveBeenCalled();
+          done();
+        }
+      });
   });
 
   describe('setAndRegisterTimeout', () => {
@@ -184,6 +184,19 @@ describe('BaseRequest', () => {
       request.dispose();
       jasmine.clock().tick(1001);
       done();
+    });
+  });
+
+  describe('cancel requests', () => {
+    it('should reject when canceling requests', done => {
+      const expectedError = OpenYoloError.operationCancelled();
+      request.dispatch(undefined, 100)
+        .then(() => fail('Should not have resolved'))
+        .catch((error) => {
+          expect(error).toEqual(expectedError);
+          done();
+        });
+      request.cancel();
     });
   });
 });

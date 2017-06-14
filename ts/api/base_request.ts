@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import {ERROR_TYPES, OpenYoloError, OpenYoloErrorData, OpenYoloExtendedError} from '../protocol/errors';
-import {RpcMessageArgumentTypes, RpcMessageDataTypes, RpcMessageType} from '../protocol/rpc_messages';
-import {SecureChannel} from '../protocol/secure_channel';
-import {generateId, PromiseResolver} from '../protocol/utils';
+import { ERROR_TYPES, OpenYoloError, OpenYoloErrorData, OpenYoloExtendedError } from '../protocol/errors';
+import { RpcMessageArgumentTypes, RpcMessageDataTypes, RpcMessageType } from '../protocol/rpc_messages';
+import { SecureChannel } from '../protocol/secure_channel';
+import { generateId, PromiseResolver, CancellablePromise } from '../protocol/utils';
 
-import {ProviderFrameElement} from './provider_frame_elem';
+import { ProviderFrameElement } from './provider_frame_elem';
 
 export type RpcMessageHandler<T extends RpcMessageType> =
-    (data: RpcMessageArgumentTypes[T], type: T, ev: MessageEvent) => void;
+  (data: RpcMessageArgumentTypes[T], type: T, ev: MessageEvent) => void;
 
 /**
  * General interface of a request to the relay.
@@ -51,27 +51,37 @@ export interface RelayRequest<T, O> {
  *     Type of the options required for this request.
  */
 export abstract class BaseRequest<ResultT, OptionsT> implements
-    RelayRequest<ResultT, OptionsT> {
+  RelayRequest<ResultT, OptionsT> {
   private promiseResolver = new PromiseResolver<ResultT>();
   private listenerKeys: number[] = [];
   private timeouts: number[] = [];
   private disposed = false;
+  private cancelled = new CancellablePromise<ResultT>();
 
   constructor(
-      protected frame: ProviderFrameElement,
-      protected channel: SecureChannel,
-      public id = generateId()) {}
+    protected frame: ProviderFrameElement,
+    protected channel: SecureChannel,
+    public id = generateId()) {}
 
   dispatch(options: OptionsT, timeoutMs?: number): Promise<ResultT> {
     this.registerBaseHandlers(timeoutMs);
     this.dispatchInternal(options);
-    return this.getPromise();
+    // we are racing between the cancellable promise, and the promise that
+    return Promise.race([this.cancelled.promise, this.getPromise()]);
   }
 
   /**
    * Method to implement in subclasses that handle the request.
    */
   abstract dispatchInternal(options: OptionsT): void;
+
+  /**
+   * Cancels a potentially pending request.
+   */
+  cancel() {
+    this.debugLog('request cancelled');
+    this.cancelled.cancel();
+  }
 
   /**
    * Registers the base handlers for the request. To be called by subclasses for
@@ -137,17 +147,17 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
    * of the specified type that match the ID of this request.
    */
   registerHandler<T extends RpcMessageType>(
-      type: T,
-      handler: RpcMessageHandler<T>): void {
+    type: T,
+    handler: RpcMessageHandler<T>): void {
     let filter =
-        (data: RpcMessageDataTypes[T], t: T, e: MessageEvent): boolean => {
-          if (data.id !== this.id) {
-            return false;
-          }
+      (data: RpcMessageDataTypes[T], t: T, e: MessageEvent): boolean => {
+        if (data.id !== this.id) {
+          return false;
+        }
 
-          handler(data.args, type, e);
-          return true;
-        };
+        handler(data.args, type, e);
+        return true;
+      };
     filter.toString = () => `${type} message handler`;
     this.listenerKeys.push(this.channel.listen(type, filter));
   }
@@ -188,6 +198,7 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
     }
     this.clearTimeouts();
     this.clearListeners();
+    this.cancelled.dispose();
     this.promiseResolver.dispose();
     this.disposed = true;
   }
