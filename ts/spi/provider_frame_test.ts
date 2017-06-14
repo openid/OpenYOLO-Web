@@ -300,6 +300,50 @@ describe('ProviderFrame', () => {
                msg.retrieveMessage(requestId, passwordOnlyRequest));
          });
 
+      it('should cancel a credential request', async function(done) {
+        credentialDataProvider.credentials = [alicePwdCred];
+
+        (interactionProvider.showAutoSignIn as jasmine.Spy)
+            .and.callFake(
+                (credential: Credential,
+                 displayCallbacks: DisplayCallbacks) => {
+                  expect(credential).toBe(alicePwdCred);
+                  // return a promise that's not going to resolve
+                  return new Promise<void>((resolve, reject) => {});
+                });
+
+        let cancelPromise = new PromiseResolver<void>();
+        let errorPromise = new PromiseResolver<void>();
+
+        clientChannel.listen(
+            msg.RPC_MESSAGE_TYPES.credential,
+            (data) => {
+                // does nothing, only adding this to suppress a warning
+                // about unknown message types
+            });
+
+        clientChannel.listen(
+            msg.RPC_MESSAGE_TYPES.cancelLastOperationResult, (data) => {
+              expectMessageContents(
+                  data, msg.cancelLastOperationResultMessage(requestId));
+              cancelPromise.resolve();
+            });
+
+        clientChannel.listen(msg.RPC_MESSAGE_TYPES.error, (data) => {
+          expectMessageContents(
+              data,
+              msg.errorMessage(requestId, OpenYoloError.clientCancelled()));
+          errorPromise.resolve();
+        });
+
+        clientChannel.send(msg.retrieveMessage(requestId, passwordOnlyRequest));
+        clientChannel.send(msg.cancelLastOperationMessage(requestId));
+
+        Promise.all([cancelPromise.promise, errorPromise.promise])
+            .then(done)
+            .catch(fail);
+      });
+
       it('should filter out irrelevant credentials', async function(done) {
         // we expect the "carl" credential to be filtered out, as it has
         // an authentication method that is not on the request list.
@@ -524,13 +568,15 @@ describe('ProviderFrame', () => {
       // creates a message listener that expects a pick message to be received,
       // and verifies the set of credentials sent to the interaction manager
       // for display. If a selection is provided, then this is used to resolve
-      // the hint picker promise, otherwise the promise is rejected. Finally,
-      // if an expected outcome is provided, this is checked for as a follow-up
-      // message, otherwise a pick cancel message is expected.
+      // the hint picker promise, otherwise the promise is rejected unless never
+      // resolve is set to true. Finally, if an expected outcome is provided,
+      // this is checked for as a follow-up message, otherwise a pick cancel
+      // message is expected.
       function expectPickFromHints(
           expectedHints: Credential[],
           selection: Credential|null,
-          expectedResult: msg.RpcMessage<'credential'>|msg.RpcMessage<'none'>) {
+          expectedResult: msg.RpcMessage<'credential'>|msg.RpcMessage<'none'>,
+          neverResolve: boolean = false) {
         let promiseResolver = new PromiseResolver<void>();
         let expectFinalResult = false;
 
@@ -543,10 +589,16 @@ describe('ProviderFrame', () => {
                   expect(options).toBeDefined();
                   expect(displayCallbacks).toBeDefined();
                   expectFinalResult = true;
-                  if (selection) {
-                    return Promise.resolve(selection);
+
+                  if (neverResolve) {
+                    console.warn('expectPickFromHints(...) will not resolve');
+                    return new Promise((resolve, reject) => {});
                   } else {
-                    return Promise.reject(OpenYoloError.canceled());
+                    if (selection) {
+                      return Promise.resolve(selection);
+                    } else {
+                      return Promise.reject(OpenYoloError.canceled());
+                    }
                   }
                 });
 
@@ -628,6 +680,29 @@ describe('ProviderFrame', () => {
             .then(done);
         clientChannel.send(msg.hintMessage(requestId, pwdOrFbHintOptions));
       });
+
+      it('should notify the client when an hint operation is cancelled',
+         async function(done) {
+           credentialDataProvider.credentials = [deliaFbCred];
+           expectPickFromHints(
+               [deliaFbCred],
+               null,
+               msg.noneAvailableMessage(requestId),
+               true /* neverResolve */)
+               .then((result) => {
+                 fail();
+               });
+
+           clientChannel.listen(
+               msg.RPC_MESSAGE_TYPES.cancelLastOperationResult, (data) => {
+                 expectMessageContents(
+                     data, msg.cancelLastOperationResultMessage(requestId));
+                 done();
+               });
+
+           clientChannel.send(msg.hintMessage(requestId, pwdOrFbHintOptions));
+           clientChannel.send(msg.cancelLastOperationMessage(requestId));
+         });
 
       it('should prioritize federated hints over password hints',
          async function(done) {

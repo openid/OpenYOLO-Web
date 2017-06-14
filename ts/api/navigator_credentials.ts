@@ -175,6 +175,10 @@ export class NavigatorCredentials implements OpenYoloApi {
     return Promise.resolve(false);
   }
 
+  cancelLastOperation(): Promise<void> {
+    return Promise.reject(OpenYoloError.apiDisabled());
+  }
+
   proxyLogin(credential: OpenYoloCredential): Promise<ProxyLoginResponse> {
     // TODO(tch): Fetch the URL from configuration.
     let url = `${window.location.protocol}//${window.location.host}/signin`;

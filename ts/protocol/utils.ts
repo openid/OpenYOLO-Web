@@ -192,3 +192,22 @@ export function timeoutPromise<T>(error: Error, timeoutMs: number): Promise<T> {
   let promiseResolver = new TimeoutPromiseResolver(error, timeoutMs);
   return promiseResolver.promise;
 }
+
+/**
+ * Is a cancellable PromiseResolver.
+ */
+export class CancellablePromise<T> extends PromiseResolver<T> {
+  private static CANCELLED = 'CancellablePromise { Operation Cancelled }';
+
+  // the error returned when a cancellable promise is cancelled.
+  static readonly CANCELLED_ERROR: Error =
+      new Error(CancellablePromise.CANCELLED);
+
+  constructor() {
+    super();
+  }
+
+  cancel() {
+    this.reject(CancellablePromise.CANCELLED_ERROR);
+  }
+}

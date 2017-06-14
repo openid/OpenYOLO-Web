@@ -22,6 +22,7 @@ import {isOpenYoloMessageFormat} from '../protocol/messages';
 import {channelErrorMessage} from '../protocol/post_messages';
 import * as msg from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
+import {CancellablePromise} from '../protocol/utils';
 
 import {AncestorOriginVerifier} from './ancestor_origin_verifier';
 import {AffiliationProvider, CredentialDataProvider, DisplayCallbacks, InteractionProvider, LocalStateProvider, ProviderConfiguration, WindowLike} from './provider_config';
@@ -33,6 +34,8 @@ export class ProviderFrame {
   private credentialDataProvider: CredentialDataProvider;
   private interactionProvider: InteractionProvider;
   private requestInProgress = false;
+  // represents a potential cancellable operation
+  private cancellable: CancellablePromise<never>|null = null;
 
   private closeListener: EventListener;
   private window: WindowLike;
@@ -165,6 +168,10 @@ export class ProviderFrame {
         msg.RPC_MESSAGE_TYPES.proxy,
         (m) => this.handleProxyLoginRequest(m.id, m.args));
 
+    this.addRpcListener(
+        msg.RPC_MESSAGE_TYPES.cancelLastOperation,
+        (m) => this.handleCancelLastOperation(m.id));
+
     this.clientChannel.addFallbackListener((ev) => {
       this.handleUnknownMessage(ev);
       return false;
@@ -184,20 +191,38 @@ export class ProviderFrame {
       type: T,
       m: msg.RpcMessageDataTypes[T],
       messageHandler: (message: msg.RpcMessageDataTypes[T]) => Promise<void>) {
-    if (!this.recordRequestStart(m.id)) {
+    if (!this.recordRequestStart(type, m.id)) {
       return;
     }
 
     try {
       await messageHandler(m);
+    } catch (error) {
+      if (error && error === CancellablePromise.CANCELLED_ERROR) {
+        console.info('Caught a cancel signal', error);
+        // reset cancellable promise, for the next set of requests
+        this.cancellable = null;
+        this.clientChannel.send(
+            msg.errorMessage(m.id, OpenYoloError.clientCancelled()));
+      } else {
+        throw error;
+      }
     } finally {
       this.recordRequestStop();
     }
   }
 
-  private recordRequestStart(requestId: string) {
+  private recordRequestStart<T extends msg.RpcMessageType>(
+      requestType: T,
+      requestId: string) {
     if (!this.requestInProgress) {
       this.requestInProgress = true;
+      return true;
+    }
+
+    if (requestType === 'cancelLastOperation') {
+      // allow cancelLastOperation even if its a concurrent request
+      console.info('Allowing a cancelLastOperation request');
       return true;
     }
 
@@ -221,7 +246,7 @@ export class ProviderFrame {
       options: CredentialHintOptions) {
     console.info('Handling hint request');
 
-    let hints = await this.getHints(options);
+    let hints = await this.cancellablePromise(this.getHints(options));
     if (hints.length < 1) {
       console.info('no hints available');
       this.clientChannel.send(msg.noneAvailableMessage(requestId));
@@ -237,7 +262,7 @@ export class ProviderFrame {
     // client
     try {
       console.info('awaiting user selection of hint');
-      let selectedHint = await selectionPromise;
+      let selectedHint = await this.cancellablePromise(selectionPromise);
 
       // once selected, we redact the credential of any sensitive details
       selectedHint = this.copyCredential(selectedHint, true);
@@ -255,6 +280,7 @@ export class ProviderFrame {
       this.clientChannel.send(
           msg.credentialResultMessage(requestId, selectedHint));
     } catch (err) {
+      this.handleWellKnownErrors(err);
       console.info(`Hint selection cancelled: ${err}`);
       this.clientChannel.send(msg.noneAvailableMessage(requestId));
     }
@@ -265,7 +291,7 @@ export class ProviderFrame {
       options: CredentialHintOptions) {
     console.info('Handling hintAvailable request');
 
-    let hints = await this.getHints(options);
+    let hints = await this.cancellablePromise(this.getHints(options));
     this.clientChannel.send(
         msg.hintAvailableResponseMessage(id, hints.length > 0));
   }
@@ -275,8 +301,9 @@ export class ProviderFrame {
       options: CredentialRequestOptions) {
     console.info('Handling credential retrieve request');
 
-    let credentials = await this.credentialDataProvider.getAllCredentials(
-        this.equivalentAuthDomains, options);
+    let credentials = await this.cancellablePromise(
+        this.credentialDataProvider.getAllCredentials(
+            this.equivalentAuthDomains, options));
 
     // filter out the credentials which don't match the request options
     let pertinentCredentials = credentials.filter((credential) => {
@@ -304,8 +331,8 @@ export class ProviderFrame {
       if (autoSignInEnabled) {
         const credential = pertinentCredentials[0];
         // Display the auto sign in screen and send the message.
-        await this.interactionProvider.showAutoSignIn(
-            credential, this.createDisplayCallbacks(requestId));
+        await this.cancellablePromise(this.interactionProvider.showAutoSignIn(
+            credential, this.createDisplayCallbacks(requestId)));
         this.clientChannel.send(msg.credentialResultMessage(
             requestId, this.storeForProxyLogin(credential)));
         return;
@@ -322,7 +349,7 @@ export class ProviderFrame {
     // now, wait for selection to occur, and send the selection result to the
     // client
     try {
-      let selectedCredential = await selectionPromise;
+      let selectedCredential = await this.cancellablePromise(selectionPromise);
       console.info('Returning selected credential');
       this.clientChannel.send(msg.credentialResultMessage(
           requestId, this.storeForProxyLogin(selectedCredential)));
@@ -342,6 +369,22 @@ export class ProviderFrame {
   private async handleProxyLoginRequest(id: string, credential: Credential) {
     // TODO(iainmcgin): implement
     return this.handleUnimplementedRequest(id, msg.RPC_MESSAGE_TYPES.proxy);
+  }
+
+  private async handleCancelLastOperation(id: string) {
+    if (!this.requestInProgress || this.cancellable === null) {
+      // no request in progress
+      console.warn('No pending request to cancel.');
+    } else {
+      try {
+        console.info('Cancelling a pending operation');
+        this.cancellable.cancel();
+      } finally {
+        // cancel any pending UI
+        this.interactionProvider.dispose();
+      }
+    }
+    this.clientChannel.send(msg.cancelLastOperationResultMessage(id));
   }
 
   /**
@@ -461,7 +504,8 @@ export class ProviderFrame {
       Promise<Credential[]> {
     // get all credentials across all domains; from this, we can filter down
     // to the set of credentials
-    let allCredentials = await this.credentialDataProvider.getAllHints(options);
+    let allCredentials = await this.cancellablePromise(
+        this.credentialDataProvider.getAllHints(options));
 
     if (allCredentials.length < 1) {
       return [];
@@ -543,5 +587,23 @@ export class ProviderFrame {
     }
 
     return score;
+  }
+
+  private cancellablePromise<T>(producer: Promise<T>): Promise<T> {
+    // creates a new cancellable promise if and only if one does not already
+    // exist for the provider frame. This should get reset only when a cancel
+    // signal has already been caught.
+    if (!this.cancellable) {
+      this.cancellable = new CancellablePromise();
+    }
+    return Promise.race([this.cancellable.promise, producer]);
+  }
+
+  private handleWellKnownErrors(error: Error) {
+    // we must let well known errors bubble up, so they
+    // are caught by the monitoring handler.
+    if (error === CancellablePromise.CANCELLED_ERROR) {
+      throw error;
+    }
   }
 }

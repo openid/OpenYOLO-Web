@@ -33,7 +33,9 @@ export const RPC_MESSAGE_TYPES = map2Enum({
   showProvider: 'showProvider',
   none: 'none',
   credential: 'credential',
-  error: 'error'
+  error: 'error',
+  cancelLastOperation: 'cancelLastOperation',
+  cancelLastOperationResult: 'cancelLastOperationResult'
 });
 
 export type RpcMessageType = keyof typeof RPC_MESSAGE_TYPES;
@@ -57,7 +59,9 @@ export type RpcMessageArgumentTypes = {
   'wrapBrowserResult': boolean,
   'none': undefined,
   'credential': Credential,
-  'error': OpenYoloErrorData
+  'error': OpenYoloErrorData,
+  'cancelLastOperation': undefined,
+  'cancelLastOperationResult': undefined
 };
 
 export type RpcMessageArgumentType<T extends RpcMessageType> =
@@ -104,7 +108,9 @@ export const RPC_MESSAGE_DATA_VALIDATORS:
       'showProvider': rpcDataValidator(isValidDisplayOptions),
       'none': rpcDataValidator(isUndefined),
       'credential': rpcDataValidator(isValidCredential),
-      'error': rpcDataValidator(isValidError)
+      'error': rpcDataValidator(isValidError),
+      'cancelLastOperation': rpcDataValidator(isUndefined),
+      'cancelLastOperationResult': rpcDataValidator(isUndefined)
     };
 
 /* ****************************************************************************/
@@ -173,4 +179,12 @@ export function saveResultMessage(id: string, saved: boolean) {
 
 export function errorMessage(id: string, error: OpenYoloExtendedError) {
   return rpcMessage(RPC_MESSAGE_TYPES.error, id, error.data);
+}
+
+export function cancelLastOperationMessage(id: string) {
+  return rpcMessage(RPC_MESSAGE_TYPES.cancelLastOperation, id, undefined);
+}
+
+export function cancelLastOperationResultMessage(id: string) {
+  return rpcMessage(RPC_MESSAGE_TYPES.cancelLastOperationResult, id, undefined);
 }
