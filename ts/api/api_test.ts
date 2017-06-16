@@ -20,6 +20,7 @@ import {SecureChannel} from '../protocol/secure_channel';
 import {openyolo} from './api';
 import {CredentialRequest} from './credential_request';
 import {CredentialSave} from './credential_save';
+import {DisableAutoSignIn} from './disable_auto_sign_in';
 import {HintAvailableRequest} from './hint_available_request';
 import {HintRequest} from './hint_request';
 import {ProxyLogin} from './proxy_login';
@@ -44,6 +45,18 @@ describe('OpenYolo API', () => {
             .and.throwError('Should not use the noTimeout method!');
       });
 
+      describe('disableAutoSignIn', () => {
+        it('works', async function(done) {
+          spyOn(DisableAutoSignIn.prototype, 'dispatch')
+              .and.returnValue(Promise.resolve());
+          openyolo.disableAutoSignIn().then(() => {
+            expect(DisableAutoSignIn.prototype.dispatch)
+                .toHaveBeenCalledWith(undefined, 3000);
+            done();
+          });
+        });
+      });
+
       describe('hintsAvailable', () => {
         const options: CredentialHintOptions = {supportedAuthMethods: []};
 
@@ -53,7 +66,7 @@ describe('OpenYolo API', () => {
           openyolo.hintsAvailable(options).then((result) => {
             expect(result).toBe(true);
             expect(HintAvailableRequest.prototype.dispatch)
-                .toHaveBeenCalledWith(options, 1000);
+                .toHaveBeenCalledWith(options, 3000);
             done();
           });
         });
@@ -64,7 +77,7 @@ describe('OpenYolo API', () => {
           openyolo.hintsAvailable(options).then((result) => {
             expect(result).toBe(false);
             expect(HintAvailableRequest.prototype.dispatch)
-                .toHaveBeenCalledWith(options, 1000);
+                .toHaveBeenCalledWith(options, 3000);
             done();
           });
         });
@@ -197,6 +210,18 @@ describe('OpenYolo API', () => {
         spyOn(SecureChannel, 'clientConnectNoTimeout')
             .and.returnValue(Promise.resolve(secureChannelSpy));
         openyolo.setTimeoutsEnabled(false);
+      });
+
+      describe('disableAutoSignIn', () => {
+        it('works', async function(done) {
+          spyOn(DisableAutoSignIn.prototype, 'dispatch')
+              .and.returnValue(Promise.resolve());
+          openyolo.disableAutoSignIn().then(() => {
+            expect(DisableAutoSignIn.prototype.dispatch)
+                .toHaveBeenCalledWith(undefined, undefined);
+            done();
+          });
+        });
       });
 
       describe('hintsAvailable', () => {

@@ -146,6 +146,10 @@ export class ProviderFrame {
         (m) => this.handleWrapBrowserRequest(m.id));
 
     this.addRpcListener(
+        msg.RPC_MESSAGE_TYPES.disableAutoSignIn,
+        (m) => this.handleDisableAutoSignInRequest(m.id));
+
+    this.addRpcListener(
         msg.RPC_MESSAGE_TYPES.retrieve,
         (m) => this.handleGetCredentialRequest(m.id, m.args));
 
@@ -214,6 +218,16 @@ export class ProviderFrame {
   private async handleWrapBrowserRequest(requestId: string) {
     this.clientChannel.send(msg.wrapBrowserResultMessage(
         requestId, this.providerConfig.delegateToBrowser));
+  }
+
+  private async handleDisableAutoSignInRequest(requestId: string) {
+    try {
+      await this.localStateProvider.setAutoSignInEnabled(
+          this.providerConfig.clientAuthDomain, false);
+    } catch (e) {
+      console.error('Failed to disable auto sign in.');
+    }
+    this.clientChannel.send(msg.disableAutoSignInResultMessage(requestId));
   }
 
   private async handleHintRequest(

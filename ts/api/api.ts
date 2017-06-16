@@ -23,6 +23,7 @@ import {generateId, sha256} from '../protocol/utils';
 
 import {CredentialRequest} from './credential_request';
 import {CredentialSave} from './credential_save';
+import {DisableAutoSignIn} from './disable_auto_sign_in';
 import {HintAvailableRequest} from './hint_available_request';
 import {HintRequest} from './hint_request';
 import {ProviderFrameElement} from './provider_frame_elem';
@@ -128,7 +129,8 @@ export interface OpenYoloApi {
 const DEFAULT_TIMEOUTS: {[key: string]: number} = {
   credentialRequest: 3000,
   credentialSave: 3000,
-  hintAvailableRequest: 1000,
+  disableAutoSignIn: 3000,
+  hintAvailableRequest: 3000,
   hintRequest: 3000,
   proxyLogin: 10000,
   wrapBrowserRequest: 1000
@@ -304,7 +306,11 @@ class OpenYoloApiImpl implements OpenYoloApi {
   }
 
   private async disableAutoSignInUsingChannel() {
-    Promise.reject('not implemented');
+    const request = new DisableAutoSignIn(this.frameManager, this.channel);
+    const timeoutMs = this.areTimeoutsDisabled ?
+        undefined :
+        DEFAULT_TIMEOUTS.disableAutoSignIn;
+    return request.dispatch(undefined, timeoutMs);
   }
 
   async proxyLogin(credential: Credential): Promise<ProxyLoginResponse> {

@@ -20,6 +20,8 @@ import {OpenYoloErrorData, OpenYoloExtendedError} from './errors';
 import {isBoolean, isUndefined, isValidCredential, isValidDisplayOptions, isValidError, isValidHintOptions, isValidProxyLoginResponse, isValidRequestOptions} from './validators';
 
 export const RPC_MESSAGE_TYPES = map2Enum({
+  disableAutoSignIn: 'disableAutoSignIn',
+  disableAutoSignInResult: 'disableAutoSignInResult',
   retrieve: 'retrieve',
   hintAvailable: 'hintAvailable',
   hintAvailableResult: 'hintAvailableResult',
@@ -44,6 +46,8 @@ export interface RpcMessage<T extends RpcMessageType> {
 }
 
 export type RpcMessageArgumentTypes = {
+  'disableAutoSignIn': undefined,
+  'disableAutoSignInResult': undefined,
   'retrieve': CredentialRequestOptions,
   'hintAvailable': CredentialHintOptions,
   'hintAvailableResult': boolean,
@@ -91,6 +95,8 @@ function rpcDataValidator(dataValidator: (data: any) => boolean) {
 
 export const RPC_MESSAGE_DATA_VALIDATORS:
     {[K in RpcMessageType]: (data: any) => boolean} = {
+      'disableAutoSignIn': rpcDataValidator(isUndefined),
+      'disableAutoSignInResult': rpcDataValidator(isUndefined),
       'retrieve': rpcDataValidator(isValidRequestOptions),
       'hintAvailable': rpcDataValidator(isValidHintOptions),
       'hintAvailableResult': rpcDataValidator(isBoolean),
@@ -114,6 +120,14 @@ export const RPC_MESSAGE_DATA_VALIDATORS:
 export function rpcMessage<T extends RpcMessageType>(
     type: T, id: string, args: RpcMessageArgumentTypes[T]): RpcMessage<T> {
   return {type, data: {id, args, ack: false}};
+}
+
+export function disableAutoSignInMessage(id: string) {
+  return rpcMessage(RPC_MESSAGE_TYPES.disableAutoSignIn, id, undefined);
+}
+
+export function disableAutoSignInResultMessage(id: string) {
+  return rpcMessage(RPC_MESSAGE_TYPES.disableAutoSignInResult, id, undefined);
 }
 
 export function retrieveMessage(id: string, options: CredentialRequestOptions) {
