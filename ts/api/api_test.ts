@@ -18,6 +18,7 @@ import {Credential, CredentialHintOptions, CredentialRequestOptions, ProxyLoginR
 import {SecureChannel} from '../protocol/secure_channel';
 
 import {openyolo} from './api';
+import {CancelLastOperationRequest} from './cancel_last_operation_request';
 import {CredentialRequest} from './credential_request';
 import {CredentialSave} from './credential_save';
 import {DisableAutoSignIn} from './disable_auto_sign_in';
@@ -78,6 +79,19 @@ describe('OpenYolo API', () => {
             expect(result).toBe(false);
             expect(HintAvailableRequest.prototype.dispatch)
                 .toHaveBeenCalledWith(options, 3000);
+            done();
+          });
+        });
+      });
+
+      describe('cancelLastRequest', () => {
+        it('works', async function(done) {
+          spyOn(CancelLastOperationRequest.prototype, 'dispatch')
+              .and.returnValue(Promise.resolve(undefined));
+          openyolo.cancelLastOperation().then((result) => {
+            expect(result).toBeFalsy();
+            expect(CancelLastOperationRequest.prototype.dispatch)
+                .toHaveBeenCalledWith(undefined, 1000);
             done();
           });
         });
@@ -295,6 +309,19 @@ describe('OpenYolo API', () => {
           });
         });
       });
+
+      describe('cancelLastOperation', () => {
+        it('works', async function(done) {
+          spyOn(CancelLastOperationRequest.prototype, 'dispatch')
+              .and.returnValue(Promise.resolve());
+          openyolo.cancelLastOperation().then(() => {
+            expect(CancelLastOperationRequest.prototype.dispatch)
+                .toHaveBeenCalledWith(undefined, undefined);
+            done();
+          });
+        });
+      });
+
     });
   });
 });

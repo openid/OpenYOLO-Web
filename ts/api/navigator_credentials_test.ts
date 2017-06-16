@@ -116,6 +116,12 @@ describe('NavigatorCredentials', () => {
     });
   });
 
+  describe('cancelLastOperation', () => {
+    it('always rejects', done => {
+      navigatorCredentials.cancelLastOperation().then(fail).catch(done);
+    });
+  });
+
   describe('save', () => {
     it('saves the password credential', done => {
       let credential: OpenYoloCredential = {

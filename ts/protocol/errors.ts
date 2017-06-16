@@ -19,6 +19,7 @@ import {map2Enum} from './enums';
 export const ERROR_TYPES = map2Enum({
   ackTimeout: 'ackTimeout',
   canceled: 'canceled',
+  cancelledLastOperation: 'cancelledLastOperation',
   clientDisposed: 'clientDisposed',
   handshakeFailed: 'handshakeFailed',
   invalidCredential: 'invalidCredential',
@@ -62,6 +63,13 @@ export class OpenYoloError {
   static canceled() {
     return OpenYoloError.createError(
         {code: ERROR_TYPES.canceled, message: 'User canceled'});
+  }
+
+  static clientCancelled() {
+    return OpenYoloError.createError({
+      code: ERROR_TYPES.cancelledLastOperation,
+      message: 'Operation cancelled'
+    });
   }
 
   static clientDisposed() {

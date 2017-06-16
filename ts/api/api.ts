@@ -21,6 +21,7 @@ import {PRELOAD_REQUEST, PreloadRequest} from '../protocol/preload_request';
 import {SecureChannel} from '../protocol/secure_channel';
 import {generateId, sha256} from '../protocol/utils';
 
+import {CancelLastOperationRequest} from './cancel_last_operation_request';
 import {CredentialRequest} from './credential_request';
 import {CredentialSave} from './credential_save';
 import {DisableAutoSignIn} from './disable_auto_sign_in';
@@ -121,6 +122,11 @@ export interface OpenYoloApi {
    *    A promise for the response data from the authentication system.
    */
   proxyLogin(credential: Credential): Promise<ProxyLoginResponse>;
+
+  /**
+   * Cancels the last pending OpenYOLO request.
+   */
+  cancelLastOperation(): Promise<void>;
 }
 
 /**
@@ -133,7 +139,8 @@ const DEFAULT_TIMEOUTS: {[key: string]: number} = {
   hintAvailableRequest: 3000,
   hintRequest: 3000,
   proxyLogin: 10000,
-  wrapBrowserRequest: 1000
+  wrapBrowserRequest: 1000,
+  cancelLastOperation: 1000
 };
 
 /**
@@ -315,7 +322,7 @@ class OpenYoloApiImpl implements OpenYoloApi {
 
   async proxyLogin(credential: Credential): Promise<ProxyLoginResponse> {
     if (this.wrapBrowser) {
-      this.proxyLoginUsingBrowser();
+      return this.proxyLoginUsingBrowser();
     }
 
     return this.proxyLoginUsingChannel(credential);
@@ -330,6 +337,23 @@ class OpenYoloApiImpl implements OpenYoloApi {
     const timeoutMs =
         this.areTimeoutsDisabled ? undefined : DEFAULT_TIMEOUTS.proxyLogin;
     return request.dispatch(credential, timeoutMs);
+  }
+
+  private async cancelLastOperationUsingBrowser() {
+    return Promise.reject('not implemented');
+  }
+
+  async cancelLastOperation() {
+    if (this.wrapBrowser) {
+      return this.cancelLastOperationUsingBrowser();
+    }
+
+    let request =
+        new CancelLastOperationRequest(this.frameManager, this.channel);
+    const timeoutMs = this.areTimeoutsDisabled ?
+        undefined :
+        DEFAULT_TIMEOUTS.cancelLastOperation;
+    return request.dispatch(undefined, timeoutMs);
   }
 }
 
@@ -420,6 +444,10 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
 
   async proxyLogin(credential: Credential): Promise<ProxyLoginResponse> {
     return (await this.init()).proxyLogin(credential);
+  }
+
+  async cancelLastOperation(): Promise<void> {
+    return (await this.init()).cancelLastOperation();
   }
 }
 
