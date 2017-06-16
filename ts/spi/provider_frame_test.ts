@@ -264,6 +264,23 @@ describe('ProviderFrame', () => {
           {supportedAuthMethods: [AUTHENTICATION_METHODS.ID_AND_PASSWORD]}));
     });
 
+    describe('handling disableAutoSignIn', () => {
+      it('should set auto sign in enabled to false', async function(done) {
+        let enabledBefore =
+            await localStateProvider.isAutoSignInEnabled(TEST_AUTH_DOMAIN);
+        expect(enabledBefore).toBe(true);
+        clientChannel.listen(
+            msg.RPC_MESSAGE_TYPES.disableAutoSignInResult, async function(res) {
+              let enabledAfter = await localStateProvider.isAutoSignInEnabled(
+                  TEST_AUTH_DOMAIN);
+              expect(enabledAfter).toBe(false);
+              done();
+            });
+
+        clientChannel.send(msg.disableAutoSignInMessage(requestId));
+      });
+    });
+
     describe('handling credential retrieval', () => {
 
       let passwordOnlyRequest: CredentialRequestOptions = {
