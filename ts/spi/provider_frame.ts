@@ -225,7 +225,7 @@ export class ProviderFrame {
       await this.localStateProvider.setAutoSignInEnabled(
           this.providerConfig.clientAuthDomain, false);
     } catch (e) {
-      // TODO(tch): Handle differently when the localStateProvider has an error?
+      console.error('Failed to disable auto sign in.');
     }
     this.clientChannel.send(msg.disableAutoSignInResultMessage(requestId));
   }
