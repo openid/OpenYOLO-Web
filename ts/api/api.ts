@@ -451,7 +451,79 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
   }
 }
 
-export const openyolo: OnDemandOpenYoloApi = new InitializeOnDemandApi();
+/**
+ * Promise stub that immediately rejects.
+ */
+class FakePromise {
+  then(onFulfilled?: Function, onRejected?: Function): FakePromise {
+    if (onRejected) {
+      window.setTimeout(() => {
+        onRejected(OpenYoloError.unsupportedBrowser());
+      }, 0);
+    }
+    return this;
+  }
+
+  catch(onRejected: Function): FakePromise {
+    window.setTimeout(() => {
+      onRejected(OpenYoloError.unsupportedBrowser());
+    }, 0);
+    return this;
+  }
+}
+
+/**
+ * API implementation that immediately rejects all requests.
+ */
+class FakeOpenYoloApi implements OnDemandOpenYoloApi {
+  private fakePromise = new FakePromise();
+
+  setProviderUrlBase(providerUrlBase: string) {}
+  setRenderMode(renderMode: RenderMode|null) {}
+  setTimeoutsEnabled(enable: boolean) {}
+  reset() {}
+
+  hintsAvailable(options: CredentialHintOptions): Promise<boolean> {
+    return this.fakePromise;
+  }
+
+  hint(options: CredentialHintOptions): Promise<Credential> {
+    return this.fakePromise;
+  }
+
+  retrieve(options: CredentialRequestOptions): Promise<Credential> {
+    return this.fakePromise;
+  }
+
+  save(credential: Credential): Promise<void> {
+    return this.fakePromise;
+  }
+
+  disableAutoSignIn(): Promise<void> {
+    return this.fakePromise;
+  }
+
+  proxyLogin(credential: Credential): Promise<ProxyLoginResponse> {
+    return this.fakePromise;
+  }
+}
+
+/**
+ * Checks whether the core browser functionality required for OpenYOLO is
+ * supported in the current context.
+ */
+function isCompatibleBrowser(): boolean {
+  const hasPromiseImplementation = window.hasOwnProperty('Promise');
+  const hasCryptoRandomImplementation =
+      window.hasOwnProperty('crypto') && 'getRandomValues' in window.crypto;
+  const hasCryptoSubtleImplementation = window.hasOwnProperty('crypto') &&
+      ('subtle' in window.crypto || 'webkitSubtle' in window.crypto);
+  return hasPromiseImplementation && hasCryptoRandomImplementation &&
+      hasCryptoSubtleImplementation;
+}
+
+export const openyolo: OnDemandOpenYoloApi =
+    isCompatibleBrowser() ? new InitializeOnDemandApi() : new FakeOpenYoloApi();
 
 // Export the public methods.
 const windowAsAny = window as any;
