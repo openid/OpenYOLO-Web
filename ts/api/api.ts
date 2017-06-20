@@ -472,3 +472,5 @@ InitializeOnDemandApi.prototype['disableAutoSignIn'] =
     InitializeOnDemandApi.prototype.disableAutoSignIn;
 InitializeOnDemandApi.prototype['proxyLogin'] =
     InitializeOnDemandApi.prototype.proxyLogin;
+InitializeOnDemandApi.prototype['cancelLastOperation'] =
+    InitializeOnDemandApi.prototype.cancelLastOperation;
