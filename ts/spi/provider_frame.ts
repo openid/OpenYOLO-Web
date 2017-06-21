@@ -368,6 +368,7 @@ export class ProviderFrame {
       this.clientChannel.send(msg.credentialResultMessage(
           requestId, this.storeForProxyLogin(selectedCredential)));
     } catch (err) {
+      this.handleWellKnownErrors(err);
       console.info(`Credential selection cancelled: ${err}`);
       this.clientChannel.send(msg.noneAvailableMessage(requestId));
     }
