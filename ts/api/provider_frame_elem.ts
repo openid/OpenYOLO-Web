@@ -96,6 +96,7 @@ export class ProviderFrameElement {
     }
 
     this.frameElem.className = HIDDEN_FRAME_CLASS;
+    this.frameElem.hidden = true;
     this.clientDocument.body.appendChild(this.frameElem);
   }
 
@@ -111,6 +112,7 @@ export class ProviderFrameElement {
    */
   display(options: DisplayOptions): void {
     this.frameElem.className = '';
+    this.frameElem.hidden = false;
     this.frameElem.classList.add(VISIBLE_FRAME_CLASS);
     this.frameElem.classList.add(this.renderMode);
     if ((options.height || options.width) &&
@@ -125,6 +127,7 @@ export class ProviderFrameElement {
    */
   hide(): void {
     this.frameElem.className = HIDDEN_FRAME_CLASS;
+    this.frameElem.hidden = true;
     this.frameElem.style.height = '';
     this.frameElem.style.width = '';
   }
