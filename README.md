@@ -85,7 +85,7 @@ available from the npm package, using a more explicit module path:
 import openyolo_spi from '@openid/openyolo/es6/openyolo-spi';
 
 // ES5 CommonJS require
-const openyolo_spi from '@openid/openyolo/es5/openyolo-spi';
+const openyolo_spi = require('@openid/openyolo/es5/openyolo-spi');
 ```
 
 ### Retrieving an existing credential
