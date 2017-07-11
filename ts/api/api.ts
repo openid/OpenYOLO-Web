@@ -407,10 +407,7 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
           'Setting it to 0 disable timeouts.');
     }
     // Only trigger reset if the setting changes and goes to disabling timeout.
-    let shouldReset = false;
-    if (this.customTimeoutsMs !== timeoutMs && timeoutMs === 0) {
-      shouldReset = true;
-    }
+    const shouldReset = this.customTimeoutsMs !== timeoutMs && timeoutMs === 0;
     this.customTimeoutsMs = timeoutMs;
     if (shouldReset) {
       this.reset();

@@ -167,7 +167,7 @@ export class TimeoutPromiseResolver<T> extends PromiseResolver<T> {
   private timeoutId: number;
   constructor(private timeoutError: Error, timeoutMs: number) {
     super();
-    this.timeoutId = setTimeout(((this.timeoutReject.bind(this))), timeoutMs);
+    this.timeoutId = setTimeout((this.timeoutReject.bind(this)), timeoutMs);
   }
 
   resolve(result?: T): void {

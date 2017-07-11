@@ -37,7 +37,7 @@ describe('OpenYolo API', () => {
   });
 
   describe('setTimeouts', () => {
-    it('raises an error if a negative number', () => {
+    it('raises an error if given a negative number', () => {
       expect(() => {
         openyolo.setTimeouts(-1);
       }).toThrowError();
@@ -250,6 +250,7 @@ describe('OpenYolo API', () => {
             .and.throwError('Should not use the with timeout method!');
         spyOn(SecureChannel, 'clientConnectNoTimeout')
             .and.returnValue(Promise.resolve(secureChannelSpy));
+        // Disable timeouts.
         openyolo.setTimeouts(0);
       });
 
