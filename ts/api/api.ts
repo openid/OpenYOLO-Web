@@ -19,7 +19,7 @@ import {RENDER_MODES, RenderMode} from '../protocol/data';
 import {OpenYoloError} from '../protocol/errors';
 import {PRELOAD_REQUEST, PreloadRequest} from '../protocol/preload_request';
 import {SecureChannel} from '../protocol/secure_channel';
-import {generateId, sha256} from '../protocol/utils';
+import {generateId, sha256, TimeoutPromiseResolver} from '../protocol/utils';
 
 import {CancelLastOperationRequest} from './cancel_last_operation_request';
 import {CredentialRequest} from './credential_request';
@@ -360,7 +360,7 @@ class OpenYoloApiImpl implements OpenYoloApi {
 export interface OnDemandOpenYoloApi extends OpenYoloApi {
   setProviderUrlBase(providerUrlBase: string): void;
   setRenderMode(renderMode: RenderMode|null): void;
-  setTimeoutsEnabled(enable: boolean): void;
+  setTimeouts(timeoutMs: number): void;
   reset(): void;
 }
 
@@ -374,7 +374,11 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
   private providerUrlBase: string = 'https://provider.openyolo.org';
   private implPromise: Promise<OpenYoloApiImpl>|null = null;
   private renderMode: RenderMode|null = null;
-  private areTimeoutsDisabled: boolean = false;
+  /**
+   * Custom timeouts defined by the client. When null, the predefined timeouts
+   * are used.
+   */
+  private customTimeoutsMs: number|null = null;
 
   constructor() {
     // Register the handler for ping verification automatically on module load.
@@ -391,9 +395,26 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
     this.reset();
   }
 
-  setTimeoutsEnabled(enable: boolean) {
-    this.areTimeoutsDisabled = !enable;
-    this.reset();
+  /**
+   * Sets a global custom timeouts that will wrap every request.
+   * @param timeoutMs Custom timeout, in milliseconds.
+   */
+  setTimeouts(timeoutMs: number) {
+    // Perform sanitization on the developer provided value.
+    if (typeof timeoutMs !== 'number' || timeoutMs < 0) {
+      throw new Error(
+          'Invalid timeout. It must be a number superior or equal to 0. ' +
+          'Setting it to 0 disable timeouts.');
+    }
+    // Only trigger reset if the setting changes and goes to disabling timeout.
+    let shouldReset = false;
+    if (this.customTimeoutsMs !== timeoutMs && timeoutMs === 0) {
+      shouldReset = true;
+    }
+    this.customTimeoutsMs = timeoutMs;
+    if (shouldReset) {
+      this.reset();
+    }
   }
 
   reset() {
@@ -414,40 +435,61 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
       this.implPromise = OpenYoloApiImpl.create(
           this.providerUrlBase,
           this.renderMode,
-          this.areTimeoutsDisabled,
+          // If the custom timeouts is 0, disable all timeouts.
+          this.customTimeoutsMs === 0,
           preloadRequest);
     }
     return this.implPromise;
   }
 
   async hintsAvailable(options: CredentialHintOptions): Promise<boolean> {
-    return (await this.init()).hintsAvailable(options);
+    return await this.wrapTimeout((await this.init()).hintsAvailable(options));
   }
 
   async hint(options: CredentialHintOptions): Promise<Credential|null> {
-    return (await this.init({type: PRELOAD_REQUEST.hint, options}))
-        .hint(options);
+    return await this.wrapTimeout(
+        (await this.init({type: PRELOAD_REQUEST.hint, options})).hint(options));
   }
 
   async retrieve(options: CredentialRequestOptions): Promise<Credential|null> {
-    return (await this.init({type: PRELOAD_REQUEST.retrieve, options}))
-        .retrieve(options);
+    return await this.wrapTimeout(
+        (await this.init({type: PRELOAD_REQUEST.retrieve, options}))
+            .retrieve(options));
   }
 
   async save(credential: Credential): Promise<void> {
-    return (await this.init()).save(credential);
+    return await this.wrapTimeout((await this.init()).save(credential));
   }
 
   async disableAutoSignIn(): Promise<void> {
-    return (await this.init()).disableAutoSignIn();
+    return await this.wrapTimeout((await this.init()).disableAutoSignIn());
   }
 
   async proxyLogin(credential: Credential): Promise<ProxyLoginResponse> {
-    return (await this.init()).proxyLogin(credential);
+    return await this.wrapTimeout((await this.init()).proxyLogin(credential));
   }
 
   async cancelLastOperation(): Promise<void> {
-    return (await this.init()).cancelLastOperation();
+    return await this.wrapTimeout((await this.init()).cancelLastOperation());
+  }
+
+  /**
+   * Wraps the resolution of the given promise with the custom timeout set, if
+   * present.
+   * @param promise The promise that is expected to resolve before the custom
+   *     timeout.
+   */
+  private async wrapTimeout<R>(promise: Promise<R>): Promise<R> {
+    // Use the default timeouts.
+    if (this.customTimeoutsMs === null || this.customTimeoutsMs === 0) {
+      return promise;
+    }
+    const timeoutPromiseResolver = new TimeoutPromiseResolver(
+        OpenYoloError.requestTimeout(), this.customTimeoutsMs);
+    // The TimeoutPromiseResolver never resolves, so the result of this promise
+    // is always of type R.
+    return Promise.race([promise, timeoutPromiseResolver.promise]) as
+        Promise<R>;
   }
 }
 
@@ -460,8 +502,8 @@ InitializeOnDemandApi.prototype['setProviderUrlBase'] =
     InitializeOnDemandApi.prototype.setProviderUrlBase;
 InitializeOnDemandApi.prototype['setRenderMode'] =
     InitializeOnDemandApi.prototype.setRenderMode;
-InitializeOnDemandApi.prototype['setTimeoutsEnabled'] =
-    InitializeOnDemandApi.prototype.setTimeoutsEnabled;
+InitializeOnDemandApi.prototype['setTimeouts'] =
+    InitializeOnDemandApi.prototype.setTimeouts;
 InitializeOnDemandApi.prototype['hintsAvailable'] =
     InitializeOnDemandApi.prototype.hintsAvailable;
 InitializeOnDemandApi.prototype['hint'] = InitializeOnDemandApi.prototype.hint;
