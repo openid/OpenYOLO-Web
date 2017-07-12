@@ -163,57 +163,99 @@ function verifyOrDetectRenderMode(renderMode: RenderMode|null): RenderMode {
 }
 
 /**
+ * Create the open yolo API based on the parameters given. It will always open
+ * the provider page to check the user's configuration, and initialize the
+ * correct implementation of OpenYolo based on the result.
+ */
+async function createOpenYoloApi(
+    providerUrlBase: string,
+    renderMode: RenderMode|null,
+    areTimeoutsDisabled: boolean,
+    preloadRequest?: PreloadRequest): Promise<OpenYoloApi> {
+  // Sanitize input.
+  renderMode = verifyOrDetectRenderMode(renderMode);
+
+  const instanceId = generateId();
+  const instanceIdHash = await sha256(instanceId);
+  const frameManager = new ProviderFrameElement(
+      document,
+      instanceIdHash,
+      window.location.origin,
+      renderMode,
+      providerUrlBase,
+      preloadRequest);
+
+  let channel: SecureChannel|null = null;
+  if (areTimeoutsDisabled) {
+    channel = await SecureChannel.clientConnectNoTimeout(
+        window, frameManager.getContentWindow(), instanceId, instanceIdHash);
+  } else {
+    channel = await SecureChannel.clientConnect(
+        window, frameManager.getContentWindow(), instanceId, instanceIdHash);
+  }
+
+  // Check whether the client should wrap the browser's
+  // navigator.credentials.
+  const request = new WrapBrowserRequest(frameManager, channel);
+  const timeoutMs =
+      areTimeoutsDisabled ? undefined : DEFAULT_TIMEOUTS.wrapBrowserRequest;
+  let wrapBrowser = false;
+  try {
+    wrapBrowser = await request.dispatch(undefined, timeoutMs);
+  } catch (e) {
+    // Default to false if request fails.
+  }
+
+  if (wrapBrowser) {
+    return new OpenYoloBrowserApiImpl();
+  }
+  return new OpenYoloApiImpl(frameManager, channel, areTimeoutsDisabled);
+}
+
+/**
+ * OpenYolo implementation using the browser navigator.credentials.
+ * TODO: Implement.
+ */
+class OpenYoloBrowserApiImpl implements OpenYoloApi {
+  async retrieve(options: CredentialRequestOptions): Promise<Credential> {
+    return Promise.reject('not implemented');
+  }
+
+  async hintsAvailable(options: CredentialRequestOptions): Promise<boolean> {
+    return Promise.reject('not implemented');
+  }
+
+  async hint(options: CredentialRequestOptions): Promise<Credential> {
+    return Promise.reject('not implemented');
+  }
+
+  async disableAutoSignIn(): Promise<void> {
+    return Promise.reject('not implemented');
+  }
+
+  async save(credential: Credential): Promise<void> {
+    return Promise.reject('not implemented');
+  }
+
+  async proxyLogin(credential: Credential): Promise<ProxyLoginResponse> {
+    return Promise.reject('not implemented');
+  }
+
+  async cancelLastOperation(): Promise<void> {
+    return Promise.reject('not implemented');
+  }
+}
+
+/**
  * Provides access to the user's preferred credential provider, in order to
  * retrieve credentials.
  */
 class OpenYoloApiImpl implements OpenYoloApi {
-  static async create(
-      providerUrlBase: string,
-      renderMode: RenderMode|null,
-      areTimeoutsDisabled?: boolean,
-      preloadRequest?: PreloadRequest): Promise<OpenYoloApiImpl> {
-    // Sanitize input.
-    renderMode = verifyOrDetectRenderMode(renderMode);
-
-    const instanceId = generateId();
-    const instanceIdHash = await sha256(instanceId);
-    const frameManager = new ProviderFrameElement(
-        document,
-        instanceIdHash,
-        window.location.origin,
-        renderMode,
-        providerUrlBase,
-        preloadRequest);
-
-    let channel: SecureChannel|null = null;
-    if (areTimeoutsDisabled) {
-      channel = await SecureChannel.clientConnectNoTimeout(
-          window, frameManager.getContentWindow(), instanceId, instanceIdHash);
-    } else {
-      channel = await SecureChannel.clientConnect(
-          window, frameManager.getContentWindow(), instanceId, instanceIdHash);
-    }
-
-    // Check whether the client should wrap the browser's navigator.credentials.
-    const request = new WrapBrowserRequest(frameManager, channel);
-    const timeoutMs =
-        areTimeoutsDisabled ? undefined : DEFAULT_TIMEOUTS.wrapBrowserRequest;
-    const wrapBrowser =
-        await request.dispatch(undefined, timeoutMs).catch((error) => {
-          // Ignore errors.
-          return false;
-        });
-
-    return new OpenYoloApiImpl(
-        frameManager, channel, wrapBrowser, !!areTimeoutsDisabled);
-  }
-
   private disposed: boolean = false;
 
   constructor(
       private frameManager: ProviderFrameElement,
       private channel: SecureChannel,
-      private wrapBrowser: boolean,
       private areTimeoutsDisabled: boolean) {}
 
   async hintsAvailable(options: CredentialHintOptions): Promise<boolean> {
@@ -238,21 +280,6 @@ class OpenYoloApiImpl implements OpenYoloApi {
 
   async retrieve(options: CredentialRequestOptions): Promise<Credential|null> {
     this.checkNotDisposed();
-    if (this.wrapBrowser) {
-      return this.retrieveUsingBrowser(options);
-    } else {
-      return this.retrieveUsingChannel(options);
-    }
-  }
-
-  private async retrieveUsingBrowser(options: CredentialRequestOptions):
-      Promise<Credential> {
-    // TODO: implement
-    return Promise.reject('not implemented');
-  }
-
-  private retrieveUsingChannel(options: CredentialRequestOptions):
-      Promise<Credential|null> {
     const request = new CredentialRequest(this.frameManager, this.channel);
     const timeoutMs = this.areTimeoutsDisabled ?
         undefined :
@@ -260,34 +287,38 @@ class OpenYoloApiImpl implements OpenYoloApi {
     return request.dispatch(options, timeoutMs);
   }
 
-  async save(credential: Credential): Promise<void> {
+  async save(credential: Credential) {
     this.checkNotDisposed();
-    if (this.wrapBrowser) {
-      return this.saveUsingBrowser(credential);
-    } else {
-      return this.saveUsingChannel(credential);
-    }
-  }
-
-  private async saveUsingBrowser(credential: Credential) {
-    // TODO: implement
-    return Promise.reject('not implemented');
-  }
-
-  private async saveUsingChannel(credential: Credential) {
-    let request = new CredentialSave(this.frameManager, this.channel);
+    const request = new CredentialSave(this.frameManager, this.channel);
     const timeoutMs =
         this.areTimeoutsDisabled ? undefined : DEFAULT_TIMEOUTS.credentialSave;
     return request.dispatch(credential, timeoutMs);
   }
 
-  async disableAutoSignIn(): Promise<void> {
+  async proxyLogin(credential: Credential): Promise<ProxyLoginResponse> {
     this.checkNotDisposed();
-    if (this.wrapBrowser) {
-      this.disableAutoSignInUsingBrowser();
-    } else {
-      this.disableAutoSignInUsingChannel();
-    }
+    const request = new ProxyLogin(this.frameManager, this.channel);
+    const timeoutMs =
+        this.areTimeoutsDisabled ? undefined : DEFAULT_TIMEOUTS.proxyLogin;
+    return request.dispatch(credential, timeoutMs);
+  }
+
+  async disableAutoSignIn() {
+    this.checkNotDisposed();
+    const request = new DisableAutoSignIn(this.frameManager, this.channel);
+    const timeoutMs = this.areTimeoutsDisabled ?
+        undefined :
+        DEFAULT_TIMEOUTS.disableAutoSignIn;
+    return request.dispatch(undefined, timeoutMs);
+  }
+
+  async cancelLastOperation() {
+    const request =
+        new CancelLastOperationRequest(this.frameManager, this.channel);
+    const timeoutMs = this.areTimeoutsDisabled ?
+        undefined :
+        DEFAULT_TIMEOUTS.cancelLastOperation;
+    return request.dispatch(undefined, timeoutMs);
   }
 
   isDisposed(): boolean {
@@ -307,60 +338,24 @@ class OpenYoloApiImpl implements OpenYoloApi {
       throw OpenYoloError.clientDisposed();
     }
   }
-
-  private async disableAutoSignInUsingBrowser() {
-    Promise.reject('not implemented');
-  }
-
-  private async disableAutoSignInUsingChannel() {
-    const request = new DisableAutoSignIn(this.frameManager, this.channel);
-    const timeoutMs = this.areTimeoutsDisabled ?
-        undefined :
-        DEFAULT_TIMEOUTS.disableAutoSignIn;
-    return request.dispatch(undefined, timeoutMs);
-  }
-
-  async proxyLogin(credential: Credential): Promise<ProxyLoginResponse> {
-    if (this.wrapBrowser) {
-      return this.proxyLoginUsingBrowser();
-    }
-
-    return this.proxyLoginUsingChannel(credential);
-  }
-
-  private async proxyLoginUsingBrowser() {
-    return Promise.reject('not implemented');
-  }
-
-  private async proxyLoginUsingChannel(credential: Credential) {
-    let request = new ProxyLogin(this.frameManager, this.channel);
-    const timeoutMs =
-        this.areTimeoutsDisabled ? undefined : DEFAULT_TIMEOUTS.proxyLogin;
-    return request.dispatch(credential, timeoutMs);
-  }
-
-  private async cancelLastOperationUsingBrowser() {
-    return Promise.reject('not implemented');
-  }
-
-  async cancelLastOperation() {
-    if (this.wrapBrowser) {
-      return this.cancelLastOperationUsingBrowser();
-    }
-
-    let request =
-        new CancelLastOperationRequest(this.frameManager, this.channel);
-    const timeoutMs = this.areTimeoutsDisabled ?
-        undefined :
-        DEFAULT_TIMEOUTS.cancelLastOperation;
-    return request.dispatch(undefined, timeoutMs);
-  }
 }
 
 export interface OnDemandOpenYoloApi extends OpenYoloApi {
+  /**
+   * Sets the provider URL.
+   */
   setProviderUrlBase(providerUrlBase: string): void;
+  /**
+   * Sets the render mode, or null if the default one should be used.
+   */
   setRenderMode(renderMode: RenderMode|null): void;
+  /**
+   * Sets a custom timeouts, or 0 to disable timeouts.
+   */
   setTimeouts(timeoutMs: number): void;
+  /**
+   * Resets the current instantiation of the API.
+   */
   reset(): void;
 }
 
@@ -429,7 +424,7 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
 
   private init(preloadRequest?: PreloadRequest): Promise<OpenYoloApiImpl> {
     if (!this.implPromise) {
-      this.implPromise = OpenYoloApiImpl.create(
+      this.implPromise = createOpenYoloApi(
           this.providerUrlBase,
           this.renderMode,
           // If the custom timeouts is 0, disable all timeouts.

@@ -371,12 +371,14 @@ describe('OpenYolo API', () => {
 
       describe('disableAutoSignIn', () => {
         it('works', async function(done) {
+          // spyOn(DisableAutoSignIn.prototype, 'dispose');
           openyolo.disableAutoSignIn().then(
               () => {
                 done.fail('Should not resolve!');
               },
               (error) => {
                 expect(OpenYoloError.errorIs(error, 'requestTimeout'));
+                // expect(DisableAutoSignIn.prototype.dispose).toHaveBeenCalled();
                 done();
               });
           jasmine.clock().tick(timeoutMs);
