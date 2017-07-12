@@ -15,6 +15,7 @@
  */
 
 import {Credential, CredentialHintOptions, CredentialRequestOptions, ProxyLoginResponse} from '../protocol/data';
+import {OpenYoloError} from '../protocol/errors';
 import {SecureChannel} from '../protocol/secure_channel';
 
 import {openyolo} from './api';
@@ -375,6 +376,7 @@ describe('OpenYolo API', () => {
                 done.fail('Should not resolve!');
               },
               (error) => {
+                expect(OpenYoloError.errorIs(error, 'requestTimeout'));
                 done();
               });
           jasmine.clock().tick(timeoutMs);
@@ -390,6 +392,7 @@ describe('OpenYolo API', () => {
                 done.fail('Should not resolve!');
               },
               (error) => {
+                expect(OpenYoloError.errorIs(error, 'requestTimeout'));
                 done();
               });
           jasmine.clock().tick(timeoutMs);
@@ -403,6 +406,7 @@ describe('OpenYolo API', () => {
                 done.fail('Should not resolve!');
               },
               (error) => {
+                expect(OpenYoloError.errorIs(error, 'requestTimeout'));
                 done();
               });
           jasmine.clock().tick(timeoutMs);
@@ -418,6 +422,7 @@ describe('OpenYolo API', () => {
                 done.fail('Should not resolve!');
               },
               (error) => {
+                expect(OpenYoloError.errorIs(error, 'requestTimeout'));
                 done();
               });
           jasmine.clock().tick(timeoutMs);
@@ -433,6 +438,7 @@ describe('OpenYolo API', () => {
                 done.fail('Should not resolve!');
               },
               (error) => {
+                expect(OpenYoloError.errorIs(error, 'requestTimeout'));
                 done();
               });
           jasmine.clock().tick(timeoutMs);
@@ -447,6 +453,7 @@ describe('OpenYolo API', () => {
                     done.fail('Should not resolve!');
                   },
                   (error) => {
+                    expect(OpenYoloError.errorIs(error, 'requestTimeout'));
                     done();
                   });
           jasmine.clock().tick(timeoutMs);
@@ -461,6 +468,7 @@ describe('OpenYolo API', () => {
                     done.fail('Should not resolve!');
                   },
                   (error) => {
+                    expect(OpenYoloError.errorIs(error, 'requestTimeout'));
                     done();
                   });
           jasmine.clock().tick(timeoutMs);

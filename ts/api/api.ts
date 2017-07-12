@@ -427,7 +427,7 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
     });
   }
 
-  private init(preloadRequest?: PreloadRequest) {
+  private init(preloadRequest?: PreloadRequest): Promise<OpenYoloApiImpl> {
     if (!this.implPromise) {
       this.implPromise = OpenYoloApiImpl.create(
           this.providerUrlBase,
@@ -440,34 +440,47 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
   }
 
   async hintsAvailable(options: CredentialHintOptions): Promise<boolean> {
-    return await this.wrapTimeout((await this.init()).hintsAvailable(options));
+    return await this.wrapInitAndTimeout(null, (impl) => {
+      return impl.hintsAvailable(options);
+    });
   }
 
   async hint(options: CredentialHintOptions): Promise<Credential|null> {
-    return await this.wrapTimeout(
-        (await this.init({type: PRELOAD_REQUEST.hint, options})).hint(options));
+    const preloadRequest = {type: PRELOAD_REQUEST.hint, options};
+    return await this.wrapInitAndTimeout(preloadRequest, (impl) => {
+      return impl.hint(options);
+    });
   }
 
   async retrieve(options: CredentialRequestOptions): Promise<Credential|null> {
-    return await this.wrapTimeout(
-        (await this.init({type: PRELOAD_REQUEST.retrieve, options}))
-            .retrieve(options));
+    const preloadRequest = {type: PRELOAD_REQUEST.retrieve, options};
+    return await this.wrapInitAndTimeout(preloadRequest, (impl) => {
+      return impl.retrieve(options);
+    });
   }
 
   async save(credential: Credential): Promise<void> {
-    return await this.wrapTimeout((await this.init()).save(credential));
+    return await this.wrapInitAndTimeout(null, (impl) => {
+      return impl.save(credential);
+    });
   }
 
   async disableAutoSignIn(): Promise<void> {
-    return await this.wrapTimeout((await this.init()).disableAutoSignIn());
+    return await this.wrapInitAndTimeout(null, (impl) => {
+      return impl.disableAutoSignIn();
+    });
   }
 
   async proxyLogin(credential: Credential): Promise<ProxyLoginResponse> {
-    return await this.wrapTimeout((await this.init()).proxyLogin(credential));
+    return await this.wrapInitAndTimeout(null, (impl) => {
+      return impl.proxyLogin(credential);
+    });
   }
 
   async cancelLastOperation(): Promise<void> {
-    return await this.wrapTimeout((await this.init()).cancelLastOperation());
+    return await this.wrapInitAndTimeout(null, (impl) => {
+      return impl.cancelLastOperation();
+    });
   }
 
   /**
@@ -476,7 +489,10 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
    * @param promise The promise that is expected to resolve before the custom
    *     timeout.
    */
-  private async wrapTimeout<R>(promise: Promise<R>): Promise<R> {
+  private async wrapInitAndTimeout<R>(
+      preloadRequest: PreloadRequest|null,
+      callback: (impl: OpenYoloApiImpl) => Promise<R>): Promise<R> {
+    const promise = this.init(preloadRequest || undefined).then(callback);
     // Use the default timeouts.
     if (this.customTimeoutsMs === null || this.customTimeoutsMs === 0) {
       return promise;
