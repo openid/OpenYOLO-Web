@@ -26,7 +26,6 @@ export class CancelLastOperationRequest extends BaseRequest<void, void> {
   }
 
   private handleResult(): void {
-    this.clearTimeouts();
     this.resolve();
     this.dispose();
   }

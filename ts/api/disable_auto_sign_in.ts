@@ -27,7 +27,6 @@ export class DisableAutoSignIn extends BaseRequest<undefined, undefined> {
    */
   dispatchInternal() {
     this.registerHandler(RPC_MESSAGE_TYPES.disableAutoSignInResult, () => {
-      this.clearTimeouts();
       this.resolve();
       this.dispose();
     });

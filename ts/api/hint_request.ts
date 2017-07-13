@@ -43,7 +43,6 @@ export class HintRequest extends
    */
   private handleResult(credential: Credential|null): void {
     this.debugLog(`Hint request complete`);
-    this.clearTimeouts();
     this.resolve(credential);
     this.dispose();
   }

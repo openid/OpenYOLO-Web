@@ -17,7 +17,7 @@
 import {ERROR_TYPES, OpenYoloError, OpenYoloErrorData, OpenYoloExtendedError} from '../protocol/errors';
 import {RpcMessageArgumentTypes, RpcMessageDataTypes, RpcMessageType} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
-import {generateId, PromiseResolver} from '../protocol/utils';
+import {generateId, PromiseResolver, startTimeoutRacer, TimeoutRacer} from '../protocol/utils';
 
 import {ProviderFrameElement} from './provider_frame_elem';
 
@@ -36,7 +36,7 @@ export interface RelayRequest<T, O> {
   /**
    * Sends the specific request to the relay, with the given options.
    */
-  dispatch(options: O, timeoutMs?: number): Promise<T>;
+  dispatch(options: O, timeoutRacer: TimeoutRacer): Promise<T>;
 }
 
 /**
@@ -54,18 +54,28 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
     RelayRequest<ResultT, OptionsT> {
   private promiseResolver = new PromiseResolver<ResultT>();
   private listenerKeys: number[] = [];
-  private timeouts: number[] = [];
   private disposed = false;
+  private timeoutRacer: TimeoutRacer|null = null;
 
   constructor(
       protected frame: ProviderFrameElement,
       protected channel: SecureChannel,
       public id = generateId()) {}
 
-  dispatch(options: OptionsT, timeoutMs?: number): Promise<ResultT> {
-    this.registerBaseHandlers(timeoutMs);
+  async dispatch(options: OptionsT, timeoutRacer?: TimeoutRacer):
+      Promise<ResultT> {
+    this.timeoutRacer = timeoutRacer || startTimeoutRacer(0);
+    this.registerBaseHandlers();
     this.dispatchInternal(options);
-    return this.getPromise();
+    try {
+      return await this.timeoutRacer.race(this.getPromise());
+    } catch (error) {
+      this.timeoutRacer.handleTimeoutError(error);
+      // Handle a timeout error.
+      this.frame.hide();
+      this.dispose();
+      throw OpenYoloError.requestTimeout();
+    }
   }
 
   /**
@@ -77,7 +87,7 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
    * Registers the base handlers for the request. To be called by subclasses for
    * proper initialization.
    */
-  private registerBaseHandlers(timeoutMs?: number) {
+  private registerBaseHandlers() {
     this.debugLog('request instantiated');
     // Register a standard error handler.
     this.registerHandler('error', (data: OpenYoloErrorData) => {
@@ -97,17 +107,9 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
     // shown, the timeouts are also canceled to allow the operation to proceed
     // at human pace.
     this.registerHandler('showProvider', (options) => {
-      this.clearTimeouts();
+      this.clearTimeout();
       this.frame.display(options);
     });
-
-    // Register a timeout handler if required.
-    if (timeoutMs && timeoutMs > 0) {
-      this.setAndRegisterTimeout(() => {
-        this.reject(OpenYoloError.requestTimeout());
-        this.dispose();
-      }, timeoutMs);
-    }
   }
 
   protected debugLog(message: string) {
@@ -163,20 +165,12 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
   }
 
   /**
-   * Sets a timeout and keep the id to be able to clear it later.
+   * Clear the timeout racer.
    */
-  setAndRegisterTimeout(fn: () => void, timeout: number) {
-    this.timeouts.push(window.setTimeout(() => fn(), timeout));
-  }
-
-  /**
-   * Clears all started timeouts.
-   */
-  protected clearTimeouts(): void {
-    this.timeouts.forEach((id) => {
-      window.clearTimeout(id);
-    });
-    this.timeouts = [];
+  protected clearTimeout(): void {
+    if (this.timeoutRacer !== null) {
+      this.timeoutRacer.stop();
+    }
   }
 
   /**
@@ -186,7 +180,7 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
     if (this.disposed) {
       return;
     }
-    this.clearTimeouts();
+    this.clearTimeout();
     this.clearListeners();
     this.promiseResolver.dispose();
     this.disposed = true;

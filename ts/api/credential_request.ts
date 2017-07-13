@@ -44,7 +44,6 @@ export class CredentialRequest extends
    * Handles the initial response from a credential request.
    */
   private handleResult(credential: Credential|null): void {
-    this.clearTimeouts();
     this.resolve(credential);
     this.dispose();
   }
