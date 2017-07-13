@@ -70,8 +70,9 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
     try {
       return await this.timeoutRacer.race(this.getPromise());
     } catch (error) {
-      this.timeoutRacer.handleTimeoutError(error);
-      // Handle a timeout error.
+      // Rethrow the error unless it timed out, to keep the correct error type.
+      this.timeoutRacer.rethrowUnlessTimeoutError(error);
+      // Handle specifically a timeout error.
       this.frame.hide();
       this.dispose();
       throw OpenYoloError.requestTimeout();

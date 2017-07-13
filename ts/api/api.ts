@@ -219,9 +219,10 @@ async function createOpenYoloApi(
     try {
       wrapBrowser = await request.dispatch(undefined, timeoutRacer);
     } catch (e) {
-      // Only rethrow a timeout error.
-      timeoutRacer.rethrowTimeoutError(e);
       // Default to false if request fails.
+      // It also ignores timeout errors, as the initialization is actually
+      // complete so even if this operation fails, the next could succeed
+      // without reloading the IFrame.
     }
 
     if (wrapBrowser) {
@@ -229,7 +230,7 @@ async function createOpenYoloApi(
     }
     return new OpenYoloApiImpl(frameManager, channel);
   } catch (e) {
-    timeoutRacer.handleTimeoutError(e);
+    timeoutRacer.rethrowUnlessTimeoutError(e);
     // Convert the timeout error.
     throw OpenYoloError.requestTimeout();
   }
@@ -292,7 +293,7 @@ class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
     this.checkNotDisposed();
     const request = new HintAvailableRequest(this.frameManager, this.channel);
     try {
-      return await timeoutRacer.race(request.dispatch(options));
+      return await request.dispatch(options, timeoutRacer);
     } catch (e) {
       return false;
     }
@@ -446,10 +447,14 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
       this.implPromise = createOpenYoloApi(
           timeoutRacer, this.providerUrlBase, this.renderMode, preloadRequest);
     }
+    this.implPromise.catch((e) => {
+      // If the initialization failed, reset so the next call could work.
+      this.reset();
+    });
     return this.implPromise;
   }
 
-  private startTimeoutRacer(defaultTimeoutMs: number): TimeoutRacer {
+  private startCustomTimeoutRacer(defaultTimeoutMs: number): TimeoutRacer {
     return startTimeoutRacer(
         this.customTimeoutsMs !== null ? this.customTimeoutsMs :
                                          defaultTimeoutMs);
@@ -457,47 +462,49 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
 
   async hintsAvailable(options: CredentialHintOptions): Promise<boolean> {
     const timeoutRacer =
-        this.startTimeoutRacer(DEFAULT_TIMEOUTS.hintsAvailable);
+        this.startCustomTimeoutRacer(DEFAULT_TIMEOUTS.hintsAvailable);
     const impl = await this.init(timeoutRacer);
     return await impl.hintsAvailable(options, timeoutRacer);
   }
 
   async hint(options: CredentialHintOptions): Promise<Credential|null> {
     const preloadRequest = {type: PRELOAD_REQUEST.hint, options};
-    const timeoutRacer = this.startTimeoutRacer(DEFAULT_TIMEOUTS.hint);
+    const timeoutRacer = this.startCustomTimeoutRacer(DEFAULT_TIMEOUTS.hint);
     const impl = await this.init(timeoutRacer, preloadRequest);
     return await impl.hint(options, timeoutRacer);
   }
 
   async retrieve(options: CredentialRequestOptions): Promise<Credential|null> {
     const preloadRequest = {type: PRELOAD_REQUEST.retrieve, options};
-    const timeoutRacer = this.startTimeoutRacer(DEFAULT_TIMEOUTS.retrieve);
+    const timeoutRacer =
+        this.startCustomTimeoutRacer(DEFAULT_TIMEOUTS.retrieve);
     const impl = await this.init(timeoutRacer, preloadRequest);
     return impl.retrieve(options, timeoutRacer);
   }
 
   async save(credential: Credential): Promise<void> {
-    const timeoutRacer = this.startTimeoutRacer(DEFAULT_TIMEOUTS.save);
+    const timeoutRacer = this.startCustomTimeoutRacer(DEFAULT_TIMEOUTS.save);
     const impl = await this.init(timeoutRacer);
     return impl.save(credential, timeoutRacer);
   }
 
   async disableAutoSignIn(): Promise<void> {
     const timeoutRacer =
-        this.startTimeoutRacer(DEFAULT_TIMEOUTS.disableAutoSignIn);
+        this.startCustomTimeoutRacer(DEFAULT_TIMEOUTS.disableAutoSignIn);
     const impl = await this.init(timeoutRacer);
     return impl.disableAutoSignIn(timeoutRacer);
   }
 
   async proxyLogin(credential: Credential): Promise<ProxyLoginResponse> {
-    const timeoutRacer = this.startTimeoutRacer(DEFAULT_TIMEOUTS.proxyLogin);
+    const timeoutRacer =
+        this.startCustomTimeoutRacer(DEFAULT_TIMEOUTS.proxyLogin);
     const impl = await this.init(timeoutRacer);
     return impl.proxyLogin(credential, timeoutRacer);
   }
 
   async cancelLastOperation(): Promise<void> {
     const timeoutRacer =
-        this.startTimeoutRacer(DEFAULT_TIMEOUTS.cancelLastOperation);
+        this.startCustomTimeoutRacer(DEFAULT_TIMEOUTS.cancelLastOperation);
     const impl = await this.init(timeoutRacer);
     return impl.cancelLastOperation(timeoutRacer);
   }

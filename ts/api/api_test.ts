@@ -76,6 +76,24 @@ describe('OpenYolo API', () => {
               .and.returnValue(Promise.resolve());
           openyolo.disableAutoSignIn().then(done);
         });
+
+        it('resets the API if initialization fails', (done) => {
+          const expectedError = new Error('ERROR!');
+          spyOn(DisableAutoSignIn.prototype, 'dispatch');
+          (SecureChannel.clientConnectNoTimeout as jasmine.Spy)
+              .and.returnValue(Promise.reject(expectedError));
+          openyolo.disableAutoSignIn().then(
+              () => {
+                done.fail('Should not resolve!');
+              },
+              (error) => {
+                expect(error).toBe(expectedError);
+                // Second initialization works.
+                (SecureChannel.clientConnectNoTimeout as jasmine.Spy)
+                    .and.returnValue(Promise.resolve(secureChannelSpy));
+                openyolo.disableAutoSignIn().then(done);
+              });
+        });
       });
 
       describe('hintsAvailable', () => {

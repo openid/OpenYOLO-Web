@@ -233,8 +233,8 @@ class TimeoutRacerError extends Error {
 export interface TimeoutRacer {
   race<R>(promise: Promise<R>): Promise<R>;
   stop(): void;
-  rethrowTimeoutError(error: Error): void;
-  handleTimeoutError(error: Error): void;
+  rethrowIfTimeoutError(error: Error): void;
+  rethrowUnlessTimeoutError(error: Error): void;
   dispose(): void;
 }
 
@@ -271,7 +271,7 @@ class EnabledTimeoutRacer implements TimeoutRacer {
   /**
    * Rethrows the error given if it is the timeout racer's error.
    */
-  rethrowTimeoutError(error: Error) {
+  rethrowIfTimeoutError(error: Error) {
     if (error === this.error) {
       throw error;
     }
@@ -280,7 +280,7 @@ class EnabledTimeoutRacer implements TimeoutRacer {
   /**
    * Rethrows anhy error given unless it is the timeout racer's error.
    */
-  handleTimeoutError(error: Error) {
+  rethrowUnlessTimeoutError(error: Error) {
     if (error !== this.error) {
       throw error;
     }
@@ -313,12 +313,12 @@ class DisabledTimeoutRacer implements TimeoutRacer {
   /**
    * Rethrows the error given if it is the timeout racer's error.
    */
-  rethrowTimeoutError(error: Error) {}
+  rethrowIfTimeoutError(error: Error) {}
 
   /**
    * Rethrows anhy error given unless it is the timeout racer's error.
    */
-  handleTimeoutError(error: Error) {
+  rethrowUnlessTimeoutError(error: Error) {
     throw error;
   }
 

@@ -123,9 +123,9 @@ describe('utils', () => {
               },
               (error) => {
                 // Ignore an invalid error.
-                timeoutRacer2.rethrowTimeoutError(error);
+                timeoutRacer2.rethrowIfTimeoutError(error);
                 ignoredFirst = true;
-                timeoutRacer1.rethrowTimeoutError(error);
+                timeoutRacer1.rethrowIfTimeoutError(error);
               })
           .catch((error) => {
             expect(ignoredFirst).toBe(true);
@@ -143,7 +143,7 @@ describe('utils', () => {
                 done.fail('Should not resolve!');
               },
               (error) => {
-                timeoutRacer.rethrowTimeoutError(error);
+                timeoutRacer.rethrowIfTimeoutError(error);
                 done();
               });
       promiseResolver.reject(new Error('Other error.'));
@@ -160,10 +160,10 @@ describe('utils', () => {
                 done.fail('Should not resolve!');
               },
               (error) => {
-                timeoutRacer1.handleTimeoutError(error);
+                timeoutRacer1.rethrowUnlessTimeoutError(error);
                 handledFirst = true;
                 // Ignore an invalid error.
-                timeoutRacer2.handleTimeoutError(error);
+                timeoutRacer2.rethrowUnlessTimeoutError(error);
               })
           .catch((error) => {
             expect(handledFirst).toBe(true);
@@ -181,7 +181,7 @@ describe('utils', () => {
                 done.fail('Should not resolve!');
               },
               (error) => {
-                timeoutRacer.handleTimeoutError(error);
+                timeoutRacer.rethrowUnlessTimeoutError(error);
                 done.fail('Should not reject here!');
               })
           .catch(done);
