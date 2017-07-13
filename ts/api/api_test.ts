@@ -359,11 +359,28 @@ describe('OpenYolo API', () => {
                 done.fail('Should not resolve!');
               },
               (error) => {
-                expect(OpenYoloError.errorIs(error, 'requestTimeout'));
+                expect(OpenYoloError.errorIs(error, 'requestTimeout'))
+                    .toBe(true);
                 done();
               });
           jasmine.clock().tick(timeoutMs);
         });
+
+        it('throws RequestTimeout if any step of the initialization times out',
+           (done) => {
+             (SecureChannel.clientConnectNoTimeout as jasmine.Spy)
+                 .and.returnValue(new Promise(() => {}));
+             openyolo.disableAutoSignIn().then(
+                 () => {
+                   done.fail('Should not resolve!');
+                 },
+                 (error) => {
+                   expect(OpenYoloError.errorIs(error, 'requestTimeout'))
+                       .toBe(true);
+                   done();
+                 });
+             jasmine.clock().tick(timeoutMs);
+           });
       });
 
       describe('hintsAvailable', () => {
@@ -375,7 +392,8 @@ describe('OpenYolo API', () => {
                 done.fail('Should not resolve!');
               },
               (error) => {
-                expect(OpenYoloError.errorIs(error, 'requestTimeout'));
+                expect(OpenYoloError.errorIs(error, 'requestTimeout'))
+                    .toBe(true);
                 done();
               });
           jasmine.clock().tick(timeoutMs);
@@ -389,7 +407,8 @@ describe('OpenYolo API', () => {
                 done.fail('Should not resolve!');
               },
               (error) => {
-                expect(OpenYoloError.errorIs(error, 'requestTimeout'));
+                expect(OpenYoloError.errorIs(error, 'requestTimeout'))
+                    .toBe(true);
                 done();
               });
           jasmine.clock().tick(timeoutMs);
@@ -405,7 +424,8 @@ describe('OpenYolo API', () => {
                 done.fail('Should not resolve!');
               },
               (error) => {
-                expect(OpenYoloError.errorIs(error, 'requestTimeout'));
+                expect(OpenYoloError.errorIs(error, 'requestTimeout'))
+                    .toBe(true);
                 done();
               });
           jasmine.clock().tick(timeoutMs);
@@ -421,7 +441,8 @@ describe('OpenYolo API', () => {
                 done.fail('Should not resolve!');
               },
               (error) => {
-                expect(OpenYoloError.errorIs(error, 'requestTimeout'));
+                expect(OpenYoloError.errorIs(error, 'requestTimeout'))
+                    .toBe(true);
                 done();
               });
           jasmine.clock().tick(timeoutMs);
@@ -436,7 +457,8 @@ describe('OpenYolo API', () => {
                     done.fail('Should not resolve!');
                   },
                   (error) => {
-                    expect(OpenYoloError.errorIs(error, 'requestTimeout'));
+                    expect(OpenYoloError.errorIs(error, 'requestTimeout'))
+                        .toBe(true);
                     done();
                   });
           jasmine.clock().tick(timeoutMs);
@@ -451,7 +473,8 @@ describe('OpenYolo API', () => {
                     done.fail('Should not resolve!');
                   },
                   (error) => {
-                    expect(OpenYoloError.errorIs(error, 'requestTimeout'));
+                    expect(OpenYoloError.errorIs(error, 'requestTimeout'))
+                        .toBe(true);
                     done();
                   });
           jasmine.clock().tick(timeoutMs);

@@ -36,7 +36,7 @@ export interface RelayRequest<T, O> {
   /**
    * Sends the specific request to the relay, with the given options.
    */
-  dispatch(options: O, timeoutRacer: TimeoutRacer): Promise<T>;
+  dispatch(options: O, timeoutRacer?: TimeoutRacer): Promise<T>;
 }
 
 /**

@@ -167,17 +167,17 @@ export class TimeoutPromiseResolver<T> extends PromiseResolver<T> {
   private timeoutId: number;
   constructor(private timeoutError: Error, timeoutMs: number) {
     super();
-    this.timeoutId = setTimeout((this.timeoutReject.bind(this)), timeoutMs);
+    this.timeoutId = setTimeout(this.timeoutReject.bind(this), timeoutMs);
   }
 
   resolve(result?: T): void {
     super.resolve(result);
-    clearTimeout(this.timeoutId);
+    this.clear();
   }
 
   reject(error: Error): void {
     super.reject(error);
-    clearTimeout(this.timeoutId);
+    this.clear();
   }
 
   clear(): void {
@@ -193,7 +193,7 @@ export class TimeoutPromiseResolver<T> extends PromiseResolver<T> {
 }
 
 export function timeoutPromise<T>(error: Error, timeoutMs: number): Promise<T> {
-  let promiseResolver = new TimeoutPromiseResolver<T>(error, timeoutMs);
+  const promiseResolver = new TimeoutPromiseResolver<T>(error, timeoutMs);
   return promiseResolver.promise;
 }
 
@@ -256,7 +256,7 @@ class EnabledTimeoutRacer implements TimeoutRacer {
    */
   race<R>(promise: Promise<R>): Promise<R> {
     // If the timeout promise has already been rejected, this will directly
-    // reject.
+    // reject. The cast is safe as the timeoutPromiseResolver never resolves.
     return Promise.race([this.timeoutPromiseResolver.promise, promise]) as
         Promise<R>;
   }

@@ -130,7 +130,7 @@ export interface OpenYoloApi {
 }
 
 /**
- * Similar interace than the exposed OpenYoloApi, but it handles external
+ * Similar interface than the exposed OpenYoloApi, but it handles external
  * timeouts given.
  */
 export interface OpenYoloWithTimeoutApi {
@@ -159,7 +159,7 @@ const DEFAULT_TIMEOUTS: {[key in OpenYoloApiMethods]: number} = {
   hintsAvailable: 3000,
   hint: 3000,
   proxyLogin: 10000,
-  cancelLastOperation: 1000
+  cancelLastOperation: 3000
 };
 
 /**
@@ -191,39 +191,48 @@ async function createOpenYoloApi(
     providerUrlBase: string,
     renderMode: RenderMode|null,
     preloadRequest?: PreloadRequest): Promise<OpenYoloWithTimeoutApi> {
-  // Sanitize input.
-  renderMode = verifyOrDetectRenderMode(renderMode);
-
-  const instanceId = generateId();
-  const instanceIdHash = await timeoutRacer.race(sha256(instanceId));
-  const frameManager = new ProviderFrameElement(
-      document,
-      instanceIdHash,
-      window.location.origin,
-      renderMode,
-      providerUrlBase,
-      preloadRequest);
-
-  let channel: SecureChannel|null = null;
-  channel = await timeoutRacer.race(SecureChannel.clientConnectNoTimeout(
-      window, frameManager.getContentWindow(), instanceId, instanceIdHash));
-
-  // Check whether the client should wrap the browser's
-  // navigator.credentials.
-  const request = new WrapBrowserRequest(frameManager, channel);
-  let wrapBrowser = false;
   try {
-    wrapBrowser = await request.dispatch(undefined, timeoutRacer);
-  } catch (e) {
-    // Only rethrow a timeout error.
-    timeoutRacer.rethrowTimeoutError(e);
-    // Default to false if request fails.
-  }
+    // Sanitize input.
+    renderMode = verifyOrDetectRenderMode(renderMode);
 
-  if (wrapBrowser) {
-    return new OpenYoloBrowserApiImpl();
+    const instanceId = generateId();
+    const instanceIdHash = await timeoutRacer.race(sha256(instanceId));
+    const frameManager = new ProviderFrameElement(
+        document,
+        instanceIdHash,
+        window.location.origin,
+        renderMode,
+        providerUrlBase,
+        preloadRequest);
+
+    const channel =
+        await timeoutRacer.race(SecureChannel.clientConnectNoTimeout(
+            window,
+            frameManager.getContentWindow(),
+            instanceId,
+            instanceIdHash));
+
+    // Check whether the client should wrap the browser's
+    // navigator.credentials.
+    const request = new WrapBrowserRequest(frameManager, channel);
+    let wrapBrowser = false;
+    try {
+      wrapBrowser = await request.dispatch(undefined, timeoutRacer);
+    } catch (e) {
+      // Only rethrow a timeout error.
+      timeoutRacer.rethrowTimeoutError(e);
+      // Default to false if request fails.
+    }
+
+    if (wrapBrowser) {
+      return new OpenYoloBrowserApiImpl();
+    }
+    return new OpenYoloApiImpl(frameManager, channel);
+  } catch (e) {
+    timeoutRacer.handleTimeoutError(e);
+    // Convert the timeout error.
+    throw OpenYoloError.requestTimeout();
   }
-  return new OpenYoloApiImpl(frameManager, channel);
 }
 
 /**
