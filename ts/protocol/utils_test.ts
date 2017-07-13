@@ -187,5 +187,22 @@ describe('utils', () => {
           .catch(done);
       promiseResolver.reject(new Error('Other error.'));
     });
+
+    it('stops', (done) => {
+      const timeoutRacer = utils.startTimeoutRacer(100);
+      const promiseResolver = new utils.PromiseResolver<void>();
+      timeoutRacer.race(promiseResolver.promise)
+          .then(
+              () => {
+                done();
+              },
+              (error) => {
+                done.fail('Should not reject!');
+              });
+      jasmine.clock().tick(99);
+      timeoutRacer.stop();
+      jasmine.clock().tick(Infinity);
+      promiseResolver.resolve();
+    });
   });
 });
