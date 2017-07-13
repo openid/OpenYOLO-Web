@@ -28,7 +28,7 @@ import {HintRequest} from './hint_request';
 import {ProxyLogin} from './proxy_login';
 import {WrapBrowserRequest} from './wrap_browser_request';
 
-describe('OpenYolo API', () => {
+xdescribe('OpenYolo API', () => {
   const credential: Credential = {id: 'test', authMethod: 'test'};
   const expectedError = new Error('ERROR!');
   const secureChannelSpy = jasmine.createSpyObj('SecureChannel', ['send']);

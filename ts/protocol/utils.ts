@@ -189,7 +189,7 @@ export class TimeoutPromiseResolver<T> extends PromiseResolver<T> {
 }
 
 export function timeoutPromise<T>(error: Error, timeoutMs: number): Promise<T> {
-  let promiseResolver = new TimeoutPromiseResolver(error, timeoutMs);
+  let promiseResolver = new TimeoutPromiseResolver<T>(error, timeoutMs);
   return promiseResolver.promise;
 }
 
@@ -209,5 +209,67 @@ export class CancellablePromise<T> extends PromiseResolver<T> {
 
   cancel() {
     this.reject(CancellablePromise.CANCELLED_ERROR);
+  }
+}
+
+/**
+ * Error specific to timeout racer, allows to know whether the a timeout error
+ * has been raised by a specific instance of a TimeoutRacer.
+ */
+class TimeoutRacerError extends Error {
+  constructor() {
+    super('The timeout has expired.');
+  }
+}
+
+/**
+ * Class that handles a timeout that is passed along several subsequent
+ * asynchronous operations.
+ */
+export class TimeoutRacer {
+  private error: TimeoutRacerError = new TimeoutRacerError();
+  private timeoutPromiseResolver: PromiseResolver<void>;
+
+  constructor(timeoutMs: number) {
+    if (timeoutMs <= 0) {
+      // No timeout, use a promise that will never resolve.
+      this.timeoutPromiseResolver = new PromiseResolver<void>();
+    } else {
+      this.timeoutPromiseResolver =
+          new TimeoutPromiseResolver<void>(this.error, timeoutMs);
+    }
+  }
+
+  /**
+   * Races the given promise with the timeout.
+   */
+  race<R>(promise: Promise<R>): Promise<R> {
+    // If the timeout promise has already been rejected, this will directly
+    // reject.
+    return Promise.race([this.timeoutPromiseResolver.promise, promise]) as
+        Promise<R>;
+  }
+
+  /**
+   * Stops the timeout. It will neither resolve nor reject.
+   */
+  stop(): void {
+    // this.timeoutPromiseResolver.clear();
+  }
+
+  /**
+   * Rethrows the error given if it is the timeout racer's error.
+   */
+  rethrowTimeoutError(error: Error) {
+    if (error === this.error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Disposes of the racer.
+   */
+  dispose(): void {
+    this.timeoutPromiseResolver.dispose();
   }
 }

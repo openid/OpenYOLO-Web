@@ -59,4 +59,94 @@ describe('utils', () => {
          done();
        });
   });
+
+  describe('TimeoutRacer', () => {
+    beforeEach(() => {
+      jasmine.clock().install();
+    });
+
+    afterEach(() => {
+      jasmine.clock().uninstall();
+    });
+
+    it('does nothing if promise resolves before timeout', (done) => {
+      const timeoutRacer = new utils.TimeoutRacer(100);
+      const promiseResolver = new utils.PromiseResolver<void>();
+      timeoutRacer.race(promiseResolver.promise).then(done);
+      jasmine.clock().tick(99);
+      promiseResolver.resolve();
+    });
+
+    it('does reject if timeout', (done) => {
+      const timeoutRacer = new utils.TimeoutRacer(100);
+      const promiseResolver = new utils.PromiseResolver<void>();
+      timeoutRacer.race(promiseResolver.promise)
+          .then(
+              () => {
+                done.fail('Should not resolve!');
+              },
+              (error) => {
+                expect(error.message).toEqual('The timeout has expired.');
+                done();
+              });
+      jasmine.clock().tick(100);
+    });
+
+    it('does allow to chain resolution', (done) => {
+      const timeoutRacer = new utils.TimeoutRacer(100);
+      const promiseResolver1 = new utils.PromiseResolver<void>();
+      const promiseResolver2 = new utils.PromiseResolver<void>();
+      timeoutRacer.race(promiseResolver1.promise).then(() => {
+        timeoutRacer.race(promiseResolver2.promise)
+            .then(
+                () => {
+                  done.fail('The second promise should not resolve!');
+                },
+                (error) => {
+                  done();
+                });
+        jasmine.clock().tick(50);
+      });
+      jasmine.clock().tick(50);
+      promiseResolver1.resolve();
+    });
+
+    it('rethrows the correct timeout error', (done) => {
+      const timeoutRacer1 = new utils.TimeoutRacer(100);
+      const timeoutRacer2 = new utils.TimeoutRacer(100);
+      const promiseResolver = new utils.PromiseResolver<void>();
+      let ignoredFirst = false;
+      timeoutRacer1.race(promiseResolver.promise)
+          .then(
+              () => {
+                done.fail('Should not resolve!');
+              },
+              (error) => {
+                // Ignore an invalid error.
+                timeoutRacer2.rethrowTimeoutError(error);
+                ignoredFirst = true;
+                timeoutRacer1.rethrowTimeoutError(error);
+              })
+          .catch((error) => {
+            expect(ignoredFirst).toBe(true);
+            done();
+          });
+      jasmine.clock().tick(100);
+    });
+
+    it('rethrows the correct error', (done) => {
+      const timeoutRacer = new utils.TimeoutRacer(100);
+      const promiseResolver = new utils.PromiseResolver<void>();
+      timeoutRacer.race(promiseResolver.promise)
+          .then(
+              () => {
+                done.fail('Should not resolve!');
+              },
+              (error) => {
+                timeoutRacer.rethrowTimeoutError(error);
+                done();
+              });
+      promiseResolver.reject(new Error('Other error.'));
+    });
+  });
 });
