@@ -130,8 +130,7 @@ export interface OpenYoloApi {
 }
 
 /**
- * Similar interface than the exposed OpenYoloApi, but it handles external
- * timeouts given.
+ * A variant of the OpenYoloApi interface, with support for operation timeouts.
  */
 export interface OpenYoloWithTimeoutApi {
   hintsAvailable(options: CredentialHintOptions, timeoutRacer: TimeoutRacer):
@@ -295,6 +294,7 @@ class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
     try {
       return await request.dispatch(options, timeoutRacer);
     } catch (e) {
+      console.log(`Hint available request failed: ${e.message}`);
       return false;
     }
   }
@@ -415,7 +415,7 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
     // Perform sanitization on the developer provided value.
     if (typeof timeoutMs !== 'number' || timeoutMs < 0) {
       throw new Error(
-          'Invalid timeout. It must be a number superior or equal to 0. ' +
+          'Invalid timeout. It must be a number greater than or equal to 0. ' +
           'Setting it to 0 disable timeouts.');
     }
     // Only trigger reset if the setting changes and goes to disabling timeout,
