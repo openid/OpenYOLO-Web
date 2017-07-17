@@ -31,7 +31,6 @@ export class HintAvailableRequest extends
   dispatchInternal(options: CredentialHintOptions) {
     this.registerHandler(
         RPC_MESSAGE_TYPES.hintAvailableResult, (available: boolean) => {
-          this.clearTimeouts();
           this.resolve(available);
           this.dispose();
         });

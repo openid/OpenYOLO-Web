@@ -17,10 +17,10 @@
 import {OpenYoloError} from '../protocol/errors';
 import {errorMessage, noneAvailableMessage, RPC_MESSAGE_TYPES, showProviderMessage} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
+import {startTimeoutRacer} from '../protocol/utils';
 import {FakeProviderConnection} from '../test_utils/channels';
 import {createSpyFrame} from '../test_utils/frames';
 import {createUntypedMessageEvent} from '../test_utils/messages';
-import {JasmineTimeoutManager} from '../test_utils/timeout';
 
 import {BaseRequest} from './base_request';
 import {ProviderFrameElement} from './provider_frame_elem';
@@ -38,7 +38,6 @@ describe('BaseRequest', () => {
   let handlerSpy: jasmine.Spy;
   let listenSpy: jasmine.Spy;
   let unlistenSpy: jasmine.Spy;
-  let jasmineTimeoutManager = new JasmineTimeoutManager();
 
   beforeEach(() => {
     frame = createSpyFrame('frameId');
@@ -51,12 +50,12 @@ describe('BaseRequest', () => {
 
     providerChannel = connection.providerChannel;
     request = new ImplementedBaseRequest(frame, channel);
-    jasmineTimeoutManager.install();
+    jasmine.clock().install();
   });
 
   afterEach(() => {
     request.dispose();
-    jasmineTimeoutManager.uninstall();
+    jasmine.clock().uninstall();
   });
 
   describe('registerHandler', () => {
@@ -91,7 +90,8 @@ describe('BaseRequest', () => {
 
   describe('timeouts handling', () => {
     it('timeouts if too long', async function(done) {
-      request.dispatch(undefined, 100)
+      const timeoutRacer = startTimeoutRacer(100);
+      request.dispatch(undefined, timeoutRacer)
           .then(
               () => {
                 done.fail('Should not be a success!');
@@ -99,26 +99,30 @@ describe('BaseRequest', () => {
               (error) => {
                 expect(OpenYoloError.errorIs(error, 'requestTimeout'))
                     .toBe(true);
+                expect(frame.hide).toHaveBeenCalled();
                 done();
               });
-      jasmine.clock().tick(101);
+      jasmine.clock().tick(100);
     });
 
     it('does not timeout if disabled', async function(done) {
-      request.dispatch(undefined).then(
-          () => {
-            done.fail('Should not be a success!');
-          },
-          (error) => {
-            done.fail('Should not timeout!');
-          });
+      const timeoutRacer = startTimeoutRacer(0);
+      request.dispatch(undefined, timeoutRacer)
+          .then(
+              () => {
+                done.fail('Should not be a success!');
+              },
+              (error) => {
+                done.fail('Should not timeout!');
+              });
       jasmine.clock().tick(Infinity);
       done();
     });
 
     it('clears timeouts when showProvider message is received',
        async function(done) {
-         request.dispatch(undefined, 100)
+         const timeoutRacer = startTimeoutRacer(100);
+         request.dispatch(undefined, timeoutRacer)
              .then(
                  () => {
                    done.fail('Should not be a success!');
@@ -127,6 +131,7 @@ describe('BaseRequest', () => {
                    done.fail('Should not timeout!');
                  });
          const displayOptions = {height: 100};
+         jasmine.clock().tick(99);
          providerChannel.send(showProviderMessage(request.id, displayOptions));
          jasmine.clock().tick(Infinity);
          expect(frame.display).toHaveBeenCalledWith(displayOptions);
@@ -169,21 +174,5 @@ describe('BaseRequest', () => {
            done();
          }
        });
-  });
-
-  describe('setAndRegisterTimeout', () => {
-    it('should set a timeout', done => {
-      request.setAndRegisterTimeout(done, 1000);
-      jasmine.clock().tick(1001);
-    });
-
-    it('should clear timeout when disposed', done => {
-      request.setAndRegisterTimeout(() => {
-        done.fail('Should not be called!');
-      }, 1000);
-      request.dispose();
-      jasmine.clock().tick(1001);
-      done();
-    });
   });
 });

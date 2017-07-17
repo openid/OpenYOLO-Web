@@ -172,11 +172,15 @@ export class TimeoutPromiseResolver<T> extends PromiseResolver<T> {
 
   resolve(result?: T): void {
     super.resolve(result);
-    clearTimeout(this.timeoutId);
+    this.clear();
   }
 
   reject(error: Error): void {
     super.reject(error);
+    this.clear();
+  }
+
+  clear(): void {
     clearTimeout(this.timeoutId);
   }
 
@@ -189,7 +193,7 @@ export class TimeoutPromiseResolver<T> extends PromiseResolver<T> {
 }
 
 export function timeoutPromise<T>(error: Error, timeoutMs: number): Promise<T> {
-  let promiseResolver = new TimeoutPromiseResolver(error, timeoutMs);
+  const promiseResolver = new TimeoutPromiseResolver<T>(error, timeoutMs);
   return promiseResolver.promise;
 }
 
@@ -209,5 +213,126 @@ export class CancellablePromise<T> extends PromiseResolver<T> {
 
   cancel() {
     this.reject(CancellablePromise.CANCELLED_ERROR);
+  }
+}
+
+/**
+ * Error specific to timeout racer, allows to know whether the a timeout error
+ * has been raised by a specific instance of a TimeoutRacer.
+ */
+class TimeoutRacerError extends Error {
+  constructor() {
+    super('The timeout has expired.');
+  }
+}
+
+/**
+ * Interface of the timeout racer to handle a common timeout for a series of
+ * asynchronous operations.
+ */
+export interface TimeoutRacer {
+  race<R>(promise: Promise<R>): Promise<R>;
+  stop(): void;
+  rethrowIfTimeoutError(error: Error): void;
+  rethrowUnlessTimeoutError(error: Error): void;
+  dispose(): void;
+}
+
+/**
+ * Class that handles a timeout that is passed along several subsequent
+ * asynchronous operations.
+ */
+class EnabledTimeoutRacer implements TimeoutRacer {
+  private error: TimeoutRacerError = new TimeoutRacerError();
+  private timeoutPromiseResolver: TimeoutPromiseResolver<void>;
+
+  constructor(timeoutMs: number) {
+    this.timeoutPromiseResolver =
+        new TimeoutPromiseResolver<void>(this.error, timeoutMs);
+  }
+
+  /**
+   * Races the given promise with the timeout.
+   */
+  race<R>(promise: Promise<R>): Promise<R> {
+    // If the timeout promise has already been rejected, this will directly
+    // reject. The cast is safe as the timeoutPromiseResolver never resolves.
+    return Promise.race([this.timeoutPromiseResolver.promise, promise]) as
+        Promise<R>;
+  }
+
+  /**
+   * Stops the timeout. It will neither resolve nor reject.
+   */
+  stop(): void {
+    this.timeoutPromiseResolver.clear();
+  }
+
+  /**
+   * Rethrows the error given if it is the timeout racer's error.
+   */
+  rethrowIfTimeoutError(error: Error) {
+    if (error === this.error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Rethrows anhy error given unless it is the timeout racer's error.
+   */
+  rethrowUnlessTimeoutError(error: Error) {
+    if (error !== this.error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Disposes of the racer.
+   */
+  dispose(): void {
+    this.timeoutPromiseResolver.dispose();
+  }
+}
+
+/**
+ * A no-op timeout racer, that never times out.
+ */
+class DisabledTimeoutRacer implements TimeoutRacer {
+  /**
+   * Races the given promise with the timeout.
+   */
+  race<R>(promise: Promise<R>): Promise<R> {
+    return promise;
+  }
+
+  /**
+   * Stops the timeout. It will neither resolve nor reject.
+   */
+  stop(): void {}
+
+  /**
+   * Rethrows the error given if it is the timeout racer's error.
+   */
+  rethrowIfTimeoutError(error: Error) {}
+
+  /**
+   * Rethrows anhy error given unless it is the timeout racer's error.
+   */
+  rethrowUnlessTimeoutError(error: Error) {
+    throw error;
+  }
+
+  /**
+   * Disposes of the racer.
+   */
+  dispose(): void {}
+}
+
+/** Creates the timeout racer corresponding to the timeout given. */
+export function startTimeoutRacer(timeoutMs: number): TimeoutRacer {
+  if (timeoutMs <= 0) {
+    return new DisabledTimeoutRacer();
+  } else {
+    return new EnabledTimeoutRacer(timeoutMs);
   }
 }

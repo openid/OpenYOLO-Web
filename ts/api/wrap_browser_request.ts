@@ -29,7 +29,6 @@ export class WrapBrowserRequest extends BaseRequest<boolean, undefined> {
   dispatchInternal() {
     this.registerHandler(
         RPC_MESSAGE_TYPES.wrapBrowserResult, (wrapBrowser: boolean) => {
-          this.clearTimeouts();
           this.resolve(wrapBrowser);
           this.dispose();
         });
