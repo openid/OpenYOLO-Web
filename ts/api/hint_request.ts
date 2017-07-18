@@ -15,7 +15,7 @@
  */
 
 import {Credential, CredentialHintOptions} from '../protocol/data';
-import {hintMessage, RPC_MESSAGE_TYPES} from '../protocol/rpc_messages';
+import {hintMessage, RpcMessageType} from '../protocol/rpc_messages';
 
 import {BaseRequest} from './base_request';
 
@@ -30,9 +30,9 @@ export class HintRequest extends
    */
   dispatchInternal(options: CredentialHintOptions) {
     this.registerHandler(
-        RPC_MESSAGE_TYPES.credential,
+        RpcMessageType.credential,
         (credential: Credential) => this.handleResult(credential));
-    this.registerHandler(RPC_MESSAGE_TYPES.none, () => this.handleResult(null));
+    this.registerHandler(RpcMessageType.none, () => this.handleResult(null));
 
     this.debugLog(`Sending hint request`);
     this.channel.send(hintMessage(this.id, options));

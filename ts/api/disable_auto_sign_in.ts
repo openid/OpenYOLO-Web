@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {disableAutoSignInMessage, RPC_MESSAGE_TYPES} from '../protocol/rpc_messages';
+import {disableAutoSignInMessage, RpcMessageType} from '../protocol/rpc_messages';
 
 import {BaseRequest} from './base_request';
 
@@ -26,7 +26,7 @@ export class DisableAutoSignIn extends BaseRequest<undefined, undefined> {
    * Sends the RPC to the IFrame and waits for the result.
    */
   dispatchInternal() {
-    this.registerHandler(RPC_MESSAGE_TYPES.disableAutoSignInResult, () => {
+    this.registerHandler(RpcMessageType.disableAutoSignInResult, () => {
       this.resolve();
       this.dispose();
     });

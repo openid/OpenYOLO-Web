@@ -15,8 +15,8 @@
  */
 
 import {isOpenYoloMessageFormat, Message, MESSAGE_DATA_VALIDATORS, MessageDataTypes, MessageType} from './messages';
-import {PostMessageDataTypes, PostMessageType} from './post_messages';
-import {RpcMessageDataTypes, RpcMessageType} from './rpc_messages';
+import {PostMessageData, PostMessageType} from './post_messages';
+import {RpcMessageData, RpcMessageType} from './rpc_messages';
 
 /**
  * Interface exposing only the required properties and methods of the Window
@@ -49,10 +49,10 @@ export function isPermittedOrigin(
 }
 
 export type PostMessageListener<T extends PostMessageType> =
-    (data: PostMessageDataTypes[T], type: T, event: MessageEvent) => void;
+    (data: PostMessageData<T>, type: T, event: MessageEvent) => void;
 
 export type RpcMessageListener<T extends RpcMessageType> =
-    (data: RpcMessageDataTypes[T], type: T, event: MessageEvent) => void;
+    (data: RpcMessageData<T>, type: T, event: MessageEvent) => void;
 
 export type MessageListener<T extends MessageType> =
     (data: MessageDataTypes[T], type: T, event: MessageEvent) => void;

@@ -15,7 +15,7 @@
  */
 
 import {Credential, CredentialRequestOptions} from '../protocol/data';
-import {retrieveMessage, RPC_MESSAGE_TYPES} from '../protocol/rpc_messages';
+import {retrieveMessage, RpcMessageType} from '../protocol/rpc_messages';
 
 import {BaseRequest} from './base_request';
 
@@ -32,9 +32,9 @@ export class CredentialRequest extends
     // the final outcome will either be a credential, or a notification that
     // none are available / none was selected by the user.
     this.registerHandler(
-        RPC_MESSAGE_TYPES.credential,
+        RpcMessageType.credential,
         (credential: Credential) => this.handleResult(credential));
-    this.registerHandler(RPC_MESSAGE_TYPES.none, () => this.handleResult(null));
+    this.registerHandler(RpcMessageType.none, () => this.handleResult(null));
 
     // send the request
     this.channel.send(retrieveMessage(this.id, options));

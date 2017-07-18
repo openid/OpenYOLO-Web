@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {RPC_MESSAGE_TYPES, wrapBrowserMessage} from '../protocol/rpc_messages';
+import {RpcMessageType, wrapBrowserMessage} from '../protocol/rpc_messages';
 
 import {BaseRequest} from './base_request';
 
@@ -28,7 +28,7 @@ export class WrapBrowserRequest extends BaseRequest<boolean, undefined> {
    */
   dispatchInternal() {
     this.registerHandler(
-        RPC_MESSAGE_TYPES.wrapBrowserResult, (wrapBrowser: boolean) => {
+        RpcMessageType.wrapBrowserResult, (wrapBrowser: boolean) => {
           this.resolve(wrapBrowser);
           this.dispose();
         });

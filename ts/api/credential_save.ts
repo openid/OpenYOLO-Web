@@ -16,13 +16,13 @@
 
 import {Credential} from '../protocol/data';
 import {OpenYoloError} from '../protocol/errors';
-import {RPC_MESSAGE_TYPES, saveMessage} from '../protocol/rpc_messages';
+import {RpcMessageType, saveMessage} from '../protocol/rpc_messages';
 
 import {BaseRequest} from './base_request';
 
 export class CredentialSave extends BaseRequest<void, Credential> {
   dispatchInternal(credential: Credential) {
-    this.registerHandler(RPC_MESSAGE_TYPES.saveResult, (saved: boolean) => {
+    this.registerHandler(RpcMessageType.saveResult, (saved: boolean) => {
       if (saved) {
         this.resolve();
       } else {

@@ -14,36 +14,28 @@
  * limitations under the License.
  */
 
-import {map2Enum} from './enums';
-
-export const ERROR_TYPES = map2Enum({
-  ackTimeout: 'ackTimeout',
-  canceled: 'canceled',
-  cancelledLastOperation: 'cancelledLastOperation',
-  clientDisposed: 'clientDisposed',
-  handshakeFailed: 'handshakeFailed',
-  invalidCredential: 'invalidCredential',
-  invalidData: 'invalidData',
-  iframeError: 'iframeError',
-  invalidOrigin: 'invalidOrigin',
-  untrustedOrigin: 'untrustedOrigin',
-  requestFailed: 'requestFailed',
-  requestTimeout: 'requestTimeout',
-  illegalState: 'illegalState',
-  illegalConcurrentRequest: 'illegalConcurrentRequest',
-  establishSecureChannelTimeout: 'establishSecureChannelTimeout',
-  unknownRequest: 'unknownRequest',
-  apiDisabled: 'apiDisabled',
-  parentVerifyTimeout: 'parentVerifyTimeout',
-  parentIsNotRoot: 'parentIsNotRoot',
-  providerInitFailed: 'providerInitFailed',
-  unknown: 'unknown'
-});
-
-export type ErrorType = keyof typeof ERROR_TYPES;
+export enum InternalErrorCode {
+  ackTimeout = 'ackTimeout',
+  establishSecureChannelTimeout = 'establishSecureChannelTimeout',
+  parentVerifyTimeout = 'parentVerifyTimeout',
+  illegalStateError = 'illegalStateError',
+  providerInitializationFailed = 'providerInitializationFailed',
+  apiDisabled = 'apiDisabled',
+  untrustedOrigin = 'untrustedOrigin',
+  parentIsNotRoot = 'parentIsNotRoot',
+  userCanceled = 'userCanceled',
+  noCredentialsAvailable = 'noCredentialsAvailable',
+  operationCanceled = 'operationCanceled',
+  clientDisposed = 'clientDisposed',
+  requestFailed = 'requestFailed',
+  requestTimeout = 'requestTimeout',
+  illegalConcurrentRequest = 'illegalConcurrentRequest',
+  unknownRequest = 'unknownRequest',
+  unknown = 'unknown'
+}
 
 export interface OpenYoloErrorData {
-  code: ErrorType;
+  code: InternalErrorCode;
   message: string;
   info?: {[key: string]: string};
 }
@@ -55,126 +47,102 @@ export interface OpenYoloExtendedError extends Error {
 export class OpenYoloError {
   static ackTimeout() {
     return OpenYoloError.createError({
-      code: ERROR_TYPES.ackTimeout,
+      code: InternalErrorCode.ackTimeout,
       message: 'Message acknowledgement timed out.'
     });
   }
 
   static canceled() {
     return OpenYoloError.createError(
-        {code: ERROR_TYPES.canceled, message: 'User canceled'});
+        {code: InternalErrorCode.userCanceled, message: 'User canceled'});
   }
 
   static clientCancelled() {
     return OpenYoloError.createError({
-      code: ERROR_TYPES.cancelledLastOperation,
+      code: InternalErrorCode.operationCanceled,
       message: 'Operation cancelled'
     });
   }
 
   static clientDisposed() {
     return OpenYoloError.createError({
-      code: ERROR_TYPES.clientDisposed,
+      code: InternalErrorCode.clientDisposed,
       message: 'Client is disposed and no longer usable'
     });
   }
 
-  static handshake(reason: string) {
-    return OpenYoloError.createError(
-        {code: ERROR_TYPES.handshakeFailed, message: reason});
-  }
-
-  static invalidCredential() {
-    return OpenYoloError.createError({
-      code: ERROR_TYPES.invalidCredential,
-      message: 'The provided credential is invalid'
-    });
-  }
-
-  static invalidData() {
-    return OpenYoloError.createError({
-      code: ERROR_TYPES.invalidData,
-      message: 'Message contained invalid data'
-    });
-  }
-
-  static iframe(cause: string) {
-    return OpenYoloError.createError(
-        {code: ERROR_TYPES.iframeError, message: `IFrame error: ${cause}`});
-  }
-
   static untrustedOrigin(origin: string) {
     return OpenYoloError.createError({
-      code: ERROR_TYPES.untrustedOrigin,
+      code: InternalErrorCode.untrustedOrigin,
       message: `Untrusted origin: ${origin}`
     });
   }
 
   static requestFailed(message: string) {
     return OpenYoloError.createError(
-        {code: ERROR_TYPES.requestFailed, message});
+        {code: InternalErrorCode.requestFailed, message});
   }
 
   static requestTimeout() {
     return OpenYoloError.createError(
-        {code: ERROR_TYPES.requestTimeout, message: 'Request timed out'});
+        {code: InternalErrorCode.requestTimeout, message: 'Request timed out'});
   }
 
   static illegalStateError(reason: string) {
     return OpenYoloError.createError(
-        {code: ERROR_TYPES.illegalState, message: reason});
+        {code: InternalErrorCode.illegalStateError, message: reason});
   }
 
   static illegalConcurrentRequestError() {
     return OpenYoloError.createError({
-      code: ERROR_TYPES.illegalConcurrentRequest,
+      code: InternalErrorCode.illegalConcurrentRequest,
       message: 'Concurrent requests are not permitted'
     });
   }
 
   static establishSecureChannelTimeout() {
     return OpenYoloError.createError({
-      code: ERROR_TYPES.establishSecureChannelTimeout,
+      code: InternalErrorCode.establishSecureChannelTimeout,
       message: 'SecureConnection establishment timed out'
     });
   }
 
   static unknownRequest(requestType: string) {
     return OpenYoloError.createError({
-      code: ERROR_TYPES.unknownRequest,
+      code: InternalErrorCode.unknownRequest,
       message: `Unknown request type ${requestType}`
     });
   }
 
   static apiDisabled() {
     return OpenYoloError.createError(
-        {code: ERROR_TYPES.apiDisabled, message: 'API is disabled'});
-  }
-
-  static unknown() {
-    return OpenYoloError.createError(
-        {code: ERROR_TYPES.unknown, message: 'Unknown error'});
+        {code: InternalErrorCode.apiDisabled, message: 'API is disabled'});
   }
 
   static ancestorVerifyTimeout() {
     return OpenYoloError.createError({
-      code: ERROR_TYPES.parentVerifyTimeout,
+      code: InternalErrorCode.parentVerifyTimeout,
       message: `Frame ancestor origin verification timed out`
     });
   }
 
   static parentIsNotRoot() {
     return OpenYoloError.createError({
-      code: ERROR_TYPES.parentIsNotRoot,
+      code: InternalErrorCode.parentIsNotRoot,
       message: `Parent frame is not a root window`
     });
   }
 
   static providerInitFailed() {
     return OpenYoloError.createError({
-      code: ERROR_TYPES.providerInitFailed,
+      code: InternalErrorCode.providerInitializationFailed,
       message: `Provider failed to initialize`
     });
+  }
+
+  static unknown() {
+    return OpenYoloError.createError(
+        {code: InternalErrorCode.unknown, message: `Unkown error.`});
   }
 
   static createError(errorData: OpenYoloErrorData): OpenYoloExtendedError {
@@ -183,7 +151,7 @@ export class OpenYoloError {
     return err;
   }
 
-  static errorIs<T extends ErrorType>(err: any, code: T) {
+  static errorIs(err: any, code: InternalErrorCode) {
     // force comparability for the purposes of this dynamic check
     if ('data' in err) {
       return err['data']['code'] === code;

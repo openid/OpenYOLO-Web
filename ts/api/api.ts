@@ -15,9 +15,9 @@
  */
 
 import {Credential, CredentialHintOptions, CredentialRequestOptions, ProxyLoginResponse} from '../protocol/data';
-import {RENDER_MODES, RenderMode} from '../protocol/data';
+import {RenderMode} from '../protocol/data';
 import {OpenYoloError} from '../protocol/errors';
-import {PRELOAD_REQUEST, PreloadRequest} from '../protocol/preload_request';
+import {PreloadRequest, PreloadRequestType} from '../protocol/preload_request';
 import {SecureChannel} from '../protocol/secure_channel';
 import {generateId, sha256, startTimeoutRacer, TimeoutRacer} from '../protocol/utils';
 
@@ -34,7 +34,7 @@ import {WrapBrowserRequest} from './wrap_browser_request';
 
 // re-export all the data types
 export * from '../protocol/data';
-export {OpenYoloError, ERROR_TYPES} from '../protocol/errors';
+export {OpenYoloError, InternalErrorCode} from '../protocol/errors';
 
 const MOBILE_USER_AGENT_REGEX = /android|iphone|ipod|iemobile/i;
 
@@ -165,18 +165,18 @@ const DEFAULT_TIMEOUTS: {[key in OpenYoloApiMethods]: number} = {
  * Sanitzes the input for renderMode, selecting the default one if invalid.
  */
 function verifyOrDetectRenderMode(renderMode: RenderMode|null): RenderMode {
-  if (renderMode && renderMode in RENDER_MODES) {
+  if (renderMode && renderMode in RenderMode) {
     return renderMode;
   }
   const isNested = window.parent !== window;
   if (isNested) {
-    return RENDER_MODES.fullScreen;
+    return RenderMode.fullScreen;
   }
   const isMobile = navigator.userAgent.match(MOBILE_USER_AGENT_REGEX);
   if (isMobile) {
-    return RENDER_MODES.bottomSheet;
+    return RenderMode.bottomSheet;
   } else {
-    return RENDER_MODES.navPopout;
+    return RenderMode.navPopout;
   }
 }
 
@@ -468,14 +468,14 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
   }
 
   async hint(options: CredentialHintOptions): Promise<Credential|null> {
-    const preloadRequest = {type: PRELOAD_REQUEST.hint, options};
+    const preloadRequest = {type: PreloadRequestType.hint, options};
     const timeoutRacer = this.startCustomTimeoutRacer(DEFAULT_TIMEOUTS.hint);
     const impl = await this.init(timeoutRacer, preloadRequest);
     return await impl.hint(options, timeoutRacer);
   }
 
   async retrieve(options: CredentialRequestOptions): Promise<Credential|null> {
-    const preloadRequest = {type: PRELOAD_REQUEST.retrieve, options};
+    const preloadRequest = {type: PreloadRequestType.retrieve, options};
     const timeoutRacer =
         this.startCustomTimeoutRacer(DEFAULT_TIMEOUTS.retrieve);
     const impl = await this.init(timeoutRacer, preloadRequest);

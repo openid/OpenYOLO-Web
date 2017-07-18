@@ -15,7 +15,7 @@
  */
 
 import {CredentialHintOptions} from '../protocol/data';
-import {hintAvailableMessage, RPC_MESSAGE_TYPES} from '../protocol/rpc_messages';
+import {hintAvailableMessage, RpcMessageType} from '../protocol/rpc_messages';
 
 import {BaseRequest} from './base_request';
 
@@ -30,7 +30,7 @@ export class HintAvailableRequest extends
    */
   dispatchInternal(options: CredentialHintOptions) {
     this.registerHandler(
-        RPC_MESSAGE_TYPES.hintAvailableResult, (available: boolean) => {
+        RpcMessageType.hintAvailableResult, (available: boolean) => {
           this.resolve(available);
           this.dispose();
         });

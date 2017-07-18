@@ -15,36 +15,28 @@
  */
 
 import {Credential, CredentialHintOptions, CredentialRequestOptions, ProxyLoginResponse} from './data';
-import {map2Enum} from './enums';
 import {OpenYoloErrorData, OpenYoloExtendedError} from './errors';
-import {isBoolean, isUndefined, isValidCredential, isValidDisplayOptions, isValidError, isValidHintOptions, isValidProxyLoginResponse, isValidRequestOptions} from './validators';
+import {DataValidator, isBoolean, isUndefined, isValidCredential, isValidDisplayOptions, isValidError, isValidHintOptions, isValidProxyLoginResponse, isValidRequestOptions} from './validators';
 
-export const RPC_MESSAGE_TYPES = map2Enum({
-  disableAutoSignIn: 'disableAutoSignIn',
-  disableAutoSignInResult: 'disableAutoSignInResult',
-  retrieve: 'retrieve',
-  hintAvailable: 'hintAvailable',
-  hintAvailableResult: 'hintAvailableResult',
-  hint: 'hint',
-  save: 'save',
-  saveResult: 'saveResult',
-  proxy: 'proxy',
-  proxyResult: 'proxyResult',
-  wrapBrowser: 'wrapBrowser',
-  wrapBrowserResult: 'wrapBrowserResult',
-  showProvider: 'showProvider',
-  none: 'none',
-  credential: 'credential',
-  error: 'error',
-  cancelLastOperation: 'cancelLastOperation',
-  cancelLastOperationResult: 'cancelLastOperationResult'
-});
-
-export type RpcMessageType = keyof typeof RPC_MESSAGE_TYPES;
-
-export interface RpcMessage<T extends RpcMessageType> {
-  type: T;
-  data: RpcMessageData<T>;
+export enum RpcMessageType {
+  disableAutoSignIn = 'disableAutoSignIn',
+  disableAutoSignInResult = 'disableAutoSignInResult',
+  retrieve = 'retrieve',
+  hintAvailable = 'hintAvailable',
+  hintAvailableResult = 'hintAvailableResult',
+  hint = 'hint',
+  save = 'save',
+  saveResult = 'saveResult',
+  proxy = 'proxy',
+  proxyResult = 'proxyResult',
+  wrapBrowser = 'wrapBrowser',
+  wrapBrowserResult = 'wrapBrowserResult',
+  showProvider = 'showProvider',
+  none = 'none',
+  credential = 'credential',
+  error = 'error',
+  cancelLastOperation = 'cancelLastOperation',
+  cancelLastOperationResult = 'cancelLastOperationResult'
 }
 
 export type RpcMessageArgumentTypes = {
@@ -68,29 +60,18 @@ export type RpcMessageArgumentTypes = {
   'cancelLastOperationResult': undefined
 };
 
-export type RpcMessageArgumentType<T extends RpcMessageType> =
-    RpcMessageArgumentTypes[T];
-
 export interface RpcMessageData<T extends RpcMessageType> {
   id: string;
   ack: boolean;
   args: RpcMessageArgumentTypes[T];
 }
 
-export type RpcMessageDataTypes = {
-  [K in RpcMessageType]: RpcMessageData<K>
-};
-
-export interface CredentialResponseData { credential: Credential; }
-
-export interface ErrorMessageData { error: OpenYoloErrorData; }
-
-export interface DisplayOptions {
-  height?: number;
-  width?: number;
+export interface RpcMessage<T extends RpcMessageType> {
+  type: T;
+  data: RpcMessageData<T>;
 }
 
-function rpcDataValidator(dataValidator: (data: any) => boolean) {
+function rpcDataValidator(dataValidator: DataValidator): DataValidator {
   return (data: any): boolean => {
     return !!data && typeof data === 'object' && 'id' in data &&
         typeof data['id'] === 'string' && dataValidator(data['args']);
@@ -98,7 +79,7 @@ function rpcDataValidator(dataValidator: (data: any) => boolean) {
 }
 
 export const RPC_MESSAGE_DATA_VALIDATORS:
-    {[K in RpcMessageType]: (data: any) => boolean} = {
+    {[K in RpcMessageType]: DataValidator} = {
       'disableAutoSignIn': rpcDataValidator(isUndefined),
       'disableAutoSignInResult': rpcDataValidator(isUndefined),
       'retrieve': rpcDataValidator(isValidRequestOptions),
@@ -119,6 +100,15 @@ export const RPC_MESSAGE_DATA_VALIDATORS:
       'cancelLastOperationResult': rpcDataValidator(isUndefined)
     };
 
+export interface CredentialResponseData { credential: Credential; }
+
+export interface ErrorMessageData { error: OpenYoloErrorData; }
+
+export interface DisplayOptions {
+  height?: number;
+  width?: number;
+}
+
 /* ****************************************************************************/
 /* ************************ MESSAGE CREATION FUNCTIONS ************************/
 /* ****************************************************************************/
@@ -129,76 +119,76 @@ export function rpcMessage<T extends RpcMessageType>(
 }
 
 export function disableAutoSignInMessage(id: string) {
-  return rpcMessage(RPC_MESSAGE_TYPES.disableAutoSignIn, id, undefined);
+  return rpcMessage(RpcMessageType.disableAutoSignIn, id, undefined);
 }
 
 export function disableAutoSignInResultMessage(id: string) {
-  return rpcMessage(RPC_MESSAGE_TYPES.disableAutoSignInResult, id, undefined);
+  return rpcMessage(RpcMessageType.disableAutoSignInResult, id, undefined);
 }
 
 export function retrieveMessage(id: string, options: CredentialRequestOptions) {
-  return rpcMessage(RPC_MESSAGE_TYPES.retrieve, id, options);
+  return rpcMessage(RpcMessageType.retrieve, id, options);
 }
 
 export function hintAvailableMessage(
     id: string, options: CredentialHintOptions) {
-  return rpcMessage(RPC_MESSAGE_TYPES.hintAvailable, id, options);
+  return rpcMessage(RpcMessageType.hintAvailable, id, options);
 }
 
 export function hintAvailableResponseMessage(id: string, available: boolean) {
-  return rpcMessage(RPC_MESSAGE_TYPES.hintAvailableResult, id, available);
+  return rpcMessage(RpcMessageType.hintAvailableResult, id, available);
 }
 
 export function hintMessage(id: string, options: CredentialHintOptions) {
-  return rpcMessage(RPC_MESSAGE_TYPES.hint, id, options);
+  return rpcMessage(RpcMessageType.hint, id, options);
 }
 
 export function proxyLoginMessage(id: string, credential: Credential) {
-  return rpcMessage(RPC_MESSAGE_TYPES.proxy, id, credential);
+  return rpcMessage(RpcMessageType.proxy, id, credential);
 }
 
 export function proxyLoginResponseMessage(
     id: string, response: ProxyLoginResponse) {
-  return rpcMessage(RPC_MESSAGE_TYPES.proxyResult, id, response);
+  return rpcMessage(RpcMessageType.proxyResult, id, response);
 }
 
 export function wrapBrowserMessage(id: string) {
-  return rpcMessage(RPC_MESSAGE_TYPES.wrapBrowser, id, undefined);
+  return rpcMessage(RpcMessageType.wrapBrowser, id, undefined);
 }
 
 export function wrapBrowserResultMessage(id: string, wrapBrowser: boolean) {
   console.log(`wrapBrowserResult ${id} ${wrapBrowser}`);
-  return rpcMessage(RPC_MESSAGE_TYPES.wrapBrowserResult, id, wrapBrowser);
+  return rpcMessage(RpcMessageType.wrapBrowserResult, id, wrapBrowser);
 }
 
 export function noneAvailableMessage(id: string) {
-  return rpcMessage(RPC_MESSAGE_TYPES.none, id, undefined);
+  return rpcMessage(RpcMessageType.none, id, undefined);
 }
 
 export function credentialResultMessage(id: string, credential: Credential) {
-  return rpcMessage(RPC_MESSAGE_TYPES.credential, id, credential);
+  return rpcMessage(RpcMessageType.credential, id, credential);
 }
 
 export function showProviderMessage(id: string, options: DisplayOptions) {
-  return rpcMessage(RPC_MESSAGE_TYPES.showProvider, id, options);
+  return rpcMessage(RpcMessageType.showProvider, id, options);
 }
 
 export function saveMessage(id: string, credential: Credential) {
-  return rpcMessage(RPC_MESSAGE_TYPES.save, id, credential);
+  return rpcMessage(RpcMessageType.save, id, credential);
 }
 
 export function saveResultMessage(id: string, saved: boolean) {
-  return rpcMessage(RPC_MESSAGE_TYPES.saveResult, id, saved);
+  return rpcMessage(RpcMessageType.saveResult, id, saved);
 }
 
 export function errorMessage(id: string, error: OpenYoloExtendedError) {
-  return rpcMessage(RPC_MESSAGE_TYPES.error, id, error.data);
+  return rpcMessage(RpcMessageType.error, id, error.data);
 }
 
 export function cancelLastOperationMessage(id: string) {
-  return rpcMessage(RPC_MESSAGE_TYPES.cancelLastOperation, id, undefined);
+  return rpcMessage(RpcMessageType.cancelLastOperation, id, undefined);
 }
 
 export function cancelLastOperationResultMessage(id: string) {
-  return rpcMessage(RPC_MESSAGE_TYPES.cancelLastOperationResult, id, undefined);
+  return rpcMessage(RpcMessageType.cancelLastOperationResult, id, undefined);
 }

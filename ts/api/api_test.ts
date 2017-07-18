@@ -15,7 +15,7 @@
  */
 
 import {Credential, CredentialHintOptions, CredentialRequestOptions, ProxyLoginResponse} from '../protocol/data';
-import {OpenYoloError} from '../protocol/errors';
+import {InternalErrorCode, OpenYoloError} from '../protocol/errors';
 import {SecureChannel} from '../protocol/secure_channel';
 
 import {openyolo} from './api';
@@ -377,7 +377,8 @@ describe('OpenYolo API', () => {
                 done.fail('Should not resolve!');
               },
               (error) => {
-                expect(OpenYoloError.errorIs(error, 'requestTimeout'))
+                expect(OpenYoloError.errorIs(
+                           error, InternalErrorCode.requestTimeout))
                     .toBe(true);
                 done();
               });
@@ -393,7 +394,8 @@ describe('OpenYolo API', () => {
                    done.fail('Should not resolve!');
                  },
                  (error) => {
-                   expect(OpenYoloError.errorIs(error, 'requestTimeout'))
+                   expect(OpenYoloError.errorIs(
+                              error, InternalErrorCode.requestTimeout))
                        .toBe(true);
                    done();
                  });
@@ -410,7 +412,8 @@ describe('OpenYolo API', () => {
                 done.fail('Should not resolve!');
               },
               (error) => {
-                expect(OpenYoloError.errorIs(error, 'requestTimeout'))
+                expect(OpenYoloError.errorIs(
+                           error, InternalErrorCode.requestTimeout))
                     .toBe(true);
                 done();
               });
@@ -425,7 +428,8 @@ describe('OpenYolo API', () => {
                 done.fail('Should not resolve!');
               },
               (error) => {
-                expect(OpenYoloError.errorIs(error, 'requestTimeout'))
+                expect(OpenYoloError.errorIs(
+                           error, InternalErrorCode.requestTimeout))
                     .toBe(true);
                 done();
               });
@@ -442,7 +446,8 @@ describe('OpenYolo API', () => {
                 done.fail('Should not resolve!');
               },
               (error) => {
-                expect(OpenYoloError.errorIs(error, 'requestTimeout'))
+                expect(OpenYoloError.errorIs(
+                           error, InternalErrorCode.requestTimeout))
                     .toBe(true);
                 done();
               });
@@ -459,7 +464,8 @@ describe('OpenYolo API', () => {
                 done.fail('Should not resolve!');
               },
               (error) => {
-                expect(OpenYoloError.errorIs(error, 'requestTimeout'))
+                expect(OpenYoloError.errorIs(
+                           error, InternalErrorCode.requestTimeout))
                     .toBe(true);
                 done();
               });
@@ -475,7 +481,8 @@ describe('OpenYolo API', () => {
                     done.fail('Should not resolve!');
                   },
                   (error) => {
-                    expect(OpenYoloError.errorIs(error, 'requestTimeout'))
+                    expect(OpenYoloError.errorIs(
+                               error, InternalErrorCode.requestTimeout))
                         .toBe(true);
                     done();
                   });
@@ -491,7 +498,8 @@ describe('OpenYolo API', () => {
                     done.fail('Should not resolve!');
                   },
                   (error) => {
-                    expect(OpenYoloError.errorIs(error, 'requestTimeout'))
+                    expect(OpenYoloError.errorIs(
+                               error, InternalErrorCode.requestTimeout))
                         .toBe(true);
                     done();
                   });

@@ -28,18 +28,21 @@
  * as part of the initial load of the iframe, to speed up handling of these
  * requests.
  */
-import {CredentialHintOptions} from './data';
-import {map2Enum} from './enums';
+import {CredentialHintOptions, CredentialRequestOptions} from './data';
 
-export const PRELOAD_REQUEST = map2Enum({hint: 'hint', retrieve: 'retrieve'});
+
+export enum PreloadRequestType {
+  hint = 'hint',
+  retrieve = 'retrieve'
+}
 
 export interface HintPreloadRequest {
-  type: typeof PRELOAD_REQUEST.hint;
+  type: PreloadRequestType;
   options: CredentialHintOptions;
 }
 
 export interface RetrievePreloadRequest {
-  type: typeof PRELOAD_REQUEST.retrieve;
+  type: PreloadRequestType;
   options: CredentialRequestOptions;
 }
 

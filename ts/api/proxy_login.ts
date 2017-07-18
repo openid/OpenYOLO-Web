@@ -15,7 +15,7 @@
  */
 
 import {Credential, ProxyLoginResponse} from '../protocol/data';
-import {proxyLoginMessage, RPC_MESSAGE_TYPES} from '../protocol/rpc_messages';
+import {proxyLoginMessage, RpcMessageType} from '../protocol/rpc_messages';
 
 import {BaseRequest} from './base_request';
 
@@ -28,7 +28,7 @@ export class ProxyLogin extends BaseRequest<ProxyLoginResponse, Credential> {
    */
   dispatchInternal(credential: Credential) {
     this.registerHandler(
-        RPC_MESSAGE_TYPES.proxyResult, (response: ProxyLoginResponse) => {
+        RpcMessageType.proxyResult, (response: ProxyLoginResponse) => {
           this.resolve(response);
           this.dispose();
         });

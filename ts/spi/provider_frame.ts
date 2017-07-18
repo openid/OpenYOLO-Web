@@ -145,35 +145,34 @@ export class ProviderFrame {
 
   private registerListeners() {
     this.addRpcListener(
-        msg.RPC_MESSAGE_TYPES.wrapBrowser,
+        msg.RpcMessageType.wrapBrowser,
         (m) => this.handleWrapBrowserRequest(m.id));
 
     this.addRpcListener(
-        msg.RPC_MESSAGE_TYPES.disableAutoSignIn,
+        msg.RpcMessageType.disableAutoSignIn,
         (m) => this.handleDisableAutoSignInRequest(m.id));
 
     this.addRpcListener(
-        msg.RPC_MESSAGE_TYPES.retrieve,
+        msg.RpcMessageType.retrieve,
         (m) => this.handleGetCredentialRequest(m.id, m.args));
 
     this.addRpcListener(
-        msg.RPC_MESSAGE_TYPES.hint,
-        (m) => this.handleHintRequest(m.id, m.args));
+        msg.RpcMessageType.hint, (m) => this.handleHintRequest(m.id, m.args));
 
     this.addRpcListener(
-        msg.RPC_MESSAGE_TYPES.hintAvailable,
+        msg.RpcMessageType.hintAvailable,
         (m) => this.handleHintAvailableRequest(m.id, m.args));
 
     this.addRpcListener(
-        msg.RPC_MESSAGE_TYPES.save,
+        msg.RpcMessageType.save,
         (m) => this.handleSaveCredentialRequest(m.id, m.args));
 
     this.addRpcListener(
-        msg.RPC_MESSAGE_TYPES.proxy,
+        msg.RpcMessageType.proxy,
         (m) => this.handleProxyLoginRequest(m.id, m.args));
 
     this.addRpcListener(
-        msg.RPC_MESSAGE_TYPES.cancelLastOperation,
+        msg.RpcMessageType.cancelLastOperation,
         (m) => this.handleCancelLastOperation(m.id));
 
     this.clientChannel.addFallbackListener((ev) => {
@@ -184,17 +183,17 @@ export class ProviderFrame {
 
   private addRpcListener<T extends msg.RpcMessageType>(
       type: T,
-      messageHandler: (message: msg.RpcMessageDataTypes[T]) => Promise<void>) {
+      messageHandler: (message: msg.RpcMessageData<T>) => Promise<void>) {
     this.clientChannel.listen<T>(
         type,
-        (m: msg.RpcMessageDataTypes[T], type: T, ev: MessageEvent) =>
+        (m: msg.RpcMessageData<T>, type: T, ev: MessageEvent) =>
             this.monitoringListener(type, m, messageHandler));
   }
 
   private async monitoringListener<T extends msg.RpcMessageType>(
       type: T,
-      m: msg.RpcMessageDataTypes[T],
-      messageHandler: (message: msg.RpcMessageDataTypes[T]) => Promise<void>) {
+      m: msg.RpcMessageData<T>,
+      messageHandler: (message: msg.RpcMessageData<T>) => Promise<void>) {
     if (!this.recordRequestStart(type, m.id)) {
       return;
     }
@@ -320,7 +319,7 @@ export class ProviderFrame {
             this.equivalentAuthDomains, options));
 
     // filter out the credentials which don't match the request options
-    let pertinentCredentials = credentials.filter((credential) => {
+    let pertinentCredentials = credentials.filter((credential: Credential) => {
       return options.supportedAuthMethods.find(
           (value) => value === credential.authMethod);
     });
@@ -378,12 +377,12 @@ export class ProviderFrame {
       id: string,
       credential: Credential) {
     // TODO(iainmcgin): implement
-    return this.handleUnimplementedRequest(id, msg.RPC_MESSAGE_TYPES.save);
+    return this.handleUnimplementedRequest(id, msg.RpcMessageType.save);
   }
 
   private async handleProxyLoginRequest(id: string, credential: Credential) {
     // TODO(iainmcgin): implement
-    return this.handleUnimplementedRequest(id, msg.RPC_MESSAGE_TYPES.proxy);
+    return this.handleUnimplementedRequest(id, msg.RpcMessageType.proxy);
   }
 
   private async handleCancelLastOperation(id: string) {
@@ -420,7 +419,7 @@ export class ProviderFrame {
       return;
     }
 
-    if (!(ev.data.type in msg.RPC_MESSAGE_TYPES)) {
+    if (!(ev.data.type in msg.RpcMessageType)) {
       console.warn('Non-RPC message received on secure channel, ignoring');
       return;
     }

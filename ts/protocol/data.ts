@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {boxEnum, indexedStrEnum, map2Enum} from './enums';
+import {boxEnum, indexedStrEnum} from './enums';
 import {PasswordSpecification} from './password_spec';
 
 /**
@@ -190,13 +190,11 @@ export interface CredentialHintOptions {
  * - navPopout: The provider is rendered in a pop-up style at the top of the
  *   screen, with a fixed width. The
  */
-export const RENDER_MODES = map2Enum({
-  bottomSheet: 'bottomSheet',
-  navPopout: 'navPopout',
-  fullScreen: 'fullScreen'
-});
-
-export type RenderMode = keyof typeof RENDER_MODES;
+export enum RenderMode {
+  bottomSheet = 'bottomSheet',
+  navPopout = 'navPopout',
+  fullScreen = 'fullScreen'
+}
 
 /**
  * A set of commonly-used federated authentication methods. This list is not

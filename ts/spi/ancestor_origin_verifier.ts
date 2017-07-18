@@ -16,7 +16,7 @@
 
 import {createMessageListener, isPermittedOrigin, sendMessage, WindowLike} from '../protocol/comms';
 import {OpenYoloError} from '../protocol/errors';
-import {POST_MESSAGE_TYPES, verifyPingMessage} from '../protocol/post_messages';
+import {PostMessageType, verifyPingMessage} from '../protocol/post_messages';
 import {generateId, TimeoutPromiseResolver} from '../protocol/utils';
 
 export interface MessageEventLike {
@@ -125,8 +125,8 @@ export class AncestorOriginVerifier {
 
     let verifyId: string = generateId();
 
-    let listener = createMessageListener(
-        POST_MESSAGE_TYPES.verifyAck, (data, type, ev) => {
+    let listener =
+        createMessageListener(PostMessageType.verifyAck, (data, type, ev) => {
           // ignore the message if it doesn't contain the correct verification
           // ID, or is from the wrong frame.
           if (data !== verifyId || ev.source !== ancestorFrame) {

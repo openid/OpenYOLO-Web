@@ -16,6 +16,8 @@
 
 import {getPath, isHierarchical, parseUri} from './uri';
 
+export type DataValidator = (data?: any) => boolean;
+
 export function isUndefined(value?: any): boolean {
   return typeof value === 'undefined';
 }
