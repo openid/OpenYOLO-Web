@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {Credential, ProxyLoginResponse} from '../protocol/data';
+import {OYCredential, OYProxyLoginResponse} from '../protocol/data';
 import {proxyLoginMessage, RpcMessageType} from '../protocol/rpc_messages';
 
 import {BaseRequest} from './base_request';
@@ -22,13 +22,14 @@ import {BaseRequest} from './base_request';
 /**
  * Handles the proxy login.
  */
-export class ProxyLogin extends BaseRequest<ProxyLoginResponse, Credential> {
+export class ProxyLogin extends
+    BaseRequest<OYProxyLoginResponse, OYCredential> {
   /**
    * Starts the Proxy Login flow.
    */
-  dispatchInternal(credential: Credential) {
+  dispatchInternal(credential: OYCredential) {
     this.registerHandler(
-        RpcMessageType.proxyResult, (response: ProxyLoginResponse) => {
+        RpcMessageType.proxyResult, (response: OYProxyLoginResponse) => {
           this.resolve(response);
           this.dispose();
         });

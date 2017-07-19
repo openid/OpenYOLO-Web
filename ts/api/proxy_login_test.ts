@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {AUTHENTICATION_METHODS, Credential} from '../protocol/data';
+import {AUTHENTICATION_METHODS, OYCredential} from '../protocol/data';
 import {OpenYoloError} from '../protocol/errors';
 import {errorMessage, proxyLoginMessage, proxyLoginResponseMessage} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
@@ -28,7 +28,7 @@ describe('ProxyLogin', () => {
   let clientChannel: SecureChannel;
   let providerChannel: SecureChannel;
   let frame: any;
-  let credential: Credential = {
+  let credential: OYCredential = {
     id: 'user@example.com',
     displayName: 'User',
     password: 'password',

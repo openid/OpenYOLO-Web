@@ -79,7 +79,8 @@ describe('OpenYolo API', () => {
 
         it('resets the API if initialization fails', (done) => {
           const expectedError = new Error('ERROR!');
-          spyOn(DisableAutoSignIn.prototype, 'dispatch');
+          spyOn(DisableAutoSignIn.prototype, 'dispatch')
+              .and.returnValue(new Promise(() => {}));
           (SecureChannel.clientConnectNoTimeout as jasmine.Spy)
               .and.returnValue(Promise.reject(expectedError));
           openyolo.disableAutoSignIn().then(
@@ -245,7 +246,8 @@ describe('OpenYolo API', () => {
 
       describe('disableAutoSignIn', () => {
         it('never times out', async function(done) {
-          spyOn(DisableAutoSignIn.prototype, 'dispatch');
+          spyOn(DisableAutoSignIn.prototype, 'dispatch')
+              .and.returnValue(new Promise(() => {}));
           openyolo.disableAutoSignIn().then(
               () => {
                 done.fail('Should never resolve!');
@@ -262,7 +264,8 @@ describe('OpenYolo API', () => {
         const options: OYCredentialHintOptions = {supportedAuthMethods: []};
 
         it('never times out', async function(done) {
-          spyOn(HintAvailableRequest.prototype, 'dispatch');
+          spyOn(HintAvailableRequest.prototype, 'dispatch')
+              .and.returnValue(new Promise(() => {}));
           openyolo.hintsAvailable(options).then(
               () => {
                 done.fail('Should never resolve!');
@@ -279,7 +282,8 @@ describe('OpenYolo API', () => {
         const options: OYCredentialHintOptions = {supportedAuthMethods: []};
 
         it('never times out', async function(done) {
-          spyOn(HintRequest.prototype, 'dispatch');
+          spyOn(HintRequest.prototype, 'dispatch')
+              .and.returnValue(new Promise(() => {}));
           openyolo.hint(options).then(
               () => {
                 done.fail('Should never resolve!');
@@ -296,7 +300,8 @@ describe('OpenYolo API', () => {
         const options: OYCredentialRequestOptions = {supportedAuthMethods: []};
 
         it('never times out', async function(done) {
-          spyOn(CredentialRequest.prototype, 'dispatch');
+          spyOn(CredentialRequest.prototype, 'dispatch')
+              .and.returnValue(new Promise(() => {}));
           openyolo.retrieve(options).then(
               () => {
                 done.fail('Should never resolve!');
@@ -311,7 +316,8 @@ describe('OpenYolo API', () => {
 
       describe('save', () => {
         it('never times out', async function(done) {
-          spyOn(CredentialSave.prototype, 'dispatch');
+          spyOn(CredentialSave.prototype, 'dispatch')
+              .and.returnValue(new Promise(() => {}));
           openyolo.save(credential)
               .then(
                   () => {
@@ -326,8 +332,9 @@ describe('OpenYolo API', () => {
       });
 
       describe('proxyLogin', () => {
-        it('nefver times out', async function(done) {
-          spyOn(ProxyLogin.prototype, 'dispatch');
+        it('never times out', async function(done) {
+          spyOn(ProxyLogin.prototype, 'dispatch')
+              .and.returnValue(new Promise(() => {}));
           openyolo.proxyLogin(credential)
               .then(
                   () => {
@@ -343,7 +350,8 @@ describe('OpenYolo API', () => {
 
       describe('cancelLastOperation', () => {
         it('never times out', async function(done) {
-          spyOn(CancelLastOperationRequest.prototype, 'dispatch');
+          spyOn(CancelLastOperationRequest.prototype, 'dispatch')
+              .and.returnValue(new Promise(() => {}));
           openyolo.cancelLastOperation().then(
               () => {
                 done.fail('Should never resolve!');

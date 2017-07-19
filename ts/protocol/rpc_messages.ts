@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {Credential, CredentialHintOptions, CredentialRequestOptions, ProxyLoginResponse} from './data';
+import {OYCredential, OYCredentialHintOptions, OYCredentialRequestOptions, OYProxyLoginResponse} from './data';
 import {OpenYoloErrorData, OpenYoloExtendedError} from './errors';
 import {DataValidator, isBoolean, isUndefined, isValidCredential, isValidDisplayOptions, isValidError, isValidHintOptions, isValidProxyLoginResponse, isValidRequestOptions} from './validators';
 
@@ -42,19 +42,19 @@ export enum RpcMessageType {
 export type RpcMessageArgumentTypes = {
   'disableAutoSignIn': undefined,
   'disableAutoSignInResult': undefined,
-  'retrieve': CredentialRequestOptions,
-  'hintAvailable': CredentialHintOptions,
+  'retrieve': OYCredentialRequestOptions,
+  'hintAvailable': OYCredentialHintOptions,
   'hintAvailableResult': boolean,
-  'hint': CredentialHintOptions,
-  'save': Credential,
+  'hint': OYCredentialHintOptions,
+  'save': OYCredential,
   'saveResult': boolean,
-  'proxy': Credential,
-  'proxyResult': ProxyLoginResponse,
+  'proxy': OYCredential,
+  'proxyResult': OYProxyLoginResponse,
   'showProvider': DisplayOptions,
   'wrapBrowser': undefined,
   'wrapBrowserResult': boolean,
   'none': undefined,
-  'credential': Credential,
+  'credential': OYCredential,
   'error': OpenYoloErrorData,
   'cancelLastOperation': undefined,
   'cancelLastOperationResult': undefined
@@ -105,7 +105,7 @@ export const RPC_MESSAGE_DATA_VALIDATORS: RpcMessageDataValidators = {
   'cancelLastOperationResult': rpcDataValidator(isUndefined)
 };
 
-export interface CredentialResponseData { credential: Credential; }
+export interface CredentialResponseData { credential: OYCredential; }
 
 export interface ErrorMessageData { error: OpenYoloErrorData; }
 
@@ -131,12 +131,13 @@ export function disableAutoSignInResultMessage(id: string) {
   return rpcMessage(RpcMessageType.disableAutoSignInResult, id, undefined);
 }
 
-export function retrieveMessage(id: string, options: CredentialRequestOptions) {
+export function retrieveMessage(
+    id: string, options: OYCredentialRequestOptions) {
   return rpcMessage(RpcMessageType.retrieve, id, options);
 }
 
 export function hintAvailableMessage(
-    id: string, options: CredentialHintOptions) {
+    id: string, options: OYCredentialHintOptions) {
   return rpcMessage(RpcMessageType.hintAvailable, id, options);
 }
 
@@ -144,16 +145,16 @@ export function hintAvailableResponseMessage(id: string, available: boolean) {
   return rpcMessage(RpcMessageType.hintAvailableResult, id, available);
 }
 
-export function hintMessage(id: string, options: CredentialHintOptions) {
+export function hintMessage(id: string, options: OYCredentialHintOptions) {
   return rpcMessage(RpcMessageType.hint, id, options);
 }
 
-export function proxyLoginMessage(id: string, credential: Credential) {
+export function proxyLoginMessage(id: string, credential: OYCredential) {
   return rpcMessage(RpcMessageType.proxy, id, credential);
 }
 
 export function proxyLoginResponseMessage(
-    id: string, response: ProxyLoginResponse) {
+    id: string, response: OYProxyLoginResponse) {
   return rpcMessage(RpcMessageType.proxyResult, id, response);
 }
 
@@ -170,7 +171,7 @@ export function noneAvailableMessage(id: string) {
   return rpcMessage(RpcMessageType.none, id, undefined);
 }
 
-export function credentialResultMessage(id: string, credential: Credential) {
+export function credentialResultMessage(id: string, credential: OYCredential) {
   return rpcMessage(RpcMessageType.credential, id, credential);
 }
 
@@ -178,7 +179,7 @@ export function showProviderMessage(id: string, options: DisplayOptions) {
   return rpcMessage(RpcMessageType.showProvider, id, options);
 }
 
-export function saveMessage(id: string, credential: Credential) {
+export function saveMessage(id: string, credential: OYCredential) {
   return rpcMessage(RpcMessageType.save, id, credential);
 }
 

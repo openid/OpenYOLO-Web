@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {CredentialHintOptions} from '../protocol/data';
+import {OYCredentialHintOptions} from '../protocol/data';
 import {hintAvailableMessage, RpcMessageType} from '../protocol/rpc_messages';
 
 import {BaseRequest} from './base_request';
@@ -24,11 +24,11 @@ import {BaseRequest} from './base_request';
  * any user interaction, and if fails, just return as if there was no hints.
  */
 export class HintAvailableRequest extends
-    BaseRequest<boolean, CredentialHintOptions> {
+    BaseRequest<boolean, OYCredentialHintOptions> {
   /**
    * Sends the RPC to the IFrame and waits for the result.
    */
-  dispatchInternal(options: CredentialHintOptions) {
+  dispatchInternal(options: OYCredentialHintOptions) {
     this.registerHandler(
         RpcMessageType.hintAvailableResult, (available: boolean) => {
           this.resolve(available);

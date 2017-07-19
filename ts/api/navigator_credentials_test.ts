@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {Credential as OpenYoloCredential, CredentialRequestOptions as OpenYoloCredentialRequestOptions} from '../protocol/data';
+import {OYCredential as OpenYoloCredential, OYCredentialRequestOptions as OpenYoloCredentialRequestOptions} from '../protocol/data';
 import {AUTHENTICATION_METHODS} from '../protocol/data';
 
 import {NavigatorCredentials} from './navigator_credentials';

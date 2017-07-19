@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {Credential} from '../protocol/data';
+import {OYCredential} from '../protocol/data';
 import {AUTHENTICATION_METHODS} from '../protocol/data';
 import {InternalErrorCode, OpenYoloError} from '../protocol/errors';
 import {errorMessage, saveMessage, saveResultMessage} from '../protocol/rpc_messages';
@@ -29,7 +29,7 @@ describe('CredentialSave', () => {
   let providerChannel: SecureChannel;
   let request: CredentialSave;
   let frame: any;
-  let credential: Credential = {
+  let credential: OYCredential = {
     id: 'user@example.com',
     authMethod: AUTHENTICATION_METHODS.ID_AND_PASSWORD,
     displayName: 'User',

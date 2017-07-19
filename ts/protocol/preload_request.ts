@@ -28,7 +28,7 @@
  * as part of the initial load of the iframe, to speed up handling of these
  * requests.
  */
-import {CredentialHintOptions, CredentialRequestOptions} from './data';
+import {OYCredentialHintOptions, OYCredentialRequestOptions} from './data';
 
 
 export enum PreloadRequestType {
@@ -38,12 +38,12 @@ export enum PreloadRequestType {
 
 export interface HintPreloadRequest {
   type: PreloadRequestType;
-  options: CredentialHintOptions;
+  options: OYCredentialHintOptions;
 }
 
 export interface RetrievePreloadRequest {
   type: PreloadRequestType;
-  options: CredentialRequestOptions;
+  options: OYCredentialRequestOptions;
 }
 
 export type PreloadRequest = HintPreloadRequest | RetrievePreloadRequest;

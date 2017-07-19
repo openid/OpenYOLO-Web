@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import {Credential} from '../protocol/data';
+import {OYCredential} from '../protocol/data';
 import {OpenYoloError} from '../protocol/errors';
 import {RpcMessageType, saveMessage} from '../protocol/rpc_messages';
 
 import {BaseRequest} from './base_request';
 
-export class CredentialSave extends BaseRequest<void, Credential> {
-  dispatchInternal(credential: Credential) {
+export class CredentialSave extends BaseRequest<void, OYCredential> {
+  dispatchInternal(credential: OYCredential) {
     this.registerHandler(RpcMessageType.saveResult, (saved: boolean) => {
       if (saved) {
         this.resolve();

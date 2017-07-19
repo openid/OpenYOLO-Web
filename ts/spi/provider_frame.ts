@@ -16,7 +16,7 @@
 
 import {PrimaryClientConfiguration} from '../protocol/client_config';
 import {sendMessage} from '../protocol/comms';
-import {AUTHENTICATION_METHODS, Credential, CredentialHintOptions, CredentialRequestOptions} from '../protocol/data';
+import {AUTHENTICATION_METHODS, OYCredential, OYCredentialHintOptions, OYCredentialRequestOptions} from '../protocol/data';
 import {OpenYoloError} from '../protocol/errors';
 import {isOpenYoloMessageFormat} from '../protocol/messages';
 import {channelErrorMessage} from '../protocol/post_messages';
@@ -40,7 +40,7 @@ export class ProviderFrame {
   private closeListener: EventListener;
   private window: WindowLike;
 
-  private proxyLoginCredential: Credential|null = null;
+  private proxyLoginCredential: OYCredential|null = null;
 
   /**
    * Performs the initial validation of the execution context, and then
@@ -256,7 +256,7 @@ export class ProviderFrame {
 
   private async handleHintRequest(
       requestId: string,
-      options: CredentialHintOptions) {
+      options: OYCredentialHintOptions) {
     console.info('Handling hint request');
 
     let hints = await this.cancellablePromise(this.getHints(options));
@@ -301,7 +301,7 @@ export class ProviderFrame {
 
   private async handleHintAvailableRequest(
       id: string,
-      options: CredentialHintOptions) {
+      options: OYCredentialHintOptions) {
     console.info('Handling hintAvailable request');
 
     let hints = await this.cancellablePromise(this.getHints(options));
@@ -311,7 +311,7 @@ export class ProviderFrame {
 
   private async handleGetCredentialRequest(
       requestId: string,
-      options: CredentialRequestOptions) {
+      options: OYCredentialRequestOptions) {
     console.info('Handling credential retrieve request');
 
     let credentials = await this.cancellablePromise(
@@ -319,10 +319,11 @@ export class ProviderFrame {
             this.equivalentAuthDomains, options));
 
     // filter out the credentials which don't match the request options
-    let pertinentCredentials = credentials.filter((credential: Credential) => {
-      return options.supportedAuthMethods.find(
-          (value) => value === credential.authMethod);
-    });
+    let pertinentCredentials =
+        credentials.filter((credential: OYCredential) => {
+          return options.supportedAuthMethods.find(
+              (value) => value === credential.authMethod);
+        });
 
     // if no credentials are available, directly respond to the client that
     // this is the case and the request will complete
@@ -375,12 +376,12 @@ export class ProviderFrame {
 
   private async handleSaveCredentialRequest(
       id: string,
-      credential: Credential) {
+      credential: OYCredential) {
     // TODO(iainmcgin): implement
     return this.handleUnimplementedRequest(id, msg.RpcMessageType.save);
   }
 
-  private async handleProxyLoginRequest(id: string, credential: Credential) {
+  private async handleProxyLoginRequest(id: string, credential: OYCredential) {
     // TODO(iainmcgin): implement
     return this.handleUnimplementedRequest(id, msg.RpcMessageType.proxy);
   }
@@ -446,7 +447,7 @@ export class ProviderFrame {
    * {@code this.proxyLoginCredential} and return a redacted version of the
    * credential. Otherwise, just an unredacted copy of the credential.
    */
-  private storeForProxyLogin(credential: Credential) {
+  private storeForProxyLogin(credential: OYCredential) {
     if (!credential.password ||
         (this.providerConfig.allowDirectAuth &&
          !this.clientConfig.requireProxyLogin)) {
@@ -467,12 +468,12 @@ export class ProviderFrame {
    * Provides a shallow copy of a credential, optionally redacting sensitive
    * data.
    */
-  private copyCredential(credential: Credential, redactSensitive?: boolean):
-      Credential {
+  private copyCredential(credential: OYCredential, redactSensitive?: boolean):
+      OYCredential {
     let redact = !!redactSensitive;
 
     let copy:
-        Credential = {id: credential.id, authMethod: credential.authMethod};
+        OYCredential = {id: credential.id, authMethod: credential.authMethod};
 
     if (credential.authDomain) {
       copy.authDomain = credential.authDomain;
@@ -514,8 +515,8 @@ export class ProviderFrame {
    * Creates a list of all hints that are compatible with the specified hint
    * options, ordered from most- to least- frequently used.
    */
-  private async getHints(options: CredentialHintOptions):
-      Promise<Credential[]> {
+  private async getHints(options: OYCredentialHintOptions):
+      Promise<OYCredential[]> {
     // get all credentials across all domains; from this, we can filter down
     // to the set of credentials
     let allCredentials = await this.cancellablePromise(
@@ -527,7 +528,7 @@ export class ProviderFrame {
 
     // consolidate credentials into a map based on the credential id, and
     // record the number of credentials with that identifier.
-    let credentialsById = ({} as {[key: string]: Credential});
+    let credentialsById = ({} as {[key: string]: OYCredential});
     let credentialCount = ({} as {[key: string]: number});
     let numRetained = 0;
     allCredentials.forEach((credential) => {
@@ -561,7 +562,7 @@ export class ProviderFrame {
     // extract and reorder the credentials from the map into a most- to
     // least-frequently ocurring order.
 
-    let hintCredentials: Credential[] = [];
+    let hintCredentials: OYCredential[] = [];
     for (let credentialId in credentialsById) {
       if (credentialsById.hasOwnProperty(credentialId)) {
         hintCredentials.push(credentialsById[credentialId]);
@@ -586,7 +587,7 @@ export class ProviderFrame {
    * information it contains is. This can be used to compare credentials and
    * favor those with more information.
    */
-  private completenessScore(credential: Credential): number {
+  private completenessScore(credential: OYCredential): number {
     let score = 0;
     if (credential.authMethod !== AUTHENTICATION_METHODS.ID_AND_PASSWORD) {
       score += 4;

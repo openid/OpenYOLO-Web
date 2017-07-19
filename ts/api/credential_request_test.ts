@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {AUTHENTICATION_METHODS, Credential, CredentialRequestOptions} from '../protocol/data';
+import {AUTHENTICATION_METHODS, OYCredential, OYCredentialRequestOptions} from '../protocol/data';
 import {credentialResultMessage, noneAvailableMessage, retrieveMessage, showProviderMessage} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {FakeProviderConnection} from '../test_utils/channels';
@@ -29,7 +29,7 @@ describe('CredentialRequest', () => {
   let clientChannel: SecureChannel;
   let providerChannel: SecureChannel;
   let frame: ProviderFrameElement;
-  const options: CredentialRequestOptions = {supportedAuthMethods: []};
+  const options: OYCredentialRequestOptions = {supportedAuthMethods: []};
 
   beforeEach(() => {
     connection = new FakeProviderConnection();
@@ -48,7 +48,7 @@ describe('CredentialRequest', () => {
   describe('dispatch', () => {
     it('should send a RPC message through the channel', () => {
       spyOn(clientChannel, 'send').and.callThrough();
-      let options: CredentialRequestOptions = {
+      let options: OYCredentialRequestOptions = {
         supportedAuthMethods: ['openyolo://id-and-password']
       };
       request.dispatch(options);
@@ -78,7 +78,7 @@ describe('CredentialRequest', () => {
     });
 
     it('should resolve with credential on success', async function(done) {
-      let credential: Credential = {
+      let credential: OYCredential = {
         id: 'alice@gmail.com',
         authMethod: AUTHENTICATION_METHODS.ID_AND_PASSWORD,
         displayName: 'Google'

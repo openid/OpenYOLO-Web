@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {Credential, CredentialHintOptions} from '../protocol/data';
+import {OYCredential, OYCredentialHintOptions} from '../protocol/data';
 import {hintMessage, RpcMessageType} from '../protocol/rpc_messages';
 
 import {BaseRequest} from './base_request';
@@ -24,14 +24,14 @@ import {BaseRequest} from './base_request';
  * the user selects a hint, if any is available.
  */
 export class HintRequest extends
-    BaseRequest<Credential|null, CredentialHintOptions|undefined> {
+    BaseRequest<OYCredential|null, OYCredentialHintOptions|undefined> {
   /**
    * Starts the Hint Request flow.
    */
-  dispatchInternal(options: CredentialHintOptions) {
+  dispatchInternal(options: OYCredentialHintOptions) {
     this.registerHandler(
         RpcMessageType.credential,
-        (credential: Credential) => this.handleResult(credential));
+        (credential: OYCredential) => this.handleResult(credential));
     this.registerHandler(RpcMessageType.none, () => this.handleResult(null));
 
     this.debugLog(`Sending hint request`);
@@ -41,7 +41,7 @@ export class HintRequest extends
   /**
    * Handles the initial response from a hint request.
    */
-  private handleResult(credential: Credential|null): void {
+  private handleResult(credential: OYCredential|null): void {
     this.debugLog(`Hint request complete`);
     this.resolve(credential);
     this.dispose();
