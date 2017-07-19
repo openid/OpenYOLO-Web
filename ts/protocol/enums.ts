@@ -14,29 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * A TypeScript utility for producing a string enumeration, retaining enough
- * string literal type information to be usable for static checking.
- *
- * The function produces an object, where for each string value _s_ provided as
- * an argument, the key s maps to the value s, with string literal type s.
- * For example, `animals = strEnum('cat', 'dog', 'pig')` produces the object
- * `{cat: 'cat', dog: 'dog', 'pig': pig}`, where `typeof animals.cat === 'cat'`.
- */
-export function strEnum<T extends string>(...enumValues: T[]):
-    Readonly<{[K in T]: K}> {
-  let result = enumValues.reduce((res, key) => {
-    res[key] = key;
-    return res;
-  }, Object.create(null));
-  return Object.freeze(result);
-}
-
-export function map2Enum<T extends string>(mapValues: {[K in T]: K}):
-    Readonly<{[K in T]: K}> {
-  return Object.freeze(mapValues);
-}
-
 export type StringKeyedObject = {
   [key: string]: any
 };

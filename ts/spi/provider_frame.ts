@@ -16,7 +16,7 @@
 
 import {PrimaryClientConfiguration} from '../protocol/client_config';
 import {sendMessage} from '../protocol/comms';
-import {AUTHENTICATION_METHODS, Credential, CredentialHintOptions, CredentialRequestOptions} from '../protocol/data';
+import {AUTHENTICATION_METHODS, OYCredential, OYCredentialHintOptions, OYCredentialRequestOptions} from '../protocol/data';
 import {OpenYoloError} from '../protocol/errors';
 import {isOpenYoloMessageFormat} from '../protocol/messages';
 import {channelErrorMessage} from '../protocol/post_messages';
@@ -40,7 +40,7 @@ export class ProviderFrame {
   private closeListener: EventListener;
   private window: WindowLike;
 
-  private proxyLoginCredential: Credential|null = null;
+  private proxyLoginCredential: OYCredential|null = null;
 
   /**
    * Performs the initial validation of the execution context, and then
@@ -54,7 +54,7 @@ export class ProviderFrame {
       let clientConfiguration =
           await providerConfig.clientConfigurationProvider.getConfiguration(
               providerConfig.clientAuthDomain);
-      if (!clientConfiguration.apiEnabled) {
+      if (!clientConfiguration || !clientConfiguration.apiEnabled) {
         console.info('OpenYOLO API is not enabled for the client origin');
         throw OpenYoloError.apiDisabled();
       }
@@ -145,35 +145,34 @@ export class ProviderFrame {
 
   private registerListeners() {
     this.addRpcListener(
-        msg.RPC_MESSAGE_TYPES.wrapBrowser,
+        msg.RpcMessageType.wrapBrowser,
         (m) => this.handleWrapBrowserRequest(m.id));
 
     this.addRpcListener(
-        msg.RPC_MESSAGE_TYPES.disableAutoSignIn,
+        msg.RpcMessageType.disableAutoSignIn,
         (m) => this.handleDisableAutoSignInRequest(m.id));
 
     this.addRpcListener(
-        msg.RPC_MESSAGE_TYPES.retrieve,
+        msg.RpcMessageType.retrieve,
         (m) => this.handleGetCredentialRequest(m.id, m.args));
 
     this.addRpcListener(
-        msg.RPC_MESSAGE_TYPES.hint,
-        (m) => this.handleHintRequest(m.id, m.args));
+        msg.RpcMessageType.hint, (m) => this.handleHintRequest(m.id, m.args));
 
     this.addRpcListener(
-        msg.RPC_MESSAGE_TYPES.hintAvailable,
+        msg.RpcMessageType.hintAvailable,
         (m) => this.handleHintAvailableRequest(m.id, m.args));
 
     this.addRpcListener(
-        msg.RPC_MESSAGE_TYPES.save,
+        msg.RpcMessageType.save,
         (m) => this.handleSaveCredentialRequest(m.id, m.args));
 
     this.addRpcListener(
-        msg.RPC_MESSAGE_TYPES.proxy,
+        msg.RpcMessageType.proxy,
         (m) => this.handleProxyLoginRequest(m.id, m.args));
 
     this.addRpcListener(
-        msg.RPC_MESSAGE_TYPES.cancelLastOperation,
+        msg.RpcMessageType.cancelLastOperation,
         (m) => this.handleCancelLastOperation(m.id));
 
     this.clientChannel.addFallbackListener((ev) => {
@@ -184,17 +183,17 @@ export class ProviderFrame {
 
   private addRpcListener<T extends msg.RpcMessageType>(
       type: T,
-      messageHandler: (message: msg.RpcMessageDataTypes[T]) => Promise<void>) {
+      messageHandler: (message: msg.RpcMessageData<T>) => Promise<void>) {
     this.clientChannel.listen<T>(
         type,
-        (m: msg.RpcMessageDataTypes[T], type: T, ev: MessageEvent) =>
+        (m: msg.RpcMessageData<T>, type: T, ev: MessageEvent) =>
             this.monitoringListener(type, m, messageHandler));
   }
 
   private async monitoringListener<T extends msg.RpcMessageType>(
       type: T,
-      m: msg.RpcMessageDataTypes[T],
-      messageHandler: (message: msg.RpcMessageDataTypes[T]) => Promise<void>) {
+      m: msg.RpcMessageData<T>,
+      messageHandler: (message: msg.RpcMessageData<T>) => Promise<void>) {
     if (!this.recordRequestStart(type, m.id)) {
       return;
     }
@@ -257,7 +256,7 @@ export class ProviderFrame {
 
   private async handleHintRequest(
       requestId: string,
-      options: CredentialHintOptions) {
+      options: OYCredentialHintOptions) {
     console.info('Handling hint request');
 
     let hints = await this.cancellablePromise(this.getHints(options));
@@ -302,7 +301,7 @@ export class ProviderFrame {
 
   private async handleHintAvailableRequest(
       id: string,
-      options: CredentialHintOptions) {
+      options: OYCredentialHintOptions) {
     console.info('Handling hintAvailable request');
 
     let hints = await this.cancellablePromise(this.getHints(options));
@@ -312,7 +311,7 @@ export class ProviderFrame {
 
   private async handleGetCredentialRequest(
       requestId: string,
-      options: CredentialRequestOptions) {
+      options: OYCredentialRequestOptions) {
     console.info('Handling credential retrieve request');
 
     let credentials = await this.cancellablePromise(
@@ -320,10 +319,11 @@ export class ProviderFrame {
             this.equivalentAuthDomains, options));
 
     // filter out the credentials which don't match the request options
-    let pertinentCredentials = credentials.filter((credential) => {
-      return options.supportedAuthMethods.find(
-          (value) => value === credential.authMethod);
-    });
+    let pertinentCredentials =
+        credentials.filter((credential: OYCredential) => {
+          return options.supportedAuthMethods.find(
+              (value) => value === credential.authMethod);
+        });
 
     // if no credentials are available, directly respond to the client that
     // this is the case and the request will complete
@@ -376,14 +376,14 @@ export class ProviderFrame {
 
   private async handleSaveCredentialRequest(
       id: string,
-      credential: Credential) {
+      credential: OYCredential) {
     // TODO(iainmcgin): implement
-    return this.handleUnimplementedRequest(id, msg.RPC_MESSAGE_TYPES.save);
+    return this.handleUnimplementedRequest(id, msg.RpcMessageType.save);
   }
 
-  private async handleProxyLoginRequest(id: string, credential: Credential) {
+  private async handleProxyLoginRequest(id: string, credential: OYCredential) {
     // TODO(iainmcgin): implement
-    return this.handleUnimplementedRequest(id, msg.RPC_MESSAGE_TYPES.proxy);
+    return this.handleUnimplementedRequest(id, msg.RpcMessageType.proxy);
   }
 
   private async handleCancelLastOperation(id: string) {
@@ -420,12 +420,12 @@ export class ProviderFrame {
       return;
     }
 
-    if (!(ev.data.type in msg.RPC_MESSAGE_TYPES)) {
+    if (!(ev.data.type in msg.RpcMessageType)) {
       console.warn('Non-RPC message received on secure channel, ignoring');
       return;
     }
 
-    let type = (ev.data.type as msg.RpcMessageType);
+    const type = (ev.data.type as msg.RpcMessageType);
 
     if (!msg.RPC_MESSAGE_DATA_VALIDATORS[type](ev.data.data)) {
       console.warn(
@@ -434,7 +434,7 @@ export class ProviderFrame {
       return;
     }
 
-    let data = (ev.data.data as msg.RpcMessageData<any>);
+    const data = (ev.data.data as msg.RpcMessageData<any>);
     // the message is a known, valid, but unhandled RPC message. Send a generic
     // failure message back.
     this.clientChannel.send(
@@ -447,7 +447,7 @@ export class ProviderFrame {
    * {@code this.proxyLoginCredential} and return a redacted version of the
    * credential. Otherwise, just an unredacted copy of the credential.
    */
-  private storeForProxyLogin(credential: Credential) {
+  private storeForProxyLogin(credential: OYCredential) {
     if (!credential.password ||
         (this.providerConfig.allowDirectAuth &&
          !this.clientConfig.requireProxyLogin)) {
@@ -468,12 +468,12 @@ export class ProviderFrame {
    * Provides a shallow copy of a credential, optionally redacting sensitive
    * data.
    */
-  private copyCredential(credential: Credential, redactSensitive?: boolean):
-      Credential {
+  private copyCredential(credential: OYCredential, redactSensitive?: boolean):
+      OYCredential {
     let redact = !!redactSensitive;
 
     let copy:
-        Credential = {id: credential.id, authMethod: credential.authMethod};
+        OYCredential = {id: credential.id, authMethod: credential.authMethod};
 
     if (credential.authDomain) {
       copy.authDomain = credential.authDomain;
@@ -515,8 +515,8 @@ export class ProviderFrame {
    * Creates a list of all hints that are compatible with the specified hint
    * options, ordered from most- to least- frequently used.
    */
-  private async getHints(options: CredentialHintOptions):
-      Promise<Credential[]> {
+  private async getHints(options: OYCredentialHintOptions):
+      Promise<OYCredential[]> {
     // get all credentials across all domains; from this, we can filter down
     // to the set of credentials
     let allCredentials = await this.cancellablePromise(
@@ -528,7 +528,7 @@ export class ProviderFrame {
 
     // consolidate credentials into a map based on the credential id, and
     // record the number of credentials with that identifier.
-    let credentialsById = ({} as {[key: string]: Credential});
+    let credentialsById = ({} as {[key: string]: OYCredential});
     let credentialCount = ({} as {[key: string]: number});
     let numRetained = 0;
     allCredentials.forEach((credential) => {
@@ -562,7 +562,7 @@ export class ProviderFrame {
     // extract and reorder the credentials from the map into a most- to
     // least-frequently ocurring order.
 
-    let hintCredentials: Credential[] = [];
+    let hintCredentials: OYCredential[] = [];
     for (let credentialId in credentialsById) {
       if (credentialsById.hasOwnProperty(credentialId)) {
         hintCredentials.push(credentialsById[credentialId]);
@@ -587,7 +587,7 @@ export class ProviderFrame {
    * information it contains is. This can be used to compare credentials and
    * favor those with more information.
    */
-  private completenessScore(credential: Credential): number {
+  private completenessScore(credential: OYCredential): number {
     let score = 0;
     if (credential.authMethod !== AUTHENTICATION_METHODS.ID_AND_PASSWORD) {
       score += 4;
@@ -611,7 +611,7 @@ export class ProviderFrame {
     if (!this.cancellable) {
       this.cancellable = new CancellablePromise();
     }
-    return Promise.race([this.cancellable.promise, producer]);
+    return Promise.race([this.cancellable.promise, producer]) as Promise<T>;
   }
 
   private handleWellKnownErrors(error: Error) {

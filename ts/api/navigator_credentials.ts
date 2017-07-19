@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {AUTHENTICATION_METHODS, Credential as OpenYoloCredential, CredentialHintOptions, CredentialRequestOptions as OpenYoloCredentialRequestOptions, ProxyLoginResponse} from '../protocol/data';
+import {AUTHENTICATION_METHODS, OYCredential as OpenYoloCredential, OYCredentialHintOptions, OYCredentialRequestOptions as OpenYoloCredentialRequestOptions, OYProxyLoginResponse} from '../protocol/data';
 import {OpenYoloError} from '../protocol/errors';
 
 import {OpenYoloApi} from './api';
@@ -151,7 +151,9 @@ export class NavigatorCredentials implements OpenYoloApi {
       Promise<OpenYoloCredential> {
     let convertedOptions = convertRequestOptions(options);
     return this.cmApi.get(convertedOptions).then((cred) => {
-      if (!cred) return;
+      if (!cred) {
+        throw OpenYoloError.canceled();
+      }
       this.credentialsMap.insert(cred);
       return convertCredentialToOpenYolo(
           cred as FederatedCredential | PasswordCredential);
@@ -166,7 +168,7 @@ export class NavigatorCredentials implements OpenYoloApi {
     });
   }
 
-  hint(options?: CredentialHintOptions): Promise<OpenYoloCredential> {
+  hint(options?: OYCredentialHintOptions): Promise<OpenYoloCredential> {
     // Reject with a canceled error as no hints can be retrieved.
     return Promise.reject(OpenYoloError.canceled());
   }
@@ -179,7 +181,7 @@ export class NavigatorCredentials implements OpenYoloApi {
     return Promise.reject(OpenYoloError.apiDisabled());
   }
 
-  proxyLogin(credential: OpenYoloCredential): Promise<ProxyLoginResponse> {
+  proxyLogin(credential: OpenYoloCredential): Promise<OYProxyLoginResponse> {
     // TODO(tch): Fetch the URL from configuration.
     let url = `${window.location.protocol}//${window.location.host}/signin`;
     const cred = this.credentialsMap.retrieve(
@@ -188,7 +190,7 @@ export class NavigatorCredentials implements OpenYoloApi {
       return Promise.reject(new Error('Invalid credential!'));
     }
 
-    return new Promise<ProxyLoginResponse>((resolve, reject) => {
+    return new Promise<OYProxyLoginResponse>((resolve, reject) => {
       fetch(url, {method: 'POST', credentials: cred}).then(resp => {
         if (resp.status !== 200) {
           reject(

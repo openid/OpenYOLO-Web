@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {boxEnum, indexedStrEnum, map2Enum} from './enums';
+import {boxEnum, indexedStrEnum} from './enums';
 import {PasswordSpecification} from './password_spec';
 
 /**
@@ -26,7 +26,7 @@ import {PasswordSpecification} from './password_spec';
 /**
  * Represents a credential which may be usable to sign in.
  */
-export interface Credential {
+export interface OYCredential {
   /**
    * The unique identifier for the credential within the scope of the
    * authentication system. This is typically an email address, phone number
@@ -102,7 +102,7 @@ export interface Credential {
 /**
  * Encapsulates the response from the authentication system to a proxy login.
  */
-export interface ProxyLoginResponse {
+export interface OYProxyLoginResponse {
   statusCode: number;
   responseText: string;
 }
@@ -111,7 +111,7 @@ export interface ProxyLoginResponse {
  * The set of parameters passed from the client for a credential retrieval
  * request.
  */
-export interface CredentialRequestOptions {
+export interface OYCredentialRequestOptions {
   /**
    * The supported authentication methods supported by the origin, described
    * as a list of absolute, hierarchical URLs with no path. See
@@ -151,7 +151,7 @@ export interface TokenProvider {
 /**
  * The set of parameters passed from the client for a hint retrieval request.
  */
-export interface CredentialHintOptions {
+export interface OYCredentialHintOptions {
   /**
    * The supported authentication methods supported by the origin, described
    * as a list of absolute, hierarchical URLs with no path. See
@@ -190,13 +190,11 @@ export interface CredentialHintOptions {
  * - navPopout: The provider is rendered in a pop-up style at the top of the
  *   screen, with a fixed width. The
  */
-export const RENDER_MODES = map2Enum({
-  bottomSheet: 'bottomSheet',
-  navPopout: 'navPopout',
-  fullScreen: 'fullScreen'
-});
-
-export type RenderMode = keyof typeof RENDER_MODES;
+export enum RenderMode {
+  bottomSheet = 'bottomSheet',
+  navPopout = 'navPopout',
+  fullScreen = 'fullScreen'
+}
 
 /**
  * A set of commonly-used federated authentication methods. This list is not

@@ -16,8 +16,8 @@
 
 import {createMessageListener, FilteringEventListener, isPermittedOrigin, RpcMessageListener, WindowLike} from './comms';
 import {OpenYoloError} from './errors';
-import {ackMessage, channelConnectMessage, channelReadyMessage, POST_MESSAGE_TYPES, readyForConnectMessage} from './post_messages';
-import {RpcMessage, RpcMessageDataTypes, RpcMessageType} from './rpc_messages';
+import {ackMessage, channelConnectMessage, channelReadyMessage, PostMessageType, readyForConnectMessage} from './post_messages';
+import {RpcMessage, RpcMessageData, RpcMessageType} from './rpc_messages';
 import {PromiseResolver, sha256, timeoutPromise} from './utils';
 
 const DEFAULT_TIMEOUT_MS = 3000;
@@ -77,13 +77,15 @@ export class SecureChannel {
     // register another listener for the success / fail of establishing the
     // connection.
 
-    let readyListener = createMessageListener('channelReady', () => {
-      readyPromiseResolver.resolve();
-    });
+    let readyListener =
+        createMessageListener(PostMessageType.channelReady, () => {
+          readyPromiseResolver.resolve();
+        });
 
-    let errorListener = createMessageListener('channelError', (err) => {
-      readyPromiseResolver.reject(OpenYoloError.createError(err));
-    });
+    let errorListener =
+        createMessageListener(PostMessageType.channelError, (err) => {
+          readyPromiseResolver.reject(OpenYoloError.createError(err));
+        });
 
     clientWindow.addEventListener('message', readyListener);
     clientWindow.addEventListener('message', errorListener);
@@ -119,7 +121,7 @@ export class SecureChannel {
       expectedNonceHash: string): Promise<void> {
     let promiseResolver = new PromiseResolver<void>();
     let listener =
-        createMessageListener(POST_MESSAGE_TYPES.readyForConnect, (nonce) => {
+        createMessageListener(PostMessageType.readyForConnect, (nonce) => {
           if (expectedNonceHash === nonce) {
             promiseResolver.resolve();
           }
@@ -150,7 +152,8 @@ export class SecureChannel {
     let promiseResolver = new PromiseResolver<SecureChannel>();
 
     let listener = createMessageListener(
-        'channelConnect', async function(nonce: string, type, ev) {
+        PostMessageType.channelConnect,
+        async function(nonce: string, type, ev) {
           SecureChannel.debugLog(
               'provider', `connection challenge received from ${ev.origin}`);
           // Runtime check as nonce could be anything.
@@ -257,7 +260,7 @@ export class SecureChannel {
       Promise<void> {
     const promiseResolver = new PromiseResolver<void>();
     message.data.ack = true;
-    const ackListner = createMessageListener(POST_MESSAGE_TYPES.ack, (id) => {
+    const ackListner = createMessageListener(PostMessageType.ack, (id) => {
       if (id === message.data.id) {
         this.port.removeEventListener('message', ackListner);
         promiseResolver.resolve();
@@ -270,7 +273,8 @@ export class SecureChannel {
     });
     this.port.addEventListener('message', ackListner);
     this.send(message);
-    return Promise.race([timeout, promiseResolver.promise]);
+    // Cast is safe as the timeout promise never resolves.
+    return Promise.race([timeout, promiseResolver.promise]) as Promise<void>;
   }
 
   listen<T extends RpcMessageType>(
@@ -282,7 +286,7 @@ export class SecureChannel {
 
     let portListener = createMessageListener(
         messageType,
-        (data: RpcMessageDataTypes[T], type: T, event: MessageEvent) => {
+        (data: RpcMessageData<T>, type: T, event: MessageEvent) => {
           // If acknowledgement is required, send the message to the sender.
           // TODO: a TS compiler bug appears to be causing intermittent problems
           // with resolving RpcMessageDataTypes[T]. Cast to any until this

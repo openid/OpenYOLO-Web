@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import {ERROR_TYPES, OpenYoloError, OpenYoloErrorData, OpenYoloExtendedError} from '../protocol/errors';
-import {RpcMessageArgumentTypes, RpcMessageDataTypes, RpcMessageType} from '../protocol/rpc_messages';
+import {InternalErrorCode, OpenYoloError, OpenYoloErrorData, OpenYoloExtendedError} from '../protocol/errors';
+import {RpcMessageArgumentTypes, RpcMessageData, RpcMessageType} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {generateId, PromiseResolver, startTimeoutRacer, TimeoutRacer} from '../protocol/utils';
 
@@ -91,7 +91,7 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
   private registerBaseHandlers() {
     this.debugLog('request instantiated');
     // Register a standard error handler.
-    this.registerHandler('error', (data: OpenYoloErrorData) => {
+    this.registerHandler(RpcMessageType.error, (data: OpenYoloErrorData) => {
       let error: OpenYoloExtendedError;
       if (data) {
         error = OpenYoloError.createError(data);
@@ -107,7 +107,7 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
     // Register a standard handler for displaying the provider - when UI is
     // shown, the timeouts are also canceled to allow the operation to proceed
     // at human pace.
-    this.registerHandler('showProvider', (options) => {
+    this.registerHandler(RpcMessageType.showProvider, (options) => {
       this.clearTimeout();
       this.frame.display(options);
     });
@@ -130,7 +130,7 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
     this.promiseResolver.reject(reason);
     // Do not hide the IFrame in case of concurrent request, to allow the
     // previous one to finish.
-    if (reason.data.code !== ERROR_TYPES.illegalConcurrentRequest) {
+    if (reason.data.code !== InternalErrorCode.illegalConcurrentRequest) {
       this.frame.hide();
     }
   }
@@ -142,15 +142,14 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
   registerHandler<T extends RpcMessageType>(
       type: T,
       handler: RpcMessageHandler<T>): void {
-    let filter =
-        (data: RpcMessageDataTypes[T], t: T, e: MessageEvent): boolean => {
-          if (data.id !== this.id) {
-            return false;
-          }
+    let filter = (data: RpcMessageData<T>, t: T, e: MessageEvent): boolean => {
+      if (data.id !== this.id) {
+        return false;
+      }
 
-          handler(data.args, type, e);
-          return true;
-        };
+      handler(data.args, type, e);
+      return true;
+    };
     filter.toString = () => `${type} message handler`;
     this.listenerKeys.push(this.channel.listen(type, filter));
   }

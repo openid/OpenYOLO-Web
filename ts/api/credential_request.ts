@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import {Credential, CredentialRequestOptions} from '../protocol/data';
-import {retrieveMessage, RPC_MESSAGE_TYPES} from '../protocol/rpc_messages';
+import {OYCredential, OYCredentialRequestOptions} from '../protocol/data';
+import {retrieveMessage, RpcMessageType} from '../protocol/rpc_messages';
 
 import {BaseRequest} from './base_request';
 
@@ -24,17 +24,17 @@ import {BaseRequest} from './base_request';
  * the user selects a credential, if any is available.
  */
 export class CredentialRequest extends
-    BaseRequest<Credential|null, CredentialRequestOptions|undefined> {
+    BaseRequest<OYCredential|null, OYCredentialRequestOptions|undefined> {
   /**
    * Starts the Credential Request flow.
    */
-  dispatchInternal(options: CredentialRequestOptions) {
+  dispatchInternal(options: OYCredentialRequestOptions) {
     // the final outcome will either be a credential, or a notification that
     // none are available / none was selected by the user.
     this.registerHandler(
-        RPC_MESSAGE_TYPES.credential,
-        (credential: Credential) => this.handleResult(credential));
-    this.registerHandler(RPC_MESSAGE_TYPES.none, () => this.handleResult(null));
+        RpcMessageType.credential,
+        (credential: OYCredential) => this.handleResult(credential));
+    this.registerHandler(RpcMessageType.none, () => this.handleResult(null));
 
     // send the request
     this.channel.send(retrieveMessage(this.id, options));
@@ -43,7 +43,7 @@ export class CredentialRequest extends
   /**
    * Handles the initial response from a credential request.
    */
-  private handleResult(credential: Credential|null): void {
+  private handleResult(credential: OYCredential|null): void {
     this.resolve(credential);
     this.dispose();
   }

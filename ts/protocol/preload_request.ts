@@ -28,19 +28,22 @@
  * as part of the initial load of the iframe, to speed up handling of these
  * requests.
  */
-import {CredentialHintOptions} from './data';
-import {map2Enum} from './enums';
+import {OYCredentialHintOptions, OYCredentialRequestOptions} from './data';
 
-export const PRELOAD_REQUEST = map2Enum({hint: 'hint', retrieve: 'retrieve'});
+
+export enum PreloadRequestType {
+  hint = 'hint',
+  retrieve = 'retrieve'
+}
 
 export interface HintPreloadRequest {
-  type: typeof PRELOAD_REQUEST.hint;
-  options: CredentialHintOptions;
+  type: PreloadRequestType;
+  options: OYCredentialHintOptions;
 }
 
 export interface RetrievePreloadRequest {
-  type: typeof PRELOAD_REQUEST.retrieve;
-  options: CredentialRequestOptions;
+  type: PreloadRequestType;
+  options: OYCredentialRequestOptions;
 }
 
 export type PreloadRequest = HintPreloadRequest | RetrievePreloadRequest;

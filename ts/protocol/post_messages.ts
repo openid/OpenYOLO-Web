@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import {map2Enum} from './enums';
 import {OpenYoloErrorData, OpenYoloExtendedError} from './errors';
-import {isNonEmptyString, isValidError} from './validators';
+import {DataValidator, isNonEmptyString, isValidError} from './validators';
 
 /**
  * Top-level message envelope types defined for OpenYOLO:
@@ -31,21 +30,14 @@ import {isNonEmptyString, isValidError} from './validators';
  *     indicate it is ready to accept requests.
  * - channelError: sent when establishing the message channel fails.
  */
-export const POST_MESSAGE_TYPES = map2Enum({
-  ack: 'ack',
-  verifyPing: 'verifyPing',
-  verifyAck: 'verifyAck',
-  readyForConnect: 'readyForConnect',
-  channelConnect: 'channelConnect',
-  channelReady: 'channelReady',
-  channelError: 'channelError'
-});
-
-export type PostMessageType = keyof typeof POST_MESSAGE_TYPES;
-
-export interface PostMessage<T extends PostMessageType> {
-  type: T;
-  data: PostMessageDataType<T>;
+export enum PostMessageType {
+  ack = 'ack',
+  verifyPing = 'verifyPing',
+  verifyAck = 'verifyAck',
+  readyForConnect = 'readyForConnect',
+  channelConnect = 'channelConnect',
+  channelReady = 'channelReady',
+  channelError = 'channelError'
 }
 
 /**
@@ -61,11 +53,16 @@ export type PostMessageDataTypes = {
   'channelError': OpenYoloErrorData
 };
 
-export type PostMessageDataType<K extends PostMessageType> =
-    PostMessageDataTypes[K];
+export type PostMessageData<T extends PostMessageType> =
+    PostMessageDataTypes[T];
+
+export interface PostMessage<T extends PostMessageType> {
+  type: T;
+  data: PostMessageDataTypes[T];
+}
 
 export const POST_MESSAGE_DATA_VALIDATORS:
-    {[K in PostMessageType]: (value: any) => boolean} = {
+    {[K in PostMessageType]: DataValidator} = {
       'ack': isNonEmptyString,
       'verifyPing': isNonEmptyString,
       'verifyAck': isNonEmptyString,
@@ -76,34 +73,34 @@ export const POST_MESSAGE_DATA_VALIDATORS:
     };
 
 export function postMessage<T extends PostMessageType>(
-    type: T, data: PostMessageDataType<T>): PostMessage<T> {
+    type: T, data: PostMessageDataTypes[T]): PostMessage<T> {
   return {type, data};
 }
 
 export function ackMessage(id: string) {
-  return postMessage(POST_MESSAGE_TYPES.ack, id);
+  return postMessage(PostMessageType.ack, id);
 }
 
 export function verifyPingMessage(nonce: string) {
-  return postMessage(POST_MESSAGE_TYPES.verifyPing, nonce);
+  return postMessage(PostMessageType.verifyPing, nonce);
 }
 
 export function verifyAckMessage(nonce: string) {
-  return postMessage(POST_MESSAGE_TYPES.verifyAck, nonce);
+  return postMessage(PostMessageType.verifyAck, nonce);
 }
 
 export function channelReadyMessage(nonce: string) {
-  return postMessage(POST_MESSAGE_TYPES.channelReady, nonce);
+  return postMessage(PostMessageType.channelReady, nonce);
 }
 
 export function channelErrorMessage(error: OpenYoloExtendedError) {
-  return postMessage(POST_MESSAGE_TYPES.channelError, error.data);
+  return postMessage(PostMessageType.channelError, error.data);
 }
 
 export function readyForConnectMessage(nonce: string) {
-  return postMessage(POST_MESSAGE_TYPES.readyForConnect, nonce);
+  return postMessage(PostMessageType.readyForConnect, nonce);
 }
 
 export function channelConnectMessage(nonce: string) {
-  return postMessage(POST_MESSAGE_TYPES.channelConnect, nonce);
+  return postMessage(PostMessageType.channelConnect, nonce);
 }

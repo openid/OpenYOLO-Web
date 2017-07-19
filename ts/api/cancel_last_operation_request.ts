@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import {cancelLastOperationMessage, RPC_MESSAGE_TYPES} from '../protocol/rpc_messages';
+import {cancelLastOperationMessage, RpcMessageType} from '../protocol/rpc_messages';
 import {BaseRequest} from './base_request';
 
 export class CancelLastOperationRequest extends BaseRequest<void, void> {
   dispatchInternal() {
     this.registerHandler(
-        RPC_MESSAGE_TYPES.cancelLastOperationResult, () => this.handleResult());
+        RpcMessageType.cancelLastOperationResult, () => this.handleResult());
     // send the request
     this.channel.send(cancelLastOperationMessage(this.id));
   }

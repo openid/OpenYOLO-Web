@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import {ClientConfiguration, PrimaryClientConfiguration} from '../protocol/client_config';
-import {AUTHENTICATION_METHODS, Credential, CredentialHintOptions, CredentialRequestOptions} from '../protocol/data';
+import {PrimaryClientConfiguration} from '../protocol/client_config';
+import {AUTHENTICATION_METHODS, OYCredential, OYCredentialHintOptions, OYCredentialRequestOptions} from '../protocol/data';
 import {OpenYoloError} from '../protocol/errors';
 import * as msg from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
@@ -46,11 +46,11 @@ describe('ProviderFrame', () => {
 
   let frameConfig: ProviderConfiguration;
 
-  let alicePwdCred: Credential;
-  let bobPwdCred: Credential;
-  let carlGoogCred: Credential;
-  let deliaFbCred: Credential;
-  let elisaOtherDomainCred: Credential;
+  let alicePwdCred: OYCredential;
+  let bobPwdCred: OYCredential;
+  let carlGoogCred: OYCredential;
+  let deliaFbCred: OYCredential;
+  let elisaOtherDomainCred: OYCredential;
 
   let timeoutManager = new JasmineTimeoutManager();
 
@@ -233,13 +233,13 @@ describe('ProviderFrame', () => {
     });
 
     it('rejects unknown requests', async function(done) {
-      clientChannel.listen(msg.RPC_MESSAGE_TYPES.error, (data) => {
+      clientChannel.listen(msg.RpcMessageType.error, (data) => {
         expectMessageContents(
             data,
             msg.errorMessage(
                 requestId,
                 OpenYoloError.unknownRequest(
-                    msg.RPC_MESSAGE_TYPES.hintAvailableResult)));
+                    msg.RpcMessageType.hintAvailableResult)));
         done();
       });
 
@@ -248,7 +248,7 @@ describe('ProviderFrame', () => {
     });
 
     it('rejects concurrent requests', async function(done) {
-      clientChannel.listen(msg.RPC_MESSAGE_TYPES.error, (data) => {
+      clientChannel.listen(msg.RpcMessageType.error, (data) => {
         expectMessageContents(
             data,
             msg.errorMessage(
@@ -270,7 +270,7 @@ describe('ProviderFrame', () => {
             await localStateProvider.isAutoSignInEnabled(TEST_AUTH_DOMAIN);
         expect(enabledBefore).toBe(true);
         clientChannel.listen(
-            msg.RPC_MESSAGE_TYPES.disableAutoSignInResult, async function(res) {
+            msg.RpcMessageType.disableAutoSignInResult, async function(res) {
               let enabledAfter = await localStateProvider.isAutoSignInEnabled(
                   TEST_AUTH_DOMAIN);
               expect(enabledAfter).toBe(false);
@@ -283,14 +283,14 @@ describe('ProviderFrame', () => {
 
     describe('handling credential retrieval', () => {
 
-      let passwordOnlyRequest: CredentialRequestOptions = {
+      let passwordOnlyRequest: OYCredentialRequestOptions = {
         supportedAuthMethods: [AUTHENTICATION_METHODS.ID_AND_PASSWORD]
       };
 
       it('should return no credentials when the store is empty',
          async function(done) {
            credentialDataProvider.credentials = [];
-           clientChannel.listen(msg.RPC_MESSAGE_TYPES.none, done);
+           clientChannel.listen(msg.RpcMessageType.none, done);
            clientChannel.send(
                msg.retrieveMessage(requestId, passwordOnlyRequest));
          });
@@ -301,13 +301,13 @@ describe('ProviderFrame', () => {
 
            (interactionProvider.showAutoSignIn as jasmine.Spy)
                .and.callFake(
-                   (credential: Credential,
+                   (credential: OYCredential,
                     displayCallbacks: DisplayCallbacks) => {
                      expect(credential).toBe(alicePwdCred);
                      return Promise.resolve();
                    });
 
-           clientChannel.listen(msg.RPC_MESSAGE_TYPES.credential, (data) => {
+           clientChannel.listen(msg.RpcMessageType.credential, (data) => {
              expectMessageContents(
                  data, msg.credentialResultMessage(requestId, alicePwdCred));
              done();
@@ -322,7 +322,7 @@ describe('ProviderFrame', () => {
 
         (interactionProvider.showAutoSignIn as jasmine.Spy)
             .and.callFake(
-                (credential: Credential,
+                (credential: OYCredential,
                  displayCallbacks: DisplayCallbacks) => {
                   expect(credential).toBe(alicePwdCred);
                   // return a promise that's not going to resolve
@@ -333,20 +333,20 @@ describe('ProviderFrame', () => {
         let errorPromise = new PromiseResolver<void>();
 
         clientChannel.listen(
-            msg.RPC_MESSAGE_TYPES.credential,
+            msg.RpcMessageType.credential,
             (data) => {
                 // does nothing, only adding this to suppress a warning
                 // about unknown message types
             });
 
         clientChannel.listen(
-            msg.RPC_MESSAGE_TYPES.cancelLastOperationResult, (data) => {
+            msg.RpcMessageType.cancelLastOperationResult, (data) => {
               expectMessageContents(
                   data, msg.cancelLastOperationResultMessage(requestId));
               cancelPromise.resolve();
             });
 
-        clientChannel.listen(msg.RPC_MESSAGE_TYPES.error, (data) => {
+        clientChannel.listen(msg.RpcMessageType.error, (data) => {
           expectMessageContents(
               data,
               msg.errorMessage(requestId, OpenYoloError.clientCancelled()));
@@ -365,7 +365,7 @@ describe('ProviderFrame', () => {
         // we expect the "carl" credential to be filtered out, as it has
         // an authentication method that is not on the request list.
         credentialDataProvider.credentials = [carlGoogCred];
-        clientChannel.listen(msg.RPC_MESSAGE_TYPES.none, (data) => {
+        clientChannel.listen(msg.RpcMessageType.none, (data) => {
           expectMessageContents(data, msg.noneAvailableMessage(requestId));
           done();
         });
@@ -381,8 +381,8 @@ describe('ProviderFrame', () => {
 
            (interactionProvider.showCredentialPicker as jasmine.Spy)
                .and.callFake(
-                   (credentials: Credential[],
-                    options: CredentialRequestOptions,
+                   (credentials: OYCredential[],
+                    options: OYCredentialRequestOptions,
                     displayCallbacks: DisplayCallbacks) => {
                      expect(credentials).toEqual([alicePwdCred]);
                      expect(options).toBeDefined();
@@ -393,7 +393,7 @@ describe('ProviderFrame', () => {
                      return Promise.resolve(alicePwdCred);
                    });
 
-           clientChannel.listen(msg.RPC_MESSAGE_TYPES.credential, (data) => {
+           clientChannel.listen(msg.RpcMessageType.credential, (data) => {
              expect(expectFinalResult).toBeTruthy();
              expectMessageContents(
                  data, msg.credentialResultMessage(requestId, alicePwdCred));
@@ -418,8 +418,8 @@ describe('ProviderFrame', () => {
 
         (interactionProvider.showCredentialPicker as jasmine.Spy)
             .and.callFake(
-                (credentials: Credential[],
-                 options: CredentialRequestOptions,
+                (credentials: OYCredential[],
+                 options: OYCredentialRequestOptions,
                  displayCallbacks: DisplayCallbacks) => {
                   displayCallbacks.requestDisplayOptions(uiConfig).then(done);
                 });
@@ -436,8 +436,8 @@ describe('ProviderFrame', () => {
 
            (interactionProvider.showCredentialPicker as jasmine.Spy)
                .and.callFake(
-                   (credentials: Credential[],
-                    options: CredentialRequestOptions,
+                   (credentials: OYCredential[],
+                    options: OYCredentialRequestOptions,
                     displayCallbacks: DisplayCallbacks) => {
                      expect(credentials).toEqual([alicePwdCred, bobPwdCred]);
                      expect(options).toBeDefined();
@@ -448,7 +448,7 @@ describe('ProviderFrame', () => {
                      return Promise.resolve(bobPwdCred);
                    });
 
-           clientChannel.listen(msg.RPC_MESSAGE_TYPES.credential, (data) => {
+           clientChannel.listen(msg.RpcMessageType.credential, (data) => {
              expect(expectFinalResult).toBeTruthy();
              expectMessageContents(
                  data, msg.credentialResultMessage(requestId, bobPwdCred));
@@ -466,14 +466,14 @@ describe('ProviderFrame', () => {
 
            (interactionProvider.showCredentialPicker as jasmine.Spy)
                .and.callFake(
-                   (credentials: Credential[],
-                    options: CredentialRequestOptions,
+                   (credentials: OYCredential[],
+                    options: OYCredentialRequestOptions,
                     displayCallbacks: DisplayCallbacks) => {
                      expectFinalResult = true;
                      return Promise.reject(OpenYoloError.canceled());
                    });
 
-           clientChannel.listen(msg.RPC_MESSAGE_TYPES.none, (data) => {
+           clientChannel.listen(msg.RpcMessageType.none, (data) => {
              expect(expectFinalResult).toBeTruthy();
              expectMessageContents(data, msg.noneAvailableMessage(requestId));
              done();
@@ -488,7 +488,7 @@ describe('ProviderFrame', () => {
            clientConfig.requireProxyLogin = true;
            credentialDataProvider.credentials = [alicePwdCred];
 
-           clientChannel.listen(msg.RPC_MESSAGE_TYPES.credential, (data) => {
+           clientChannel.listen(msg.RpcMessageType.credential, (data) => {
              // the password should be removed
              expectMessageContents(
                  data, msg.credentialResultMessage(requestId, {
@@ -509,7 +509,7 @@ describe('ProviderFrame', () => {
            frameConfig.allowDirectAuth = false;
            credentialDataProvider.credentials = [alicePwdCred];
 
-           clientChannel.listen(msg.RPC_MESSAGE_TYPES.credential, (data) => {
+           clientChannel.listen(msg.RpcMessageType.credential, (data) => {
              // the password should be removed
              expectMessageContents(
                  data, msg.credentialResultMessage(requestId, {
@@ -527,7 +527,7 @@ describe('ProviderFrame', () => {
     });
 
     // tests can use this to emulate user interaction in the credential picker
-    const pwdOrFbHintOptions: CredentialHintOptions = {
+    const pwdOrFbHintOptions: OYCredentialHintOptions = {
       supportedAuthMethods: [
         AUTHENTICATION_METHODS.ID_AND_PASSWORD,
         AUTHENTICATION_METHODS.FACEBOOK
@@ -539,11 +539,10 @@ describe('ProviderFrame', () => {
       it('should return false when the store is empty', async function(done) {
         credentialDataProvider.credentials = [];
 
-        clientChannel.listen(
-            msg.RPC_MESSAGE_TYPES.hintAvailableResult, (res) => {
-              expect(res.args).toBe(false);
-              done();
-            });
+        clientChannel.listen(msg.RpcMessageType.hintAvailableResult, (res) => {
+          expect(res.args).toBe(false);
+          done();
+        });
 
         clientChannel.send(
             msg.hintAvailableMessage(requestId, pwdOrFbHintOptions));
@@ -555,11 +554,10 @@ describe('ProviderFrame', () => {
         // generated.
         credentialDataProvider.credentials = [carlGoogCred];
 
-        clientChannel.listen(
-            msg.RPC_MESSAGE_TYPES.hintAvailableResult, (res) => {
-              expect(res.args).toBe(false);
-              done();
-            });
+        clientChannel.listen(msg.RpcMessageType.hintAvailableResult, (res) => {
+          expect(res.args).toBe(false);
+          done();
+        });
 
         clientChannel.send(
             msg.hintAvailableMessage(requestId, pwdOrFbHintOptions));
@@ -568,11 +566,10 @@ describe('ProviderFrame', () => {
       it('should return true if hint available', async function(done) {
         credentialDataProvider.credentials = [elisaOtherDomainCred];
 
-        clientChannel.listen(
-            msg.RPC_MESSAGE_TYPES.hintAvailableResult, (res) => {
-              expect(res.args).toBe(true);
-              done();
-            });
+        clientChannel.listen(msg.RpcMessageType.hintAvailableResult, (res) => {
+          expect(res.args).toBe(true);
+          done();
+        });
 
         clientChannel.send(
             msg.hintAvailableMessage(requestId, pwdOrFbHintOptions));
@@ -590,17 +587,18 @@ describe('ProviderFrame', () => {
       // this is checked for as a follow-up message, otherwise a pick cancel
       // message is expected.
       function expectPickFromHints(
-          expectedHints: Credential[],
-          selection: Credential|null,
-          expectedResult: msg.RpcMessage<'credential'>|msg.RpcMessage<'none'>,
+          expectedHints: OYCredential[],
+          selection: OYCredential|null,
+          expectedResult: msg.RpcMessage<msg.RpcMessageType.credential>|
+          msg.RpcMessage<msg.RpcMessageType.none>,
           neverResolve: boolean = false) {
         let promiseResolver = new PromiseResolver<void>();
         let expectFinalResult = false;
 
         (interactionProvider.showHintPicker as jasmine.Spy)
             .and.callFake(
-                (hints: Credential[],
-                 options: CredentialHintOptions,
+                (hints: OYCredential[],
+                 options: OYCredentialHintOptions,
                  displayCallbacks: DisplayCallbacks) => {
                   expect(hints).toEqual(expectedHints);
                   expect(options).toBeDefined();
@@ -619,9 +617,9 @@ describe('ProviderFrame', () => {
                   }
                 });
 
-        clientChannel.listen(msg.RPC_MESSAGE_TYPES.credential, (data) => {
+        clientChannel.listen(msg.RpcMessageType.credential, (data) => {
           expect(expectFinalResult).toBeTruthy();
-          if (expectedResult.type !== msg.RPC_MESSAGE_TYPES.credential) {
+          if (expectedResult.type !== msg.RpcMessageType.credential) {
             fail('Received unexpected credential result');
             return;
           }
@@ -629,9 +627,9 @@ describe('ProviderFrame', () => {
           promiseResolver.resolve();
         });
 
-        clientChannel.listen(msg.RPC_MESSAGE_TYPES.none, (data) => {
+        clientChannel.listen(msg.RpcMessageType.none, (data) => {
           expect(expectFinalResult).toBeTruthy();
-          if (expectedResult.type !== msg.RPC_MESSAGE_TYPES.none) {
+          if (expectedResult.type !== msg.RpcMessageType.none) {
             fail('Received cancelation instead of expected credential');
             return;
           }
@@ -646,7 +644,7 @@ describe('ProviderFrame', () => {
          async function(done) {
            credentialDataProvider.credentials = [];
 
-           clientChannel.listen(msg.RPC_MESSAGE_TYPES.none, (m) => {
+           clientChannel.listen(msg.RpcMessageType.none, (m) => {
              done();
            });
 
@@ -659,7 +657,7 @@ describe('ProviderFrame', () => {
         // generated.
         credentialDataProvider.credentials = [carlGoogCred];
 
-        clientChannel.listen(msg.RPC_MESSAGE_TYPES.none, (m) => {
+        clientChannel.listen(msg.RpcMessageType.none, (m) => {
           done();
         });
 
@@ -668,7 +666,7 @@ describe('ProviderFrame', () => {
 
       it('should return selected hint', async function(done) {
         credentialDataProvider.credentials = [elisaOtherDomainCred];
-        let redactedElisaCred: Credential = {
+        let redactedElisaCred: OYCredential = {
           id: elisaOtherDomainCred.id,
           authMethod: elisaOtherDomainCred.authMethod,
           authDomain: TEST_AUTH_DOMAIN
@@ -711,7 +709,7 @@ describe('ProviderFrame', () => {
                });
 
            clientChannel.listen(
-               msg.RPC_MESSAGE_TYPES.cancelLastOperationResult, (data) => {
+               msg.RpcMessageType.cancelLastOperationResult, (data) => {
                  expectMessageContents(
                      data, msg.cancelLastOperationResultMessage(requestId));
                  done();
@@ -737,7 +735,7 @@ describe('ProviderFrame', () => {
          });
 
       it('should prioritize hints with a display name', async function(done) {
-        let deliaFbCredWithName: Credential = {
+        let deliaFbCredWithName: OYCredential = {
           id: deliaFbCred.id,
           authMethod: deliaFbCred.authMethod,
           authDomain: deliaFbCred.authDomain,
@@ -753,7 +751,7 @@ describe('ProviderFrame', () => {
 
       it('should prioritize hints with a profile picture',
          async function(done) {
-           let deliaFbCredWithPicture: Credential = {
+           let deliaFbCredWithPicture: OYCredential = {
              id: deliaFbCred.id,
              authMethod: deliaFbCred.authMethod,
              authDomain: deliaFbCred.authDomain,
@@ -810,10 +808,10 @@ class TestAffiliationProvider implements AffiliationProvider {
 }
 
 class TestClientConfigurationProvider implements ClientConfigurationProvider {
-  configMap: {[key: string]: ClientConfiguration} = {};
+  configMap: {[key: string]: PrimaryClientConfiguration} = {};
 
   async getConfiguration(authDomain: string):
-      Promise<ClientConfiguration|null> {
+      Promise<PrimaryClientConfiguration|null> {
     if (authDomain in this.configMap) {
       return this.configMap[authDomain];
     }
@@ -822,15 +820,15 @@ class TestClientConfigurationProvider implements ClientConfigurationProvider {
 }
 
 class TestCredentialDataProvider implements CredentialDataProvider {
-  credentials: Credential[] = [];
+  credentials: OYCredential[] = [];
   neverSave: {[key: string]: boolean} = {};
 
-  async getAllCredentials(authDomains: string[]): Promise<Credential[]> {
+  async getAllCredentials(authDomains: string[]): Promise<OYCredential[]> {
     if (authDomains.length < 1) {
       return this.credentials;
     }
 
-    let filteredCredentials: Credential[] = [];
+    let filteredCredentials: OYCredential[] = [];
 
     for (let i = 0; i < this.credentials.length; i++) {
       let credential = this.credentials[i];
@@ -843,7 +841,7 @@ class TestCredentialDataProvider implements CredentialDataProvider {
     return filteredCredentials;
   }
 
-  async getAllHints(options: CredentialHintOptions): Promise<Credential[]> {
+  async getAllHints(options: OYCredentialHintOptions): Promise<OYCredential[]> {
     // no filtering required in the hints case
     return this.credentials;
   }
@@ -871,15 +869,15 @@ class TestCredentialDataProvider implements CredentialDataProvider {
   /**
    * Determines whether the provided credential can be saved to this store.
    */
-  async canSave(credential: Credential): Promise<boolean> {
+  async canSave(credential: OYCredential): Promise<boolean> {
     return true;
   }
 
   /**
    * Creates or updates an existing credential.
    */
-  async upsertCredential(credential: Credential, original?: Credential):
-      Promise<Credential> {
+  async upsertCredential(credential: OYCredential, original?: OYCredential):
+      Promise<OYCredential> {
     if (original) {
       await this.deleteCredential(original);
     }
@@ -890,7 +888,7 @@ class TestCredentialDataProvider implements CredentialDataProvider {
   /**
    * Determines whether the provided credential can be deleted.
    */
-  async canDelete(credential: Credential): Promise<boolean> {
+  async canDelete(credential: OYCredential): Promise<boolean> {
     return true;
   }
 
@@ -898,7 +896,7 @@ class TestCredentialDataProvider implements CredentialDataProvider {
    * Deletes the provided credential from the store. If delete is not
    * permitted for this credential, the returned promise will be rejected.
    */
-  async deleteCredential(credential: Credential): Promise<void> {
+  async deleteCredential(credential: OYCredential): Promise<void> {
     let existing = this.credentials.findIndex(
         (c) => c.authDomain === credential.authDomain &&
             c.id === credential.id && c.authMethod === credential.authMethod);
@@ -913,7 +911,7 @@ class TestCredentialDataProvider implements CredentialDataProvider {
 
 class TestLocalStateProvider implements LocalStateProvider {
   autoSignIn: {[label: string]: boolean} = {};
-  retained: {[authDomain: string]: Credential} = {};
+  retained: {[authDomain: string]: OYCredential} = {};
 
   async isAutoSignInEnabled(authDomain: string): Promise<boolean> {
     let result: boolean;
@@ -930,11 +928,13 @@ class TestLocalStateProvider implements LocalStateProvider {
     this.autoSignIn[authDomain] = enabled;
   }
 
-  async retainCredentialForSession(authDomain: string, credential: Credential) {
+  async retainCredentialForSession(
+      authDomain: string,
+      credential: OYCredential) {
     this.retained[authDomain] = credential;
   }
 
-  async getRetainedCredential(authDomain: string): Promise<Credential> {
+  async getRetainedCredential(authDomain: string): Promise<OYCredential> {
     if (this.retained[authDomain]) {
       let credential = this.retained[authDomain];
       delete this.retained[authDomain];

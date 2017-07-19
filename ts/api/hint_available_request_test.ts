@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {AUTHENTICATION_METHODS, CredentialHintOptions} from '../protocol/data';
+import {AUTHENTICATION_METHODS, OYCredentialHintOptions} from '../protocol/data';
 import {OpenYoloError} from '../protocol/errors';
 import {errorMessage, hintAvailableMessage, hintAvailableResponseMessage} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
@@ -28,7 +28,7 @@ describe('HintAvailableRequest', () => {
   let clientChannel: SecureChannel;
   let providerChannel: SecureChannel;
   let frame: any;
-  let passwordOnlyOptions: CredentialHintOptions = {
+  let passwordOnlyOptions: OYCredentialHintOptions = {
     supportedAuthMethods: [AUTHENTICATION_METHODS.ID_AND_PASSWORD]
   };
 

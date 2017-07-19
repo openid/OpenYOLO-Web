@@ -15,7 +15,7 @@
  */
 
 import {PrimaryClientConfiguration} from '../protocol/client_config';
-import {Credential, CredentialHintOptions} from '../protocol/data';
+import {OYCredential, OYCredentialHintOptions, OYCredentialRequestOptions} from '../protocol/data';
 import {DisplayOptions} from '../protocol/rpc_messages';
 
 /**
@@ -90,7 +90,8 @@ export interface ClientConfigurationProvider {
   /**
    * Returns the client configuration for the specified domain, if available.
    */
-  getConfiguration(authDomain: string): Promise<PrimaryClientConfiguration>;
+  getConfiguration(authDomain: string):
+      Promise<PrimaryClientConfiguration|null>;
 }
 
 /**
@@ -101,27 +102,27 @@ export interface CredentialDataProvider {
   /**
    * Retrieves all hint credentials, based upon the provided options.
    */
-  getAllHints(options: CredentialHintOptions): Promise<Credential[]>;
+  getAllHints(options: OYCredentialHintOptions): Promise<OYCredential[]>;
 
   /**
    * Retrieves all credentials for the specified authentication domains
    * (derived from the request) and the specified request options.
    */
-  getAllCredentials(authDomains: string[], options: CredentialRequestOptions):
-      Promise<Credential[]>;
+  getAllCredentials(authDomains: string[], options: OYCredentialRequestOptions):
+      Promise<OYCredential[]>;
 
   /**
    * Creates or updates an existing credential. If the credential cannot be
    * created or updated, the promise should be rejected.
    */
-  upsertCredential(credential: Credential, original?: Credential):
-      Promise<Credential>;
+  upsertCredential(credential: OYCredential, original?: OYCredential):
+      Promise<OYCredential>;
 
   /**
    * Deletes the provided credential from the store. If delete is not
    * permitted for this credential, the returned promise will be rejected.
    */
-  deleteCredential(credential: Credential): Promise<void>;
+  deleteCredential(credential: OYCredential): Promise<void>;
 }
 
 export interface DisplayCallbacks {
@@ -138,9 +139,9 @@ export interface InteractionProvider {
    * or reject if the action is cancelled or fails for any reason.
    */
   showCredentialPicker(
-      credentials: Credential[],
-      options: CredentialRequestOptions,
-      displayCallbacks: DisplayCallbacks): Promise<Credential>;
+      credentials: OYCredential[],
+      options: OYCredentialRequestOptions,
+      displayCallbacks: DisplayCallbacks): Promise<OYCredential>;
 
   /**
    * Requests the display of a hint picker containing the provided list of
@@ -149,9 +150,9 @@ export interface InteractionProvider {
    * not select a credential, the promise should be rejected.
    */
   showHintPicker(
-      hints: Credential[],
-      options: CredentialHintOptions,
-      displayCallbacks: DisplayCallbacks): Promise<Credential>;
+      hints: OYCredential[],
+      options: OYCredentialHintOptions,
+      displayCallbacks: DisplayCallbacks): Promise<OYCredential>;
 
   /**
    * Requests the display of a confirmation screen, allowing the user to
@@ -160,14 +161,14 @@ export interface InteractionProvider {
    * credential, false otherwise.
    */
   showSaveConfirmation(
-      credential: Credential,
+      credential: OYCredential,
       displayCallbacks: DisplayCallbacks): Promise<boolean>;
 
   /**
    * Requests the display of an auto sign in screen. The promise should always
    * resolve, as no action is required.
    */
-  showAutoSignIn(credential: Credential, displayCallbacks: DisplayCallbacks):
+  showAutoSignIn(credential: OYCredential, displayCallbacks: DisplayCallbacks):
       Promise<any>;
 
   /**
@@ -204,7 +205,7 @@ export interface LocalStateProvider {
    * timescale equivalent to what sessionStorage provides - not permanent, but
    * able to survive page turns / reinstantiation of the provider frame.
    */
-  retainCredentialForSession(authDomain: string, credential: Credential):
+  retainCredentialForSession(authDomain: string, credential: OYCredential):
       Promise<void>;
 
   /**
@@ -217,5 +218,5 @@ export interface LocalStateProvider {
    * of this interface, such that subsequent calls to this method for the same
    * domain would also return a rejected promise.
    */
-  getRetainedCredential(authDomain: string): Promise<Credential>;
+  getRetainedCredential(authDomain: string): Promise<OYCredential>;
 }

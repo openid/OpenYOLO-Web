@@ -19,7 +19,7 @@ import {MockWindow} from '../test_utils/frames';
 import {createMessageEvent, createUntypedMessageEvent} from '../test_utils/messages';
 import {JasmineTimeoutManager} from '../test_utils/timeout';
 
-import {ERROR_TYPES, OpenYoloError} from './errors';
+import {InternalErrorCode, OpenYoloError} from './errors';
 import {ackMessage, channelConnectMessage, channelReadyMessage, readyForConnectMessage} from './post_messages';
 import * as msg from './rpc_messages';
 import {SecureChannel} from './secure_channel';
@@ -84,8 +84,9 @@ describe('SecureChannel', () => {
               },
               (err: Error) => {
                 expect(expectReject).toBeTruthy('Failed before timeout');
-                expect(OpenYoloError.errorIs(
-                           err, ERROR_TYPES.establishSecureChannelTimeout))
+                expect(
+                    OpenYoloError.errorIs(
+                        err, InternalErrorCode.establishSecureChannelTimeout))
                     .toBeTruthy();
                 done();
               });
@@ -122,8 +123,8 @@ describe('SecureChannel', () => {
     it('adds and removes listener', () => {
       let listener1 = jasmine.createSpy('listener1');
       let listener2 = jasmine.createSpy('listener2');
-      let listenerKey1 = channel.listen(msg.RPC_MESSAGE_TYPES.none, listener1);
-      let listenerKey2 = channel.listen(msg.RPC_MESSAGE_TYPES.none, listener2);
+      let listenerKey1 = channel.listen(msg.RpcMessageType.none, listener1);
+      let listenerKey2 = channel.listen(msg.RpcMessageType.none, listener2);
 
       port.dispatchEvent(createMessageEvent(msg.noneAvailableMessage('123')));
 
@@ -168,7 +169,7 @@ describe('SecureChannel', () => {
             },
             (err) => {
               expect(expectReject).toBeTruthy('Failed before timeout');
-              expect(OpenYoloError.errorIs(err, ERROR_TYPES.ackTimeout))
+              expect(OpenYoloError.errorIs(err, InternalErrorCode.ackTimeout))
                   .toBeTruthy();
               expect(port.removeEventListener)
                   .toHaveBeenCalledWith('message', jasmine.any(Function));
@@ -183,7 +184,7 @@ describe('SecureChannel', () => {
 
       it('sends back ack when required', () => {
         const listener1 = jasmine.createSpy('listener1');
-        channel.listen(msg.RPC_MESSAGE_TYPES.none, listener1);
+        channel.listen(msg.RpcMessageType.none, listener1);
 
         const message = msg.noneAvailableMessage('123');
         message.data.ack = true;
@@ -197,8 +198,8 @@ describe('SecureChannel', () => {
       it('removes listeners and closes', () => {
         let listener1 = jasmine.createSpy('listener1');
         let listener2 = jasmine.createSpy('listener2');
-        channel.listen(msg.RPC_MESSAGE_TYPES.credential, listener1);
-        channel.listen(msg.RPC_MESSAGE_TYPES.credential, listener2);
+        channel.listen(msg.RpcMessageType.credential, listener1);
+        channel.listen(msg.RpcMessageType.credential, listener2);
         channel.dispose();
 
         // internally, only a single listener is added to a port, so we only
