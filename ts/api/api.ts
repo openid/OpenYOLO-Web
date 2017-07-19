@@ -38,8 +38,6 @@ export {OpenYoloError, InternalErrorCode} from '../protocol/errors';
 
 const MOBILE_USER_AGENT_REGEX = /android|iphone|ipod|iemobile/i;
 
-export const DEFAULT_REQUEST_TIMEOUT = 3000;
-
 /**
  * Provides a mechanism for credential exchange between the current origin and
  * the user's credential provider (e.g. Smart Lock for Passwords).
@@ -144,6 +142,7 @@ export interface OpenYoloWithTimeoutApi {
   proxyLogin(credential: OYCredential, timeoutRacer: TimeoutRacer):
       Promise<OYProxyLoginResponse>;
   cancelLastOperation(timeoutRacer: TimeoutRacer): Promise<void>;
+  dispose(): Promise<void>;
 }
 
 type OpenYoloApiMethods = keyof OpenYoloApi;
@@ -177,61 +176,6 @@ function verifyOrDetectRenderMode(renderMode: RenderMode|null): RenderMode {
     return RenderMode.bottomSheet;
   } else {
     return RenderMode.navPopout;
-  }
-}
-
-/**
- * Create the open yolo API based on the parameters given. It will always open
- * the provider page to check the user's configuration, and initialize the
- * correct implementation of OpenYolo based on the result.
- */
-async function createOpenYoloApi(
-    timeoutRacer: TimeoutRacer,
-    providerUrlBase: string,
-    renderMode: RenderMode|null,
-    preloadRequest?: PreloadRequest): Promise<OpenYoloWithTimeoutApi> {
-  try {
-    // Sanitize input.
-    renderMode = verifyOrDetectRenderMode(renderMode);
-
-    const instanceId = generateId();
-    const instanceIdHash = await timeoutRacer.race(sha256(instanceId));
-    const frameManager = new ProviderFrameElement(
-        document,
-        instanceIdHash,
-        window.location.origin,
-        renderMode,
-        providerUrlBase,
-        preloadRequest);
-
-    const channel =
-        await timeoutRacer.race(SecureChannel.clientConnectNoTimeout(
-            window,
-            frameManager.getContentWindow(),
-            instanceId,
-            instanceIdHash));
-
-    // Check whether the client should wrap the browser's
-    // navigator.credentials.
-    const request = new WrapBrowserRequest(frameManager, channel);
-    let wrapBrowser = false;
-    try {
-      wrapBrowser = await request.dispatch(undefined, timeoutRacer);
-    } catch (e) {
-      // Default to false if request fails.
-      // It also ignores timeout errors, as the initialization is actually
-      // complete so even if this operation fails, the next could succeed
-      // without reloading the IFrame.
-    }
-
-    if (wrapBrowser) {
-      return new OpenYoloBrowserApiImpl();
-    }
-    return new OpenYoloApiImpl(frameManager, channel);
-  } catch (e) {
-    timeoutRacer.rethrowUnlessTimeoutError(e);
-    // Convert the timeout error.
-    throw OpenYoloError.requestTimeout();
   }
 }
 
@@ -273,6 +217,10 @@ class OpenYoloBrowserApiImpl implements OpenYoloWithTimeoutApi {
 
   async cancelLastOperation(timeoutRacer: TimeoutRacer): Promise<void> {
     return Promise.reject('not implemented');
+  }
+
+  async dispose(): Promise<void> {
+    return Promise.resolve();
   }
 }
 
@@ -335,21 +283,20 @@ class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
   }
 
   async cancelLastOperation(timeoutRacer: TimeoutRacer) {
+    this.checkNotDisposed();
     const request =
         new CancelLastOperationRequest(this.frameManager, this.channel);
     return await request.dispatch(undefined, timeoutRacer);
   }
 
-  isDisposed(): boolean {
-    return this.disposed;
-  }
-
-  dispose(): void {
+  dispose(): Promise<void> {
     if (this.disposed) {
-      return;
+      return Promise.resolve();
     }
+
     this.channel.dispose();
     this.frameManager.dispose();
+    return Promise.resolve();
   }
 
   private checkNotDisposed() {
@@ -371,7 +318,7 @@ export interface OnDemandOpenYoloApi extends OpenYoloApi {
   /**
    * Sets a custom timeouts, or 0 to disable timeouts.
    */
-  setTimeouts(timeoutMs: number): void;
+  setTimeouts(timeoutMs: number|null): void;
   /**
    * Resets the current instantiation of the API.
    */
@@ -384,7 +331,7 @@ export interface OnDemandOpenYoloApi extends OpenYoloApi {
  * directly exported from the module as a constant, without triggering
  * immediate instantiation when the module is loaded.
  */
-class InitializeOnDemandApi implements OnDemandOpenYoloApi {
+export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
   private providerUrlBase: string = 'https://provider.openyolo.org';
   private implPromise: Promise<OpenYoloWithTimeoutApi>|null = null;
   private renderMode: RenderMode|null = null;
@@ -397,6 +344,61 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
   constructor() {
     // Register the handler for ping verification automatically on module load.
     respondToHandshake(window);
+  }
+
+  /**
+   * Create the open yolo API based on the parameters given. It will always open
+   * the provider page to check the user's configuration, and initialize the
+   * correct implementation of OpenYolo based on the result.
+   */
+  static async createOpenYoloApi(
+      timeoutRacer: TimeoutRacer,
+      providerUrlBase: string,
+      renderMode: RenderMode|null,
+      preloadRequest?: PreloadRequest): Promise<OpenYoloWithTimeoutApi> {
+    try {
+      // Sanitize input.
+      renderMode = verifyOrDetectRenderMode(renderMode);
+
+      const instanceId = generateId();
+      const instanceIdHash = await timeoutRacer.race(sha256(instanceId));
+      const frameManager = new ProviderFrameElement(
+          document,
+          instanceIdHash,
+          window.location.origin,
+          renderMode,
+          providerUrlBase,
+          preloadRequest);
+
+      const channel =
+          await timeoutRacer.race(SecureChannel.clientConnectNoTimeout(
+              window,
+              frameManager.getContentWindow(),
+              instanceId,
+              instanceIdHash));
+
+      // Check whether the client should wrap the browser's
+      // navigator.credentials.
+      const request = new WrapBrowserRequest(frameManager, channel);
+      let wrapBrowser = false;
+      try {
+        wrapBrowser = await request.dispatch(undefined, timeoutRacer);
+      } catch (e) {
+        // Default to false if request fails.
+        // It also ignores timeout errors, as the initialization is actually
+        // complete so even if this operation fails, the next could succeed
+        // without reloading the IFrame.
+      }
+
+      if (wrapBrowser) {
+        return new OpenYoloBrowserApiImpl();
+      }
+      return new OpenYoloApiImpl(frameManager, channel);
+    } catch (e) {
+      timeoutRacer.rethrowUnlessTimeoutError(e);
+      // Convert the timeout error.
+      throw OpenYoloError.requestTimeout();
+    }
   }
 
   setProviderUrlBase(providerUrlBase: string) {
@@ -413,7 +415,12 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
    * Sets a global custom timeouts that will wrap every request.
    * @param timeoutMs Custom timeout, in milliseconds.
    */
-  setTimeouts(timeoutMs: number) {
+  setTimeouts(timeoutMs: number|null) {
+    if (timeoutMs === null) {
+      this.customTimeoutsMs = null;
+      this.reset();
+      return;
+    }
     // Perform sanitization on the developer provided value.
     if (typeof timeoutMs !== 'number' || timeoutMs < 0) {
       throw new Error(
@@ -438,7 +445,7 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
     let promise = this.implPromise;
     this.implPromise = null;
 
-    promise.then((impl: OpenYoloApiImpl) => {
+    promise.then((impl) => {
       impl.dispose();
     });
   }
@@ -446,7 +453,7 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
   private init(timeoutRacer: TimeoutRacer, preloadRequest?: PreloadRequest):
       Promise<OpenYoloWithTimeoutApi> {
     if (!this.implPromise) {
-      this.implPromise = createOpenYoloApi(
+      this.implPromise = InitializeOnDemandApi.createOpenYoloApi(
           timeoutRacer, this.providerUrlBase, this.renderMode, preloadRequest);
     }
     this.implPromise.catch((e) => {

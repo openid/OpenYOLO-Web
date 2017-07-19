@@ -15,28 +15,20 @@
  */
 
 import {OYCredential, OYCredentialHintOptions, OYCredentialRequestOptions, OYProxyLoginResponse} from '../protocol/data';
-import {InternalErrorCode, OpenYoloError} from '../protocol/errors';
 import {SecureChannel} from '../protocol/secure_channel';
+import {PromiseResolver} from '../protocol/utils';
 
-import {openyolo} from './api';
-import {CancelLastOperationRequest} from './cancel_last_operation_request';
-import {CredentialRequest} from './credential_request';
-import {CredentialSave} from './credential_save';
+import {InitializeOnDemandApi, openyolo, OpenYoloWithTimeoutApi} from './api';
 import {DisableAutoSignIn} from './disable_auto_sign_in';
-import {HintAvailableRequest} from './hint_available_request';
-import {HintRequest} from './hint_request';
-import {ProxyLogin} from './proxy_login';
 import {WrapBrowserRequest} from './wrap_browser_request';
+
+type OpenYoloWithTimeoutApiMethods = keyof OpenYoloWithTimeoutApi;
 
 describe('OpenYolo API', () => {
   const credential: OYCredential = {id: 'test', authMethod: 'test'};
   const expectedError = new Error('ERROR!');
   const secureChannelSpy =
-      jasmine.createSpyObj('SecureChannel', ['send', 'dispose']);
-
-  beforeEach(() => {
-    openyolo.reset();
-  });
+      jasmine.createSpyObj('SecureChannel', ['send', 'listen', 'dispose']);
 
   describe('setTimeouts', () => {
     it('raises an error if given a negative number', () => {
@@ -61,457 +53,232 @@ describe('OpenYolo API', () => {
     });
   });
 
-  describe('not wrapping browser', () => {
+  describe('initialization', () => {
+    let openYoloApiImplSpy:
+        {[key in OpenYoloWithTimeoutApiMethods]: jasmine.Spy};
     beforeEach(() => {
-      spyOn(WrapBrowserRequest.prototype, 'dispatch')
-          .and.returnValue(Promise.resolve(false));
-      spyOn(SecureChannel, 'clientConnectNoTimeout')
-          .and.returnValue(Promise.resolve(secureChannelSpy));
+      openyolo.setTimeouts(null);
+      openYoloApiImplSpy = jasmine.createSpyObj('OpenYoloApiImpl', [
+        'hintsAvailable',
+        'hint',
+        'retrieve',
+        'save',
+        'proxyLogin',
+        'disableAutoSignIn',
+        'cancelLastOperation',
+        'dispose'
+      ]);
     });
 
-    describe('default timeouts', () => {
-      describe('disableAutoSignIn', () => {
-        it('works', async function(done) {
-          spyOn(DisableAutoSignIn.prototype, 'dispatch')
-              .and.returnValue(Promise.resolve());
-          openyolo.disableAutoSignIn().then(done);
-        });
-
-        it('resets the API if initialization fails', (done) => {
-          const expectedError = new Error('ERROR!');
-          spyOn(DisableAutoSignIn.prototype, 'dispatch')
-              .and.returnValue(new Promise(() => {}));
-          (SecureChannel.clientConnectNoTimeout as jasmine.Spy)
-              .and.returnValue(Promise.reject(expectedError));
-          openyolo.disableAutoSignIn().then(
+    it('allows to initialize again if failed first time', (done) => {
+      spyOn(InitializeOnDemandApi, 'createOpenYoloApi')
+          .and.returnValue(Promise.reject(expectedError));
+      // The operation does not matter here.
+      openyolo.disableAutoSignIn()
+          .then(
               () => {
                 done.fail('Should not resolve!');
               },
               (error) => {
                 expect(error).toBe(expectedError);
-                // Second initialization works.
-                (SecureChannel.clientConnectNoTimeout as jasmine.Spy)
-                    .and.returnValue(Promise.resolve(secureChannelSpy));
-                openyolo.disableAutoSignIn().then(done);
-              });
-        });
-      });
-
-      describe('hintsAvailable', () => {
-        const options: OYCredentialHintOptions = {supportedAuthMethods: []};
-
-        it('works', async function(done) {
-          spyOn(HintAvailableRequest.prototype, 'dispatch')
-              .and.returnValue(Promise.resolve(true));
-          openyolo.hintsAvailable(options).then((result) => {
-            expect(result).toBe(true);
-            done();
-          });
-        });
-
-        it('returns false when rejects', async function(done) {
-          spyOn(HintAvailableRequest.prototype, 'dispatch')
-              .and.returnValue(Promise.reject(expectedError));
-          openyolo.hintsAvailable(options).then((result) => {
-            expect(result).toBe(false);
-            done();
-          });
-        });
-      });
-
-      describe('cancelLastRequest', () => {
-        it('works', async function(done) {
-          spyOn(CancelLastOperationRequest.prototype, 'dispatch')
-              .and.returnValue(Promise.resolve(undefined));
-          openyolo.cancelLastOperation().then((result) => {
-            expect(result).toBeFalsy();
-            done();
-          });
-        });
-      });
-
-      describe('hint', () => {
-        const options: OYCredentialHintOptions = {supportedAuthMethods: []};
-
-        it('works', async function(done) {
-          spyOn(HintRequest.prototype, 'dispatch')
-              .and.returnValue(Promise.resolve(credential));
-          openyolo.hint(options).then((result) => {
-            expect(result).toEqual(credential);
-            done();
-          });
-        });
-
-        it('rejects', async function(done) {
-          spyOn(HintRequest.prototype, 'dispatch')
-              .and.returnValue(Promise.reject(expectedError));
-          openyolo.hint(options).then(
-              () => {
-                done.fail('Should not succeed!');
-              },
-              (error) => {
-                expect(error).toEqual(expectedError);
-                done();
-              });
-        });
-      });
-
-      describe('retrieve', () => {
-        const options: OYCredentialRequestOptions = {supportedAuthMethods: []};
-
-        it('works', async function(done) {
-          spyOn(CredentialRequest.prototype, 'dispatch')
-              .and.returnValue(Promise.resolve(credential));
-          openyolo.retrieve(options).then((result) => {
-            expect(result).toEqual(credential);
-            done();
-          });
-        });
-
-        it('rejects', async function(done) {
-          spyOn(CredentialRequest.prototype, 'dispatch')
-              .and.returnValue(Promise.reject(expectedError));
-          openyolo.retrieve(options).then(
-              () => {
-                done.fail('Should not succeed!');
-              },
-              (error) => {
-                expect(error).toEqual(expectedError);
-                done();
-              });
-        });
-      });
-
-      describe('save', () => {
-        it('works', async function(done) {
-          spyOn(CredentialSave.prototype, 'dispatch')
-              .and.returnValue(Promise.resolve());
-          openyolo.save(credential).then(() => {
-            done();
-          });
-        });
-
-        it('rejects', async function(done) {
-          spyOn(CredentialSave.prototype, 'dispatch')
-              .and.returnValue(Promise.reject(expectedError));
-          openyolo.save(credential)
-              .then(
-                  () => {
-                    done.fail('Should not succeed!');
-                  },
-                  (error) => {
-                    expect(error).toEqual(expectedError);
-                    done();
-                  });
-        });
-      });
-
-      describe('proxyLogin', () => {
-        it('works', async function(done) {
-          const expectedResponse:
-              OYProxyLoginResponse = {statusCode: 200, responseText: 'test'};
-          spyOn(ProxyLogin.prototype, 'dispatch')
-              .and.returnValue(Promise.resolve(expectedResponse));
-          openyolo.proxyLogin(credential).then((result) => {
-            expect(result).toEqual(expectedResponse);
-            done();
-          });
-        });
-
-        it('rejects', async function(done) {
-          spyOn(ProxyLogin.prototype, 'dispatch')
-              .and.returnValue(Promise.reject(expectedError));
-          openyolo.proxyLogin(credential)
-              .then(
-                  () => {
-                    done.fail('Should not succeed!');
-                  },
-                  (error) => {
-                    expect(error).toEqual(expectedError);
-                    done();
-                  });
-        });
-      });
+                // Successful operation.
+                (InitializeOnDemandApi.createOpenYoloApi as jasmine.Spy)
+                    .and.returnValue(Promise.resolve(openYoloApiImplSpy));
+                // Successful operation.
+                openYoloApiImplSpy.disableAutoSignIn.and.returnValue(
+                    Promise.resolve());
+                return openyolo.disableAutoSignIn();
+              })
+          .then(done);
     });
 
-    describe('timeouts disabled', () => {
+    it('secure channel connection fails', (done) => {
+      spyOn(SecureChannel, 'clientConnectNoTimeout')
+          .and.returnValue(Promise.reject(expectedError));
+      // The operation does not matter here.
+      openyolo.disableAutoSignIn().then(
+          () => {
+            done.fail('Should not resolve!');
+          },
+          (error) => {
+            expect(error).toBe(expectedError);
+            openyolo.reset();
+            done();
+          });
+    });
+
+    it('wrap browser fails', (done) => {
+      spyOn(SecureChannel, 'clientConnectNoTimeout')
+          .and.returnValue(Promise.resolve(secureChannelSpy));
+      spyOn(WrapBrowserRequest.prototype, 'dispatch')
+          .and.returnValue(Promise.reject(expectedError));
+      spyOn(DisableAutoSignIn.prototype, 'dispatch')
+          .and.returnValue(Promise.resolve());
+      // The operation does not matter here.
+      openyolo.disableAutoSignIn().then(
+          () => {
+            // Ignore the failed request.
+            openyolo.reset();
+            done();
+          },
+          (error) => {
+            done.fail('Should not reject!');
+          });
+    });
+
+    it('wrap browser succeeds', (done) => {
+      spyOn(SecureChannel, 'clientConnectNoTimeout')
+          .and.returnValue(Promise.resolve(secureChannelSpy));
+      spyOn(WrapBrowserRequest.prototype, 'dispatch')
+          .and.returnValue(Promise.resolve(false));
+      spyOn(DisableAutoSignIn.prototype, 'dispatch')
+          .and.returnValue(Promise.resolve());
+      // The operation does not matter here.
+      openyolo.disableAutoSignIn().then(
+          () => {
+            openyolo.reset();
+            done();
+          },
+          (error) => {
+            done.fail('Should not reject!');
+          });
+    });
+
+    describe('timeouts', () => {
       beforeEach(() => {
         jasmine.clock().install();
-        // Disable timeouts.
+      });
+
+      afterEach(() => {
+        jasmine.clock().uninstall();
+      });
+
+      it('timeouts disabled', (done) => {
+        const promiseResolver = new PromiseResolver<void>();
+        spyOn(SecureChannel, 'clientConnectNoTimeout')
+            .and.returnValue(promiseResolver.promise);
+        spyOn(WrapBrowserRequest.prototype, 'dispatch')
+            .and.returnValue(Promise.resolve(false));
+        spyOn(DisableAutoSignIn.prototype, 'dispatch')
+            .and.returnValue(Promise.resolve());
         openyolo.setTimeouts(0);
-      });
-      afterEach(() => {
-        jasmine.clock().uninstall();
-      });
-
-      describe('disableAutoSignIn', () => {
-        it('never times out', async function(done) {
-          spyOn(DisableAutoSignIn.prototype, 'dispatch')
-              .and.returnValue(new Promise(() => {}));
-          openyolo.disableAutoSignIn().then(
-              () => {
-                done.fail('Should never resolve!');
-              },
-              (error) => {
-                done.fail('Should never reject!');
-              });
-          jasmine.clock().tick(Infinity);
-          Promise.resolve().then(done);
-        });
+        // The operation does not matter here.
+        openyolo.disableAutoSignIn().then(
+            () => {
+              openyolo.reset();
+              done();
+            },
+            (error) => {
+              console.log(error);
+              done.fail('Should not reject!');
+            });
+        jasmine.clock().tick(Infinity);
+        promiseResolver.resolve(secureChannelSpy);
       });
 
-      describe('hintsAvailable', () => {
-        const options: OYCredentialHintOptions = {supportedAuthMethods: []};
-
-        it('never times out', async function(done) {
-          spyOn(HintAvailableRequest.prototype, 'dispatch')
-              .and.returnValue(new Promise(() => {}));
-          openyolo.hintsAvailable(options).then(
-              () => {
-                done.fail('Should never resolve!');
-              },
-              (error) => {
-                done.fail('Should never reject!');
-              });
-          jasmine.clock().tick(Infinity);
-          Promise.resolve().then(done);
-        });
+      it('custom timeouts set', (done) => {
+        const promiseResolver = new PromiseResolver<void>();
+        spyOn(SecureChannel, 'clientConnectNoTimeout')
+            .and.returnValue(promiseResolver.promise);
+        let timeoutExpired = false;
+        openyolo.setTimeouts(100);
+        // The operation does not matter here.
+        openyolo.disableAutoSignIn().then(
+            () => {
+              done.fail('Should not resolve!');
+            },
+            (error) => {
+              expect(timeoutExpired).toBe(true);
+              openyolo.reset();
+              done();
+            });
+        jasmine.clock().tick(99);
+        timeoutExpired = true;
+        jasmine.clock().tick(1);
+        // Does not matter, too late.
+        promiseResolver.resolve(secureChannelSpy);
       });
-
-      describe('hint', () => {
-        const options: OYCredentialHintOptions = {supportedAuthMethods: []};
-
-        it('never times out', async function(done) {
-          spyOn(HintRequest.prototype, 'dispatch')
-              .and.returnValue(new Promise(() => {}));
-          openyolo.hint(options).then(
-              () => {
-                done.fail('Should never resolve!');
-              },
-              (error) => {
-                done.fail('Should never reject!');
-              });
-          jasmine.clock().tick(Infinity);
-          Promise.resolve().then(done);
-        });
-      });
-
-      describe('retrieve', () => {
-        const options: OYCredentialRequestOptions = {supportedAuthMethods: []};
-
-        it('never times out', async function(done) {
-          spyOn(CredentialRequest.prototype, 'dispatch')
-              .and.returnValue(new Promise(() => {}));
-          openyolo.retrieve(options).then(
-              () => {
-                done.fail('Should never resolve!');
-              },
-              (error) => {
-                done.fail('Should never reject!');
-              });
-          jasmine.clock().tick(Infinity);
-          Promise.resolve().then(done);
-        });
-      });
-
-      describe('save', () => {
-        it('never times out', async function(done) {
-          spyOn(CredentialSave.prototype, 'dispatch')
-              .and.returnValue(new Promise(() => {}));
-          openyolo.save(credential)
-              .then(
-                  () => {
-                    done.fail('Should never resolve!');
-                  },
-                  (error) => {
-                    done.fail('Should never reject!');
-                  });
-          jasmine.clock().tick(Infinity);
-          Promise.resolve().then(done);
-        });
-      });
-
-      describe('proxyLogin', () => {
-        it('never times out', async function(done) {
-          spyOn(ProxyLogin.prototype, 'dispatch')
-              .and.returnValue(new Promise(() => {}));
-          openyolo.proxyLogin(credential)
-              .then(
-                  () => {
-                    done.fail('Should never resolve!');
-                  },
-                  (error) => {
-                    done.fail('Should never reject!');
-                  });
-          jasmine.clock().tick(Infinity);
-          Promise.resolve().then(done);
-        });
-      });
-
-      describe('cancelLastOperation', () => {
-        it('never times out', async function(done) {
-          spyOn(CancelLastOperationRequest.prototype, 'dispatch')
-              .and.returnValue(new Promise(() => {}));
-          openyolo.cancelLastOperation().then(
-              () => {
-                done.fail('Should never resolve!');
-              },
-              (error) => {
-                done.fail('Should never reject!');
-              });
-          jasmine.clock().tick(Infinity);
-          Promise.resolve().then(done);
-        });
-      });
-
     });
 
-    describe('custom timeout', () => {
-      const timeoutMs = 100;
-
+    describe('successful initialization', () => {
       beforeEach(() => {
-        jasmine.clock().install();
-        openyolo.setTimeouts(timeoutMs);
+        spyOn(InitializeOnDemandApi, 'createOpenYoloApi')
+            .and.returnValue(Promise.resolve(openYoloApiImplSpy));
       });
 
-      afterEach(() => {
-        jasmine.clock().uninstall();
-      });
-
-      describe('disableAutoSignIn', () => {
-        it('times out', async function(done) {
-          openyolo.disableAutoSignIn().then(
-              () => {
-                done.fail('Should not resolve!');
-              },
-              (error) => {
-                expect(OpenYoloError.errorIs(
-                           error, InternalErrorCode.requestTimeout))
-                    .toBe(true);
-                done();
-              });
-          jasmine.clock().tick(timeoutMs);
+      it('disableAutoSignIn', (done) => {
+        openYoloApiImplSpy.disableAutoSignIn.and.returnValue(Promise.resolve());
+        openyolo.disableAutoSignIn().then(() => {
+          expect(openYoloApiImplSpy.disableAutoSignIn)
+              .toHaveBeenCalledWith(jasmine.any(Object));
+          done();
         });
-
-        it('throws RequestTimeout if any step of the initialization times out',
-           (done) => {
-             (SecureChannel.clientConnectNoTimeout as jasmine.Spy)
-                 .and.returnValue(new Promise(() => {}));
-             openyolo.disableAutoSignIn().then(
-                 () => {
-                   done.fail('Should not resolve!');
-                 },
-                 (error) => {
-                   expect(OpenYoloError.errorIs(
-                              error, InternalErrorCode.requestTimeout))
-                       .toBe(true);
-                   done();
-                 });
-             jasmine.clock().tick(timeoutMs);
-           });
       });
 
-      describe('hintsAvailable', () => {
+      it('hintsAvailable', (done) => {
         const options: OYCredentialHintOptions = {supportedAuthMethods: []};
-
-        it('times out', async function(done) {
-          openyolo.hintsAvailable(options).then(
-              () => {
-                done.fail('Should not resolve!');
-              },
-              (error) => {
-                expect(OpenYoloError.errorIs(
-                           error, InternalErrorCode.requestTimeout))
-                    .toBe(true);
-                done();
-              });
-          jasmine.clock().tick(timeoutMs);
+        openYoloApiImplSpy.hintsAvailable.and.returnValue(
+            Promise.resolve(true));
+        openyolo.hintsAvailable(options).then((result) => {
+          expect(result).toBe(true);
+          expect(openYoloApiImplSpy.hintsAvailable)
+              .toHaveBeenCalledWith(options, jasmine.any(Object));
+          done();
         });
       });
 
-      describe('cancelLastRequest', () => {
-        it('times out', async function(done) {
-          openyolo.cancelLastOperation().then(
-              () => {
-                done.fail('Should not resolve!');
-              },
-              (error) => {
-                expect(OpenYoloError.errorIs(
-                           error, InternalErrorCode.requestTimeout))
-                    .toBe(true);
-                done();
-              });
-          jasmine.clock().tick(timeoutMs);
-        });
-      });
-
-      describe('hint', () => {
+      it('hint', (done) => {
         const options: OYCredentialHintOptions = {supportedAuthMethods: []};
-
-        it('times out', async function(done) {
-          openyolo.hint(options).then(
-              () => {
-                done.fail('Should not resolve!');
-              },
-              (error) => {
-                expect(OpenYoloError.errorIs(
-                           error, InternalErrorCode.requestTimeout))
-                    .toBe(true);
-                done();
-              });
-          jasmine.clock().tick(timeoutMs);
+        openYoloApiImplSpy.hint.and.returnValue(Promise.resolve(credential));
+        openyolo.hint(options).then((cred) => {
+          expect(cred).toBe(credential);
+          expect(openYoloApiImplSpy.hint)
+              .toHaveBeenCalledWith(options, jasmine.any(Object));
+          done();
         });
       });
 
-      describe('retrieve', () => {
+      it('retrieve', (done) => {
         const options: OYCredentialRequestOptions = {supportedAuthMethods: []};
-
-        it('times out', async function(done) {
-          openyolo.retrieve(options).then(
-              () => {
-                done.fail('Should not resolve!');
-              },
-              (error) => {
-                expect(OpenYoloError.errorIs(
-                           error, InternalErrorCode.requestTimeout))
-                    .toBe(true);
-                done();
-              });
-          jasmine.clock().tick(timeoutMs);
+        openYoloApiImplSpy.retrieve.and.returnValue(
+            Promise.resolve(credential));
+        openyolo.retrieve(options).then((cred) => {
+          expect(cred).toBe(credential);
+          expect(openYoloApiImplSpy.retrieve)
+              .toHaveBeenCalledWith(options, jasmine.any(Object));
+          done();
         });
       });
 
-      describe('save', () => {
-        it('times out', async function(done) {
-          openyolo.save(credential)
-              .then(
-                  () => {
-                    done.fail('Should not resolve!');
-                  },
-                  (error) => {
-                    expect(OpenYoloError.errorIs(
-                               error, InternalErrorCode.requestTimeout))
-                        .toBe(true);
-                    done();
-                  });
-          jasmine.clock().tick(timeoutMs);
+      it('proxyLogin', (done) => {
+        const expectedResponse:
+            OYProxyLoginResponse = {statusCode: 200, responseText: 'test'};
+        openYoloApiImplSpy.proxyLogin.and.returnValue(
+            Promise.resolve(expectedResponse));
+        openyolo.proxyLogin(credential).then((response) => {
+          expect(response).toBe(expectedResponse);
+          expect(openYoloApiImplSpy.proxyLogin)
+              .toHaveBeenCalledWith(credential, jasmine.any(Object));
+          done();
         });
       });
 
-      describe('proxyLogin', () => {
-        it('times out', async function(done) {
-          openyolo.proxyLogin(credential)
-              .then(
-                  () => {
-                    done.fail('Should not resolve!');
-                  },
-                  (error) => {
-                    expect(OpenYoloError.errorIs(
-                               error, InternalErrorCode.requestTimeout))
-                        .toBe(true);
-                    done();
-                  });
-          jasmine.clock().tick(timeoutMs);
+      it('save', (done) => {
+        openYoloApiImplSpy.save.and.returnValue(Promise.resolve());
+        openyolo.save(credential).then(() => {
+          expect(openYoloApiImplSpy.save)
+              .toHaveBeenCalledWith(credential, jasmine.any(Object));
+          done();
+        });
+      });
+
+      it('cancelLastOperation', (done) => {
+        openYoloApiImplSpy.cancelLastOperation.and.returnValue(
+            Promise.resolve());
+        openyolo.cancelLastOperation().then(() => {
+          expect(openYoloApiImplSpy.cancelLastOperation)
+              .toHaveBeenCalledWith(jasmine.any(Object));
+          done();
         });
       });
     });

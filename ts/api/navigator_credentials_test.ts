@@ -16,6 +16,7 @@
 
 import {OYCredential as OpenYoloCredential, OYCredentialRequestOptions as OpenYoloCredentialRequestOptions} from '../protocol/data';
 import {AUTHENTICATION_METHODS} from '../protocol/data';
+import {InternalErrorCode, OpenYoloError} from '../protocol/errors';
 
 import {NavigatorCredentials} from './navigator_credentials';
 
@@ -94,12 +95,17 @@ describe('NavigatorCredentials', () => {
       });
     });
 
-    it('returns nothing', done => {
+    it('rejects when no credential', done => {
       spyOn(cmApi, 'get').and.returnValue(Promise.resolve());
-      navigatorCredentials.retrieve().then(credential => {
-        expect(credential).toBeUndefined();
-        done();
-      });
+      navigatorCredentials.retrieve().then(
+          credential => {
+            done.fail('Should not resolve!');
+          },
+          (error) => {
+            expect(
+                OpenYoloError.errorIs(error, InternalErrorCode.userCanceled));
+            done();
+          });
     });
 
     it('fails', done => {
