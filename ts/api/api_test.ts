@@ -93,7 +93,7 @@ describe('OpenYolo API', () => {
     });
 
     it('secure channel connection fails', (done) => {
-      spyOn(SecureChannel, 'clientConnectNoTimeout')
+      spyOn(SecureChannel, 'clientConnect')
           .and.returnValue(Promise.reject(expectedError));
       // The operation does not matter here.
       openyolo.disableAutoSignIn().then(
@@ -108,7 +108,7 @@ describe('OpenYolo API', () => {
     });
 
     it('wrap browser fails', (done) => {
-      spyOn(SecureChannel, 'clientConnectNoTimeout')
+      spyOn(SecureChannel, 'clientConnect')
           .and.returnValue(Promise.resolve(secureChannelSpy));
       spyOn(WrapBrowserRequest.prototype, 'dispatch')
           .and.returnValue(Promise.reject(expectedError));
@@ -127,7 +127,7 @@ describe('OpenYolo API', () => {
     });
 
     it('wrap browser succeeds', (done) => {
-      spyOn(SecureChannel, 'clientConnectNoTimeout')
+      spyOn(SecureChannel, 'clientConnect')
           .and.returnValue(Promise.resolve(secureChannelSpy));
       spyOn(WrapBrowserRequest.prototype, 'dispatch')
           .and.returnValue(Promise.resolve(false));
@@ -155,7 +155,7 @@ describe('OpenYolo API', () => {
 
       it('timeouts disabled', (done) => {
         const promiseResolver = new PromiseResolver<void>();
-        spyOn(SecureChannel, 'clientConnectNoTimeout')
+        spyOn(SecureChannel, 'clientConnect')
             .and.returnValue(promiseResolver.promise);
         spyOn(WrapBrowserRequest.prototype, 'dispatch')
             .and.returnValue(Promise.resolve(false));
@@ -178,7 +178,7 @@ describe('OpenYolo API', () => {
 
       it('custom timeouts set', (done) => {
         const promiseResolver = new PromiseResolver<void>();
-        spyOn(SecureChannel, 'clientConnectNoTimeout')
+        spyOn(SecureChannel, 'clientConnect')
             .and.returnValue(promiseResolver.promise);
         let timeoutExpired = false;
         openyolo.setTimeouts(100);

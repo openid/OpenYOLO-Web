@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {InternalErrorCode, OpenYoloError, OpenYoloErrorData, OpenYoloExtendedError} from '../protocol/errors';
+import {InternalErrorCode, OYErrorData, OYInternalError} from '../protocol/errors';
 import {RpcMessageArgumentTypes, RpcMessageData, RpcMessageType} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {generateId, PromiseResolver, startTimeoutRacer, TimeoutRacer} from '../protocol/utils';
@@ -75,7 +75,7 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
       // Handle specifically a timeout error.
       this.frame.hide();
       this.dispose();
-      throw OpenYoloError.requestTimeout();
+      throw OYInternalError.requestTimeout();
     }
   }
 
@@ -91,12 +91,12 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
   private registerBaseHandlers() {
     this.debugLog('request instantiated');
     // Register a standard error handler.
-    this.registerHandler(RpcMessageType.error, (data: OpenYoloErrorData) => {
-      let error: OpenYoloExtendedError;
+    this.registerHandler(RpcMessageType.error, (data: OYErrorData) => {
+      let error: OYInternalError;
       if (data) {
-        error = OpenYoloError.createError(data);
+        error = new OYInternalError(data);
       } else {
-        error = OpenYoloError.unknown();
+        error = OYInternalError.unknownError();
       }
 
       this.debugLog(`request failed: ${error}`);
@@ -126,7 +126,7 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
     this.frame.hide();
   }
 
-  reject(reason: OpenYoloExtendedError) {
+  reject(reason: OYInternalError) {
     this.promiseResolver.reject(reason);
     // Do not hide the IFrame in case of concurrent request, to allow the
     // previous one to finish.

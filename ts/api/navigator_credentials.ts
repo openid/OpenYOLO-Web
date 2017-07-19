@@ -15,7 +15,7 @@
  */
 
 import {AUTHENTICATION_METHODS, OYCredential as OpenYoloCredential, OYCredentialHintOptions, OYCredentialRequestOptions as OpenYoloCredentialRequestOptions, OYProxyLoginResponse} from '../protocol/data';
-import {OpenYoloError} from '../protocol/errors';
+import {OYInternalError} from '../protocol/errors';
 
 import {OpenYoloApi} from './api';
 
@@ -152,7 +152,7 @@ export class NavigatorCredentials implements OpenYoloApi {
     let convertedOptions = convertRequestOptions(options);
     return this.cmApi.get(convertedOptions).then((cred) => {
       if (!cred) {
-        throw OpenYoloError.canceled();
+        throw OYInternalError.userCanceled();
       }
       this.credentialsMap.insert(cred);
       return convertCredentialToOpenYolo(
@@ -170,7 +170,7 @@ export class NavigatorCredentials implements OpenYoloApi {
 
   hint(options?: OYCredentialHintOptions): Promise<OpenYoloCredential> {
     // Reject with a canceled error as no hints can be retrieved.
-    return Promise.reject(OpenYoloError.canceled());
+    return Promise.reject(OYInternalError.userCanceled());
   }
 
   hintsAvailable(): Promise<boolean> {
@@ -178,7 +178,7 @@ export class NavigatorCredentials implements OpenYoloApi {
   }
 
   cancelLastOperation(): Promise<void> {
-    return Promise.reject(OpenYoloError.apiDisabled());
+    return Promise.reject(OYInternalError.apiDisabled());
   }
 
   proxyLogin(credential: OpenYoloCredential): Promise<OYProxyLoginResponse> {
@@ -193,8 +193,8 @@ export class NavigatorCredentials implements OpenYoloApi {
     return new Promise<OYProxyLoginResponse>((resolve, reject) => {
       fetch(url, {method: 'POST', credentials: cred}).then(resp => {
         if (resp.status !== 200) {
-          reject(
-              OpenYoloError.requestFailed(`Error: status code ${resp.status}`));
+          reject(OYInternalError.requestFailed(
+              `Error: status code ${resp.status}`));
         }
         resp.text().then(responseText => {
           resolve({statusCode: resp.status, responseText: responseText});

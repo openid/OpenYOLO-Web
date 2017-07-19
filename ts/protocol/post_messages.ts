@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {OpenYoloErrorData, OpenYoloExtendedError} from './errors';
+import {OYErrorData, OYInternalError} from './errors';
 import {DataValidator, isNonEmptyString, isValidError} from './validators';
 
 /**
@@ -50,7 +50,7 @@ export type PostMessageDataTypes = {
   'verifyAck': string,
   'channelReady': string,
   'channelConnect': string,
-  'channelError': OpenYoloErrorData
+  'channelError': OYErrorData
 };
 
 export type PostMessageData<T extends PostMessageType> =
@@ -93,7 +93,7 @@ export function channelReadyMessage(nonce: string) {
   return postMessage(PostMessageType.channelReady, nonce);
 }
 
-export function channelErrorMessage(error: OpenYoloExtendedError) {
+export function channelErrorMessage(error: OYInternalError) {
   return postMessage(PostMessageType.channelError, error.data);
 }
 

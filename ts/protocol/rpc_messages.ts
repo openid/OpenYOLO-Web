@@ -15,7 +15,7 @@
  */
 
 import {OYCredential, OYCredentialHintOptions, OYCredentialRequestOptions, OYProxyLoginResponse} from './data';
-import {OpenYoloErrorData, OpenYoloExtendedError} from './errors';
+import {OYErrorData, OYInternalError} from './errors';
 import {DataValidator, isBoolean, isUndefined, isValidCredential, isValidDisplayOptions, isValidError, isValidHintOptions, isValidProxyLoginResponse, isValidRequestOptions} from './validators';
 
 export enum RpcMessageType {
@@ -55,7 +55,7 @@ export type RpcMessageArgumentTypes = {
   'wrapBrowserResult': boolean,
   'none': undefined,
   'credential': OYCredential,
-  'error': OpenYoloErrorData,
+  'error': OYErrorData,
   'cancelLastOperation': undefined,
   'cancelLastOperationResult': undefined
 };
@@ -107,7 +107,7 @@ export const RPC_MESSAGE_DATA_VALIDATORS: RpcMessageDataValidators = {
 
 export interface CredentialResponseData { credential: OYCredential; }
 
-export interface ErrorMessageData { error: OpenYoloErrorData; }
+export interface ErrorMessageData { error: OYErrorData; }
 
 export interface DisplayOptions {
   height?: number;
@@ -187,7 +187,7 @@ export function saveResultMessage(id: string, saved: boolean) {
   return rpcMessage(RpcMessageType.saveResult, id, saved);
 }
 
-export function errorMessage(id: string, error: OpenYoloExtendedError) {
+export function errorMessage(id: string, error: OYInternalError) {
   return rpcMessage(RpcMessageType.error, id, error.data);
 }
 

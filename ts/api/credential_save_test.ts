@@ -16,7 +16,7 @@
 
 import {OYCredential} from '../protocol/data';
 import {AUTHENTICATION_METHODS} from '../protocol/data';
-import {InternalErrorCode, OpenYoloError} from '../protocol/errors';
+import {InternalErrorCode, OYInternalError} from '../protocol/errors';
 import {errorMessage, saveMessage, saveResultMessage} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {FakeProviderConnection} from '../test_utils/channels';
@@ -77,7 +77,7 @@ describe('CredentialSave', () => {
       await promise;
       done.fail('promise should be rejected');
     } catch (err) {
-      expect(OpenYoloError.errorIs(err, InternalErrorCode.userCanceled))
+      expect(OYInternalError.errorIs(err, InternalErrorCode.userCanceled))
           .toBeTruthy();
       expect(request.dispose).toHaveBeenCalled();
       done();
@@ -88,12 +88,12 @@ describe('CredentialSave', () => {
     let promise = request.dispatch(credential);
 
     providerChannel.send(
-        errorMessage(request.id, OpenYoloError.requestFailed('ERROR!')));
+        errorMessage(request.id, OYInternalError.requestFailed('ERROR!')));
     try {
       await promise;
       done.fail('Promise should be rejected');
     } catch (err) {
-      expect(OpenYoloError.errorIs(err, InternalErrorCode.requestFailed))
+      expect(OYInternalError.errorIs(err, InternalErrorCode.requestFailed))
           .toBeTruthy();
       expect(request.dispose).toHaveBeenCalled();
       done();

@@ -15,7 +15,7 @@
  */
 
 import {AUTHENTICATION_METHODS, OYCredentialHintOptions} from '../protocol/data';
-import {OpenYoloError} from '../protocol/errors';
+import {OYInternalError} from '../protocol/errors';
 import {errorMessage, hintAvailableMessage, hintAvailableResponseMessage} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {FakeProviderConnection} from '../test_utils/channels';
@@ -84,7 +84,7 @@ describe('HintAvailableRequest', () => {
 
   it('should fail if error returned', async function(done) {
     let promise = request.dispatch(passwordOnlyOptions);
-    let expectedError = OpenYoloError.requestFailed('error!');
+    let expectedError = OYInternalError.requestFailed('error!');
     providerChannel.send(errorMessage(request.id, expectedError));
 
     try {

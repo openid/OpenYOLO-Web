@@ -15,7 +15,7 @@
  */
 
 import {AUTHENTICATION_METHODS, OYCredential} from '../protocol/data';
-import {OpenYoloError} from '../protocol/errors';
+import {OYInternalError} from '../protocol/errors';
 import {errorMessage, proxyLoginMessage, proxyLoginResponseMessage} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {FakeProviderConnection} from '../test_utils/channels';
@@ -86,7 +86,7 @@ describe('ProxyLogin', () => {
     it('rejects if an error message is received', async function(done) {
       let promise = request.dispatch(credential);
 
-      let expectedError = OpenYoloError.requestFailed('error!');
+      let expectedError = OYInternalError.requestFailed('error!');
       providerChannel.send(errorMessage(request.id, expectedError));
 
       try {

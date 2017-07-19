@@ -16,7 +16,7 @@
 
 import {OYCredential, OYCredentialHintOptions, OYCredentialRequestOptions, OYProxyLoginResponse} from '../protocol/data';
 import {RenderMode} from '../protocol/data';
-import {OpenYoloError} from '../protocol/errors';
+import {OYInternalError} from '../protocol/errors';
 import {PreloadRequest, PreloadRequestType} from '../protocol/preload_request';
 import {SecureChannel} from '../protocol/secure_channel';
 import {generateId, sha256, startTimeoutRacer, TimeoutRacer} from '../protocol/utils';
@@ -34,7 +34,7 @@ import {WrapBrowserRequest} from './wrap_browser_request';
 
 // re-export all the data types
 export * from '../protocol/data';
-export {OpenYoloError, InternalErrorCode} from '../protocol/errors';
+export {OYInternalError, InternalErrorCode} from '../protocol/errors';
 
 const MOBILE_USER_AGENT_REGEX = /android|iphone|ipod|iemobile/i;
 
@@ -301,7 +301,7 @@ class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
 
   private checkNotDisposed() {
     if (this.disposed) {
-      throw OpenYoloError.clientDisposed();
+      throw OYInternalError.clientDisposed();
     }
   }
 }
@@ -370,12 +370,8 @@ export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
           providerUrlBase,
           preloadRequest);
 
-      const channel =
-          await timeoutRacer.race(SecureChannel.clientConnectNoTimeout(
-              window,
-              frameManager.getContentWindow(),
-              instanceId,
-              instanceIdHash));
+      const channel = await timeoutRacer.race(SecureChannel.clientConnect(
+          window, frameManager.getContentWindow(), instanceId, instanceIdHash));
 
       // Check whether the client should wrap the browser's
       // navigator.credentials.
@@ -397,7 +393,7 @@ export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
     } catch (e) {
       timeoutRacer.rethrowUnlessTimeoutError(e);
       // Convert the timeout error.
-      throw OpenYoloError.requestTimeout();
+      throw OYInternalError.requestTimeout();
     }
   }
 

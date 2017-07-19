@@ -16,7 +16,7 @@
 
 import {PrimaryClientConfiguration} from '../protocol/client_config';
 import {AUTHENTICATION_METHODS, OYCredential, OYCredentialHintOptions, OYCredentialRequestOptions} from '../protocol/data';
-import {OpenYoloError} from '../protocol/errors';
+import {OYInternalError} from '../protocol/errors';
 import * as msg from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {PromiseResolver} from '../protocol/utils';
@@ -146,7 +146,7 @@ describe('ProviderFrame', () => {
     });
 
     it('should fail if secure channel connection fails', async function(done) {
-      let expectedError = OpenYoloError.establishSecureChannelTimeout();
+      let expectedError = OYInternalError.establishSecureChannelTimeout();
 
       spyOn(AncestorOriginVerifier, 'verifyOnlyParent')
           .and.returnValue(Promise.resolve(TEST_AUTH_DOMAIN));
@@ -179,7 +179,7 @@ describe('ProviderFrame', () => {
         await initPromise;
         done.fail('Initialization should not succeed');
       } catch (err) {
-        expect(err).toEqual(OpenYoloError.apiDisabled());
+        expect(err).toEqual(OYInternalError.apiDisabled());
         done();
       }
     });
@@ -188,7 +188,7 @@ describe('ProviderFrame', () => {
       let parentOrigin = 'https://www.3vil.com';
       spyOn(AncestorOriginVerifier, 'verifyOnlyParent')
           .and.returnValue(
-              Promise.reject(OpenYoloError.untrustedOrigin(parentOrigin)));
+              Promise.reject(OYInternalError.untrustedOrigin(parentOrigin)));
       clientConfigurationProvider.configMap[TEST_AUTH_DOMAIN] = {
         type: 'primary',
         apiEnabled: true
@@ -238,7 +238,7 @@ describe('ProviderFrame', () => {
             data,
             msg.errorMessage(
                 requestId,
-                OpenYoloError.unknownRequest(
+                OYInternalError.unknownRequest(
                     msg.RpcMessageType.hintAvailableResult)));
         done();
       });
@@ -252,7 +252,7 @@ describe('ProviderFrame', () => {
         expectMessageContents(
             data,
             msg.errorMessage(
-                requestId, OpenYoloError.illegalConcurrentRequestError()));
+                requestId, OYInternalError.illegalConcurrentRequestError()));
         done();
       });
 
@@ -349,7 +349,7 @@ describe('ProviderFrame', () => {
         clientChannel.listen(msg.RpcMessageType.error, (data) => {
           expectMessageContents(
               data,
-              msg.errorMessage(requestId, OpenYoloError.clientCancelled()));
+              msg.errorMessage(requestId, OYInternalError.operationCanceled()));
           errorPromise.resolve();
         });
 
@@ -470,7 +470,7 @@ describe('ProviderFrame', () => {
                     options: OYCredentialRequestOptions,
                     displayCallbacks: DisplayCallbacks) => {
                      expectFinalResult = true;
-                     return Promise.reject(OpenYoloError.canceled());
+                     return Promise.reject(OYInternalError.userCanceled());
                    });
 
            clientChannel.listen(msg.RpcMessageType.none, (data) => {
@@ -612,7 +612,7 @@ describe('ProviderFrame', () => {
                     if (selection) {
                       return Promise.resolve(selection);
                     } else {
-                      return Promise.reject(OpenYoloError.canceled());
+                      return Promise.reject(OYInternalError.userCanceled());
                     }
                   }
                 });
@@ -811,11 +811,11 @@ class TestClientConfigurationProvider implements ClientConfigurationProvider {
   configMap: {[key: string]: PrimaryClientConfiguration} = {};
 
   async getConfiguration(authDomain: string):
-      Promise<PrimaryClientConfiguration|null> {
+      Promise<PrimaryClientConfiguration> {
     if (authDomain in this.configMap) {
       return this.configMap[authDomain];
     }
-    return null;
+    throw new Error('The Test Client Configuration does not exist!');
   }
 }
 

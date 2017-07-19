@@ -16,7 +16,7 @@
 
 import {OYCredential as OpenYoloCredential, OYCredentialRequestOptions as OpenYoloCredentialRequestOptions} from '../protocol/data';
 import {AUTHENTICATION_METHODS} from '../protocol/data';
-import {InternalErrorCode, OpenYoloError} from '../protocol/errors';
+import {InternalErrorCode, OYInternalError} from '../protocol/errors';
 
 import {NavigatorCredentials} from './navigator_credentials';
 
@@ -103,7 +103,7 @@ describe('NavigatorCredentials', () => {
           },
           (error) => {
             expect(
-                OpenYoloError.errorIs(error, InternalErrorCode.userCanceled));
+                OYInternalError.errorIs(error, InternalErrorCode.userCanceled));
             done();
           });
     });
@@ -254,7 +254,10 @@ describe('NavigatorCredentials', () => {
               done.fail('Unexpected success!');
             },
             (error) => {
-              expect(error.message).toEqual('Error: status code 400');
+              expect(error.message)
+                  .toEqual(
+                      'The API request failed to resolve: Error: status code ' +
+                      '400');
               done();
             });
       });

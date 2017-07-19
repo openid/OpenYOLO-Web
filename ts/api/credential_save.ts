@@ -15,7 +15,7 @@
  */
 
 import {OYCredential} from '../protocol/data';
-import {OpenYoloError} from '../protocol/errors';
+import {OYInternalError} from '../protocol/errors';
 import {RpcMessageType, saveMessage} from '../protocol/rpc_messages';
 
 import {BaseRequest} from './base_request';
@@ -26,7 +26,7 @@ export class CredentialSave extends BaseRequest<void, OYCredential> {
       if (saved) {
         this.resolve();
       } else {
-        this.reject(OpenYoloError.canceled());
+        this.reject(OYInternalError.userCanceled());
       }
       this.dispose();
     });

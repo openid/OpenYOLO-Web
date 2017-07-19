@@ -15,7 +15,7 @@
  */
 
 import {createMessageListener, isPermittedOrigin, sendMessage, WindowLike} from '../protocol/comms';
-import {OpenYoloError} from '../protocol/errors';
+import {OYInternalError} from '../protocol/errors';
 import {PostMessageType, verifyPingMessage} from '../protocol/post_messages';
 import {generateId, TimeoutPromiseResolver} from '../protocol/utils';
 
@@ -89,7 +89,7 @@ export class AncestorOriginVerifier {
     // Ensure the provider frame is running as a child frame or a popup.
     if (this.providerFrame.parent === this.providerFrame &&
         !this.providerFrame.opener) {
-      return Promise.reject(OpenYoloError.illegalStateError(
+      return Promise.reject(OYInternalError.illegalStateError(
           'The request should be opened in an iframe or a popup'));
     }
 
@@ -102,7 +102,7 @@ export class AncestorOriginVerifier {
     }
 
     if (ancestorFrame.parent !== ancestorFrame && !allowMultipleAncestors) {
-      return Promise.reject(OpenYoloError.parentIsNotRoot());
+      return Promise.reject(OYInternalError.parentIsNotRoot());
     }
 
     let promises: Array<Promise<string>> = [];
@@ -121,7 +121,7 @@ export class AncestorOriginVerifier {
   async verifyAncestorOrigin(ancestorFrame: WindowLike, parentDepth: number):
       Promise<string> {
     let promiseResolver = new TimeoutPromiseResolver<string>(
-        OpenYoloError.ancestorVerifyTimeout(), this.timeoutMs);
+        OYInternalError.parentVerifyTimeout(), this.timeoutMs);
 
     let verifyId: string = generateId();
 
@@ -139,7 +139,7 @@ export class AncestorOriginVerifier {
             promiseResolver.resolve(ev.origin);
           } else {
             console.warn(`untrusted domain in ancestor chain: ${ev.origin}`);
-            promiseResolver.reject(OpenYoloError.untrustedOrigin(ev.origin));
+            promiseResolver.reject(OYInternalError.untrustedOrigin(ev.origin));
           }
         });
 

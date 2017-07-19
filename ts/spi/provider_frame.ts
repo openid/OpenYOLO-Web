@@ -17,7 +17,7 @@
 import {PrimaryClientConfiguration} from '../protocol/client_config';
 import {sendMessage} from '../protocol/comms';
 import {AUTHENTICATION_METHODS, OYCredential, OYCredentialHintOptions, OYCredentialRequestOptions} from '../protocol/data';
-import {OpenYoloError} from '../protocol/errors';
+import {OYInternalError} from '../protocol/errors';
 import {isOpenYoloMessageFormat} from '../protocol/messages';
 import {channelErrorMessage} from '../protocol/post_messages';
 import * as msg from '../protocol/rpc_messages';
@@ -56,7 +56,7 @@ export class ProviderFrame {
               providerConfig.clientAuthDomain);
       if (!clientConfiguration || !clientConfiguration.apiEnabled) {
         console.info('OpenYOLO API is not enabled for the client origin');
-        throw OpenYoloError.apiDisabled();
+        throw OYInternalError.apiDisabled();
       }
 
       // Verify the ancestor frame(s), based on the client configuration and
@@ -101,7 +101,7 @@ export class ProviderFrame {
       // information, and that would be useful to the client.
       sendMessage(
           providerConfig.window.parent,
-          channelErrorMessage(OpenYoloError.providerInitFailed()));
+          channelErrorMessage(OYInternalError.providerInitializationFailed()));
 
       throw err;
     }
@@ -140,7 +140,7 @@ export class ProviderFrame {
   private async handleClose() {
     sendMessage(
         this.providerConfig.window.parent,
-        channelErrorMessage(OpenYoloError.canceled()));
+        channelErrorMessage(OYInternalError.userCanceled()));
   }
 
   private registerListeners() {
@@ -206,7 +206,7 @@ export class ProviderFrame {
         // reset cancellable promise, for the next set of requests
         this.cancellable = null;
         this.clientChannel.send(
-            msg.errorMessage(m.id, OpenYoloError.clientCancelled()));
+            msg.errorMessage(m.id, OYInternalError.operationCanceled()));
       } else {
         throw error;
       }
@@ -231,7 +231,7 @@ export class ProviderFrame {
 
     console.error(`Concurrent request ${requestId} received, rejecting`);
     this.clientChannel.send(msg.errorMessage(
-        requestId, OpenYoloError.illegalConcurrentRequestError()));
+        requestId, OYInternalError.illegalConcurrentRequestError()));
     return false;
   }
 
@@ -408,7 +408,7 @@ export class ProviderFrame {
   private async handleUnimplementedRequest(id: string, type: string) {
     console.error(`No implementation for request of type ${type}`);
     this.clientChannel.send(
-        msg.errorMessage(id, OpenYoloError.unknownRequest(type)));
+        msg.errorMessage(id, OYInternalError.unknownRequest(type)));
   }
 
   private handleUnknownMessage(ev: MessageEvent) {
@@ -438,7 +438,7 @@ export class ProviderFrame {
     // the message is a known, valid, but unhandled RPC message. Send a generic
     // failure message back.
     this.clientChannel.send(
-        msg.errorMessage(data.id, OpenYoloError.unknownRequest(type)));
+        msg.errorMessage(data.id, OYInternalError.unknownRequest(type)));
     return;
   }
 
