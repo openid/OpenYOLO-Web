@@ -86,17 +86,17 @@ export class OYInternalError extends Error {
     super(data.message);
   }
 
+  /** Returns the client-side exposed error. */
+  toExposedError(): OpenYoloError {
+    return OpenYoloError.fromData(this.toExposedErrorData());
+  }
+
   /** Returns the client-side exposed error data. */
-  toExposedErrorData(): OYExposedErrorData {
+  private toExposedErrorData(): OYExposedErrorData {
     return {
       type: this.data.exposedErrorType,
       message: `${this.data.code}: ${this.data.message}`
     };
-  }
-
-  /** Returns the client-side exposed error. */
-  toExposedError(): OpenYoloError {
-    return OpenYoloError.fromData(this.toExposedErrorData());
   }
 
   /* Initialization errors. */
@@ -270,8 +270,6 @@ export class OYInternalError extends Error {
  * Client side exposed error type.
  */
 export declare interface OpenYoloError extends Error {
-  /** Name of the error, to differentiate from ‘Error’. */
-  name: string;  // = ‘OpenYoloError’.
   /** Standardized error type. */
   type: OpenYoloErrorType;
   /**

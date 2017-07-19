@@ -301,7 +301,7 @@ class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
 
   private checkNotDisposed() {
     if (this.disposed) {
-      throw OYInternalError.clientDisposed();
+      throw OYInternalError.clientDisposed().toExposedError();
     }
   }
 }
@@ -393,7 +393,7 @@ export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
     } catch (e) {
       timeoutRacer.rethrowUnlessTimeoutError(e);
       // Convert the timeout error.
-      throw OYInternalError.requestTimeout();
+      throw OYInternalError.requestTimeout().toExposedError();
     }
   }
 
