@@ -54,7 +54,7 @@ export class ProviderFrame {
       let clientConfiguration =
           await providerConfig.clientConfigurationProvider.getConfiguration(
               providerConfig.clientAuthDomain);
-      if (!clientConfiguration.apiEnabled) {
+      if (!clientConfiguration || !clientConfiguration.apiEnabled) {
         console.info('OpenYOLO API is not enabled for the client origin');
         throw OpenYoloError.apiDisabled();
       }
@@ -424,7 +424,7 @@ export class ProviderFrame {
       return;
     }
 
-    let type = (ev.data.type as msg.RpcMessageType);
+    const type = (ev.data.type as msg.RpcMessageType);
 
     if (!msg.RPC_MESSAGE_DATA_VALIDATORS[type](ev.data.data)) {
       console.warn(
@@ -433,7 +433,7 @@ export class ProviderFrame {
       return;
     }
 
-    let data = (ev.data.data as msg.RpcMessageData<any>);
+    const data = (ev.data.data as msg.RpcMessageData<any>);
     // the message is a known, valid, but unhandled RPC message. Send a generic
     // failure message back.
     this.clientChannel.send(
@@ -610,7 +610,7 @@ export class ProviderFrame {
     if (!this.cancellable) {
       this.cancellable = new CancellablePromise();
     }
-    return Promise.race([this.cancellable.promise, producer]);
+    return Promise.race([this.cancellable.promise, producer]) as Promise<T>;
   }
 
   private handleWellKnownErrors(error: Error) {

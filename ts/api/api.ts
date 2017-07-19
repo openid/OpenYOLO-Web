@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {Credential, CredentialHintOptions, CredentialRequestOptions, ProxyLoginResponse} from '../protocol/data';
+import {OYCredential, OYCredentialHintOptions, OYCredentialRequestOptions, OYProxyLoginResponse} from '../protocol/data';
 import {RenderMode} from '../protocol/data';
 import {OpenYoloError} from '../protocol/errors';
 import {PreloadRequest, PreloadRequestType} from '../protocol/preload_request';
@@ -56,7 +56,7 @@ export interface OpenYoloApi {
    *     and resolves with false if none are available. The promise will not
    *     reject: if an error happen, it should resolve with false.
    */
-  hintsAvailable(options: CredentialHintOptions): Promise<boolean>;
+  hintsAvailable(options: OYCredentialHintOptions): Promise<boolean>;
 
   /**
    * Attempts to retrieve a sign-up hint that can be used to create a new
@@ -70,7 +70,7 @@ export interface OpenYoloApi {
    *     A promise for a credential hint. The promise will be rejected if the
    *     user cancels the hint selection process.
    */
-  hint(options: CredentialHintOptions): Promise<Credential|null>;
+  hint(options: OYCredentialHintOptions): Promise<OYCredential|null>;
 
   /**
    * Attempts to retrieve a credential for the current origin.
@@ -83,7 +83,7 @@ export interface OpenYoloApi {
    *     Otherwise, the promise will resolve with a credential that the app
    *     can use.
    */
-  retrieve(options: CredentialRequestOptions): Promise<Credential|null>;
+  retrieve(options: OYCredentialRequestOptions): Promise<OYCredential|null>;
 
   /**
    * Attempts to save the provided credential, which will update or create
@@ -96,7 +96,7 @@ export interface OpenYoloApi {
    *     resolve, and does not indicate whether the credential was actually
    *     saved.
    */
-  save(credential: Credential): Promise<void>;
+  save(credential: OYCredential): Promise<void>;
 
   /**
    * Prevents the automatic release of a credential from the retrieve operation.
@@ -121,7 +121,7 @@ export interface OpenYoloApi {
    * @return
    *    A promise for the response data from the authentication system.
    */
-  proxyLogin(credential: Credential): Promise<ProxyLoginResponse>;
+  proxyLogin(credential: OYCredential): Promise<OYProxyLoginResponse>;
 
   /**
    * Cancels the last pending OpenYOLO request.
@@ -133,16 +133,16 @@ export interface OpenYoloApi {
  * A variant of the OpenYoloApi interface, with support for operation timeouts.
  */
 export interface OpenYoloWithTimeoutApi {
-  hintsAvailable(options: CredentialHintOptions, timeoutRacer: TimeoutRacer):
+  hintsAvailable(options: OYCredentialHintOptions, timeoutRacer: TimeoutRacer):
       Promise<boolean>;
-  hint(options: CredentialHintOptions, timeoutRacer: TimeoutRacer):
-      Promise<Credential|null>;
-  retrieve(options: CredentialRequestOptions, timeoutRacer: TimeoutRacer):
-      Promise<Credential|null>;
-  save(credential: Credential, timeoutRacer: TimeoutRacer): Promise<void>;
+  hint(options: OYCredentialHintOptions, timeoutRacer: TimeoutRacer):
+      Promise<OYCredential|null>;
+  retrieve(options: OYCredentialRequestOptions, timeoutRacer: TimeoutRacer):
+      Promise<OYCredential|null>;
+  save(credential: OYCredential, timeoutRacer: TimeoutRacer): Promise<void>;
   disableAutoSignIn(timeoutRacer: TimeoutRacer): Promise<void>;
-  proxyLogin(credential: Credential, timeoutRacer: TimeoutRacer):
-      Promise<ProxyLoginResponse>;
+  proxyLogin(credential: OYCredential, timeoutRacer: TimeoutRacer):
+      Promise<OYProxyLoginResponse>;
   cancelLastOperation(timeoutRacer: TimeoutRacer): Promise<void>;
 }
 
@@ -240,19 +240,20 @@ async function createOpenYoloApi(
  * TODO: Implement.
  */
 class OpenYoloBrowserApiImpl implements OpenYoloWithTimeoutApi {
-  async retrieve(options: CredentialRequestOptions, timeoutRacer: TimeoutRacer):
-      Promise<Credential|null> {
+  async retrieve(
+      options: OYCredentialRequestOptions,
+      timeoutRacer: TimeoutRacer): Promise<OYCredential|null> {
     return Promise.reject('not implemented');
   }
 
   async hintsAvailable(
-      options: CredentialRequestOptions,
+      options: OYCredentialRequestOptions,
       timeoutRacer: TimeoutRacer): Promise<boolean> {
     return Promise.reject('not implemented');
   }
 
-  async hint(options: CredentialRequestOptions, timeoutRacer: TimeoutRacer):
-      Promise<Credential|null> {
+  async hint(options: OYCredentialRequestOptions, timeoutRacer: TimeoutRacer):
+      Promise<OYCredential|null> {
     return Promise.reject('not implemented');
   }
 
@@ -260,13 +261,13 @@ class OpenYoloBrowserApiImpl implements OpenYoloWithTimeoutApi {
     return Promise.reject('not implemented');
   }
 
-  async save(credential: Credential, timeoutRacer: TimeoutRacer):
+  async save(credential: OYCredential, timeoutRacer: TimeoutRacer):
       Promise<void> {
     return Promise.reject('not implemented');
   }
 
-  async proxyLogin(credential: Credential, timeoutRacer: TimeoutRacer):
-      Promise<ProxyLoginResponse> {
+  async proxyLogin(credential: OYCredential, timeoutRacer: TimeoutRacer):
+      Promise<OYProxyLoginResponse> {
     return Promise.reject('not implemented');
   }
 
@@ -287,7 +288,7 @@ class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
       private channel: SecureChannel) {}
 
   async hintsAvailable(
-      options: CredentialHintOptions,
+      options: OYCredentialHintOptions,
       timeoutRacer: TimeoutRacer): Promise<boolean> {
     this.checkNotDisposed();
     const request = new HintAvailableRequest(this.frameManager, this.channel);
@@ -299,28 +300,29 @@ class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
     }
   }
 
-  async hint(options: CredentialHintOptions, timeoutRacer: TimeoutRacer):
-      Promise<Credential|null> {
+  async hint(options: OYCredentialHintOptions, timeoutRacer: TimeoutRacer):
+      Promise<OYCredential|null> {
     this.checkNotDisposed();
     const request = new HintRequest(this.frameManager, this.channel);
     return await request.dispatch(options, timeoutRacer);
   }
 
-  async retrieve(options: CredentialRequestOptions, timeoutRacer: TimeoutRacer):
-      Promise<Credential|null> {
+  async retrieve(
+      options: OYCredentialRequestOptions,
+      timeoutRacer: TimeoutRacer): Promise<OYCredential|null> {
     this.checkNotDisposed();
     const request = new CredentialRequest(this.frameManager, this.channel);
     return await request.dispatch(options, timeoutRacer);
   }
 
-  async save(credential: Credential, timeoutRacer: TimeoutRacer) {
+  async save(credential: OYCredential, timeoutRacer: TimeoutRacer) {
     this.checkNotDisposed();
     const request = new CredentialSave(this.frameManager, this.channel);
     return await request.dispatch(credential, timeoutRacer);
   }
 
-  async proxyLogin(credential: Credential, timeoutRacer: TimeoutRacer):
-      Promise<ProxyLoginResponse> {
+  async proxyLogin(credential: OYCredential, timeoutRacer: TimeoutRacer):
+      Promise<OYProxyLoginResponse> {
     this.checkNotDisposed();
     const request = new ProxyLogin(this.frameManager, this.channel);
     return await request.dispatch(credential, timeoutRacer);
@@ -460,21 +462,22 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
                                          defaultTimeoutMs);
   }
 
-  async hintsAvailable(options: CredentialHintOptions): Promise<boolean> {
+  async hintsAvailable(options: OYCredentialHintOptions): Promise<boolean> {
     const timeoutRacer =
         this.startCustomTimeoutRacer(DEFAULT_TIMEOUTS.hintsAvailable);
     const impl = await this.init(timeoutRacer);
     return await impl.hintsAvailable(options, timeoutRacer);
   }
 
-  async hint(options: CredentialHintOptions): Promise<Credential|null> {
+  async hint(options: OYCredentialHintOptions): Promise<OYCredential|null> {
     const preloadRequest = {type: PreloadRequestType.hint, options};
     const timeoutRacer = this.startCustomTimeoutRacer(DEFAULT_TIMEOUTS.hint);
     const impl = await this.init(timeoutRacer, preloadRequest);
     return await impl.hint(options, timeoutRacer);
   }
 
-  async retrieve(options: CredentialRequestOptions): Promise<Credential|null> {
+  async retrieve(options: OYCredentialRequestOptions):
+      Promise<OYCredential|null> {
     const preloadRequest = {type: PreloadRequestType.retrieve, options};
     const timeoutRacer =
         this.startCustomTimeoutRacer(DEFAULT_TIMEOUTS.retrieve);
@@ -482,7 +485,7 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
     return impl.retrieve(options, timeoutRacer);
   }
 
-  async save(credential: Credential): Promise<void> {
+  async save(credential: OYCredential): Promise<void> {
     const timeoutRacer = this.startCustomTimeoutRacer(DEFAULT_TIMEOUTS.save);
     const impl = await this.init(timeoutRacer);
     return impl.save(credential, timeoutRacer);
@@ -495,7 +498,7 @@ class InitializeOnDemandApi implements OnDemandOpenYoloApi {
     return impl.disableAutoSignIn(timeoutRacer);
   }
 
-  async proxyLogin(credential: Credential): Promise<ProxyLoginResponse> {
+  async proxyLogin(credential: OYCredential): Promise<OYProxyLoginResponse> {
     const timeoutRacer =
         this.startCustomTimeoutRacer(DEFAULT_TIMEOUTS.proxyLogin);
     const impl = await this.init(timeoutRacer);

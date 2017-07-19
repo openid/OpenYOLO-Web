@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {ClientConfiguration, PrimaryClientConfiguration} from '../protocol/client_config';
+import {PrimaryClientConfiguration} from '../protocol/client_config';
 import {AUTHENTICATION_METHODS, Credential, CredentialHintOptions, CredentialRequestOptions} from '../protocol/data';
 import {OpenYoloError} from '../protocol/errors';
 import * as msg from '../protocol/rpc_messages';
@@ -233,13 +233,13 @@ describe('ProviderFrame', () => {
     });
 
     it('rejects unknown requests', async function(done) {
-      clientChannel.listen(msg.RPC_MESSAGE_TYPES.error, (data) => {
+      clientChannel.listen(msg.RpcMessageType.error, (data) => {
         expectMessageContents(
             data,
             msg.errorMessage(
                 requestId,
                 OpenYoloError.unknownRequest(
-                    msg.RPC_MESSAGE_TYPES.hintAvailableResult)));
+                    msg.RpcMessageType.hintAvailableResult)));
         done();
       });
 
@@ -248,7 +248,7 @@ describe('ProviderFrame', () => {
     });
 
     it('rejects concurrent requests', async function(done) {
-      clientChannel.listen(msg.RPC_MESSAGE_TYPES.error, (data) => {
+      clientChannel.listen(msg.RpcMessageType.error, (data) => {
         expectMessageContents(
             data,
             msg.errorMessage(
@@ -270,7 +270,7 @@ describe('ProviderFrame', () => {
             await localStateProvider.isAutoSignInEnabled(TEST_AUTH_DOMAIN);
         expect(enabledBefore).toBe(true);
         clientChannel.listen(
-            msg.RPC_MESSAGE_TYPES.disableAutoSignInResult, async function(res) {
+            msg.RpcMessageType.disableAutoSignInResult, async function(res) {
               let enabledAfter = await localStateProvider.isAutoSignInEnabled(
                   TEST_AUTH_DOMAIN);
               expect(enabledAfter).toBe(false);
@@ -290,7 +290,7 @@ describe('ProviderFrame', () => {
       it('should return no credentials when the store is empty',
          async function(done) {
            credentialDataProvider.credentials = [];
-           clientChannel.listen(msg.RPC_MESSAGE_TYPES.none, done);
+           clientChannel.listen(msg.RpcMessageType.none, done);
            clientChannel.send(
                msg.retrieveMessage(requestId, passwordOnlyRequest));
          });
@@ -307,7 +307,7 @@ describe('ProviderFrame', () => {
                      return Promise.resolve();
                    });
 
-           clientChannel.listen(msg.RPC_MESSAGE_TYPES.credential, (data) => {
+           clientChannel.listen(msg.RpcMessageType.credential, (data) => {
              expectMessageContents(
                  data, msg.credentialResultMessage(requestId, alicePwdCred));
              done();
@@ -333,20 +333,20 @@ describe('ProviderFrame', () => {
         let errorPromise = new PromiseResolver<void>();
 
         clientChannel.listen(
-            msg.RPC_MESSAGE_TYPES.credential,
+            msg.RpcMessageType.credential,
             (data) => {
                 // does nothing, only adding this to suppress a warning
                 // about unknown message types
             });
 
         clientChannel.listen(
-            msg.RPC_MESSAGE_TYPES.cancelLastOperationResult, (data) => {
+            msg.RpcMessageType.cancelLastOperationResult, (data) => {
               expectMessageContents(
                   data, msg.cancelLastOperationResultMessage(requestId));
               cancelPromise.resolve();
             });
 
-        clientChannel.listen(msg.RPC_MESSAGE_TYPES.error, (data) => {
+        clientChannel.listen(msg.RpcMessageType.error, (data) => {
           expectMessageContents(
               data,
               msg.errorMessage(requestId, OpenYoloError.clientCancelled()));
@@ -365,7 +365,7 @@ describe('ProviderFrame', () => {
         // we expect the "carl" credential to be filtered out, as it has
         // an authentication method that is not on the request list.
         credentialDataProvider.credentials = [carlGoogCred];
-        clientChannel.listen(msg.RPC_MESSAGE_TYPES.none, (data) => {
+        clientChannel.listen(msg.RpcMessageType.none, (data) => {
           expectMessageContents(data, msg.noneAvailableMessage(requestId));
           done();
         });
@@ -393,7 +393,7 @@ describe('ProviderFrame', () => {
                      return Promise.resolve(alicePwdCred);
                    });
 
-           clientChannel.listen(msg.RPC_MESSAGE_TYPES.credential, (data) => {
+           clientChannel.listen(msg.RpcMessageType.credential, (data) => {
              expect(expectFinalResult).toBeTruthy();
              expectMessageContents(
                  data, msg.credentialResultMessage(requestId, alicePwdCred));
@@ -448,7 +448,7 @@ describe('ProviderFrame', () => {
                      return Promise.resolve(bobPwdCred);
                    });
 
-           clientChannel.listen(msg.RPC_MESSAGE_TYPES.credential, (data) => {
+           clientChannel.listen(msg.RpcMessageType.credential, (data) => {
              expect(expectFinalResult).toBeTruthy();
              expectMessageContents(
                  data, msg.credentialResultMessage(requestId, bobPwdCred));
@@ -473,7 +473,7 @@ describe('ProviderFrame', () => {
                      return Promise.reject(OpenYoloError.canceled());
                    });
 
-           clientChannel.listen(msg.RPC_MESSAGE_TYPES.none, (data) => {
+           clientChannel.listen(msg.RpcMessageType.none, (data) => {
              expect(expectFinalResult).toBeTruthy();
              expectMessageContents(data, msg.noneAvailableMessage(requestId));
              done();
@@ -488,7 +488,7 @@ describe('ProviderFrame', () => {
            clientConfig.requireProxyLogin = true;
            credentialDataProvider.credentials = [alicePwdCred];
 
-           clientChannel.listen(msg.RPC_MESSAGE_TYPES.credential, (data) => {
+           clientChannel.listen(msg.RpcMessageType.credential, (data) => {
              // the password should be removed
              expectMessageContents(
                  data, msg.credentialResultMessage(requestId, {
@@ -509,7 +509,7 @@ describe('ProviderFrame', () => {
            frameConfig.allowDirectAuth = false;
            credentialDataProvider.credentials = [alicePwdCred];
 
-           clientChannel.listen(msg.RPC_MESSAGE_TYPES.credential, (data) => {
+           clientChannel.listen(msg.RpcMessageType.credential, (data) => {
              // the password should be removed
              expectMessageContents(
                  data, msg.credentialResultMessage(requestId, {
@@ -539,11 +539,10 @@ describe('ProviderFrame', () => {
       it('should return false when the store is empty', async function(done) {
         credentialDataProvider.credentials = [];
 
-        clientChannel.listen(
-            msg.RPC_MESSAGE_TYPES.hintAvailableResult, (res) => {
-              expect(res.args).toBe(false);
-              done();
-            });
+        clientChannel.listen(msg.RpcMessageType.hintAvailableResult, (res) => {
+          expect(res.args).toBe(false);
+          done();
+        });
 
         clientChannel.send(
             msg.hintAvailableMessage(requestId, pwdOrFbHintOptions));
@@ -555,11 +554,10 @@ describe('ProviderFrame', () => {
         // generated.
         credentialDataProvider.credentials = [carlGoogCred];
 
-        clientChannel.listen(
-            msg.RPC_MESSAGE_TYPES.hintAvailableResult, (res) => {
-              expect(res.args).toBe(false);
-              done();
-            });
+        clientChannel.listen(msg.RpcMessageType.hintAvailableResult, (res) => {
+          expect(res.args).toBe(false);
+          done();
+        });
 
         clientChannel.send(
             msg.hintAvailableMessage(requestId, pwdOrFbHintOptions));
@@ -568,11 +566,10 @@ describe('ProviderFrame', () => {
       it('should return true if hint available', async function(done) {
         credentialDataProvider.credentials = [elisaOtherDomainCred];
 
-        clientChannel.listen(
-            msg.RPC_MESSAGE_TYPES.hintAvailableResult, (res) => {
-              expect(res.args).toBe(true);
-              done();
-            });
+        clientChannel.listen(msg.RpcMessageType.hintAvailableResult, (res) => {
+          expect(res.args).toBe(true);
+          done();
+        });
 
         clientChannel.send(
             msg.hintAvailableMessage(requestId, pwdOrFbHintOptions));
@@ -592,7 +589,8 @@ describe('ProviderFrame', () => {
       function expectPickFromHints(
           expectedHints: Credential[],
           selection: Credential|null,
-          expectedResult: msg.RpcMessage<'credential'>|msg.RpcMessage<'none'>,
+          expectedResult: msg.RpcMessage<msg.RpcMessageType.credential>|
+          msg.RpcMessage<msg.RpcMessageType.none>,
           neverResolve: boolean = false) {
         let promiseResolver = new PromiseResolver<void>();
         let expectFinalResult = false;
@@ -619,9 +617,9 @@ describe('ProviderFrame', () => {
                   }
                 });
 
-        clientChannel.listen(msg.RPC_MESSAGE_TYPES.credential, (data) => {
+        clientChannel.listen(msg.RpcMessageType.credential, (data) => {
           expect(expectFinalResult).toBeTruthy();
-          if (expectedResult.type !== msg.RPC_MESSAGE_TYPES.credential) {
+          if (expectedResult.type !== msg.RpcMessageType.credential) {
             fail('Received unexpected credential result');
             return;
           }
@@ -629,9 +627,9 @@ describe('ProviderFrame', () => {
           promiseResolver.resolve();
         });
 
-        clientChannel.listen(msg.RPC_MESSAGE_TYPES.none, (data) => {
+        clientChannel.listen(msg.RpcMessageType.none, (data) => {
           expect(expectFinalResult).toBeTruthy();
-          if (expectedResult.type !== msg.RPC_MESSAGE_TYPES.none) {
+          if (expectedResult.type !== msg.RpcMessageType.none) {
             fail('Received cancelation instead of expected credential');
             return;
           }
@@ -646,7 +644,7 @@ describe('ProviderFrame', () => {
          async function(done) {
            credentialDataProvider.credentials = [];
 
-           clientChannel.listen(msg.RPC_MESSAGE_TYPES.none, (m) => {
+           clientChannel.listen(msg.RpcMessageType.none, (m) => {
              done();
            });
 
@@ -659,7 +657,7 @@ describe('ProviderFrame', () => {
         // generated.
         credentialDataProvider.credentials = [carlGoogCred];
 
-        clientChannel.listen(msg.RPC_MESSAGE_TYPES.none, (m) => {
+        clientChannel.listen(msg.RpcMessageType.none, (m) => {
           done();
         });
 
@@ -711,7 +709,7 @@ describe('ProviderFrame', () => {
                });
 
            clientChannel.listen(
-               msg.RPC_MESSAGE_TYPES.cancelLastOperationResult, (data) => {
+               msg.RpcMessageType.cancelLastOperationResult, (data) => {
                  expectMessageContents(
                      data, msg.cancelLastOperationResultMessage(requestId));
                  done();
@@ -810,10 +808,10 @@ class TestAffiliationProvider implements AffiliationProvider {
 }
 
 class TestClientConfigurationProvider implements ClientConfigurationProvider {
-  configMap: {[key: string]: ClientConfiguration} = {};
+  configMap: {[key: string]: PrimaryClientConfiguration} = {};
 
   async getConfiguration(authDomain: string):
-      Promise<ClientConfiguration|null> {
+      Promise<PrimaryClientConfiguration|null> {
     if (authDomain in this.configMap) {
       return this.configMap[authDomain];
     }

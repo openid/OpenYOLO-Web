@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import {OpenYoloError} from '../protocol/errors';
-import {errorMessage, noneAvailableMessage, RPC_MESSAGE_TYPES, showProviderMessage} from '../protocol/rpc_messages';
+import {InternalErrorCode, OpenYoloError} from '../protocol/errors';
+import {errorMessage, noneAvailableMessage, RpcMessageType, showProviderMessage} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {startTimeoutRacer} from '../protocol/utils';
 import {FakeProviderConnection} from '../test_utils/channels';
@@ -60,13 +60,13 @@ describe('BaseRequest', () => {
 
   describe('registerHandler', () => {
     beforeEach(() => {
-      request.registerHandler(RPC_MESSAGE_TYPES.none, handlerSpy);
+      request.registerHandler(RpcMessageType.none, handlerSpy);
     });
 
     it('should unlisten when disposed', () => {
       // Listener for a different message type.
       request.registerHandler(
-          RPC_MESSAGE_TYPES.credential, jasmine.createSpy('messageSpy'));
+          RpcMessageType.credential, jasmine.createSpy('messageSpy'));
       request.dispose();
       expect(unlistenSpy).toHaveBeenCalledTimes(2);
     });
@@ -97,7 +97,8 @@ describe('BaseRequest', () => {
                 done.fail('Should not be a success!');
               },
               (error) => {
-                expect(OpenYoloError.errorIs(error, 'requestTimeout'))
+                expect(OpenYoloError.errorIs(
+                           error, InternalErrorCode.requestTimeout))
                     .toBe(true);
                 expect(frame.hide).toHaveBeenCalled();
                 done();

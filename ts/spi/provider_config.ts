@@ -15,7 +15,7 @@
  */
 
 import {PrimaryClientConfiguration} from '../protocol/client_config';
-import {Credential, CredentialHintOptions} from '../protocol/data';
+import {Credential, CredentialHintOptions, CredentialRequestOptions} from '../protocol/data';
 import {DisplayOptions} from '../protocol/rpc_messages';
 
 /**
@@ -90,7 +90,8 @@ export interface ClientConfigurationProvider {
   /**
    * Returns the client configuration for the specified domain, if available.
    */
-  getConfiguration(authDomain: string): Promise<PrimaryClientConfiguration>;
+  getConfiguration(authDomain: string):
+      Promise<PrimaryClientConfiguration|null>;
 }
 
 /**

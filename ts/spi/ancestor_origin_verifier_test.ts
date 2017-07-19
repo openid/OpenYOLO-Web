@@ -15,7 +15,7 @@
  */
 
 import {OpenYoloError} from '../protocol/errors';
-import {POST_MESSAGE_TYPES, verifyAckMessage, verifyPingMessage} from '../protocol/post_messages';
+import {PostMessageType, verifyAckMessage, verifyPingMessage} from '../protocol/post_messages';
 import {MockWindow} from '../test_utils/frames';
 import {createMessageEvent} from '../test_utils/messages';
 import {JasmineTimeoutManager} from '../test_utils/timeout';
@@ -61,10 +61,8 @@ describe('AncestorOriginVerifier', () => {
       // the verification message should be sent
       expect(postMessageSpy)
           .toHaveBeenCalledWith(
-              jasmine.objectContaining({
-                type: POST_MESSAGE_TYPES.verifyPing,
-                data: jasmine.anything()
-              }),
+              jasmine.objectContaining(
+                  {type: PostMessageType.verifyPing, data: jasmine.anything()}),
               '*');
     });
 
@@ -91,7 +89,7 @@ describe('AncestorOriginVerifier', () => {
       let parentOrigin = permittedOrigins[0];
 
       parentFrame.addEventListener('message', (ev: MessageEvent) => {
-        expect(ev.data.type).toBe(POST_MESSAGE_TYPES.verifyPing);
+        expect(ev.data.type).toBe(PostMessageType.verifyPing);
         // simulate the response message from the valid parent origin, and
         // with the received nonce value
         providerFrame.postMessageFromOrigin(
@@ -109,7 +107,7 @@ describe('AncestorOriginVerifier', () => {
 
          let pingReceived = false;
          parentFrame.addEventListener('message', (ev: MessageEvent) => {
-           expect(ev.data.type).toBe(POST_MESSAGE_TYPES.verifyPing);
+           expect(ev.data.type).toBe(PostMessageType.verifyPing);
            pingReceived = true;
            // simulate the response message from the wrong origin
            providerFrame.postMessageFromOrigin(
@@ -131,7 +129,7 @@ describe('AncestorOriginVerifier', () => {
       let parentOrigin = permittedOrigins[0];
 
       parentFrame.addEventListener('message', (ev: MessageEvent) => {
-        expect(ev.data.type).toBe(POST_MESSAGE_TYPES.verifyPing);
+        expect(ev.data.type).toBe(PostMessageType.verifyPing);
         // simulate the response message from the valid parent origin,
         // but with a different nonce
         providerFrame.postMessageFromOrigin(
@@ -156,7 +154,7 @@ describe('AncestorOriginVerifier', () => {
       let parentOrigin = permittedOrigins[0];
 
       parentFrame.addEventListener('message', (ev: MessageEvent) => {
-        expect(ev.data.type).toBe(POST_MESSAGE_TYPES.verifyPing);
+        expect(ev.data.type).toBe(PostMessageType.verifyPing);
         // simulate the response message from the valid parent origin,
         // but with another ping instead of an ack
         providerFrame.postMessageFromOrigin(
@@ -180,7 +178,7 @@ describe('AncestorOriginVerifier', () => {
 
          let pingReceived = false;
          parentFrame.addEventListener('message', (ev: MessageEvent) => {
-           expect(ev.data.type).toBe(POST_MESSAGE_TYPES.verifyPing);
+           expect(ev.data.type).toBe(PostMessageType.verifyPing);
            pingReceived = true;
            // simulate the response message from the valid parent origin,
            // but with a source that is not the provider frame

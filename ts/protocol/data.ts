@@ -26,7 +26,7 @@ import {PasswordSpecification} from './password_spec';
 /**
  * Represents a credential which may be usable to sign in.
  */
-export interface Credential {
+export interface OYCredential {
   /**
    * The unique identifier for the credential within the scope of the
    * authentication system. This is typically an email address, phone number
@@ -102,7 +102,7 @@ export interface Credential {
 /**
  * Encapsulates the response from the authentication system to a proxy login.
  */
-export interface ProxyLoginResponse {
+export interface OYProxyLoginResponse {
   statusCode: number;
   responseText: string;
 }
@@ -111,7 +111,7 @@ export interface ProxyLoginResponse {
  * The set of parameters passed from the client for a credential retrieval
  * request.
  */
-export interface CredentialRequestOptions {
+export interface OYCredentialRequestOptions {
   /**
    * The supported authentication methods supported by the origin, described
    * as a list of absolute, hierarchical URLs with no path. See
@@ -151,7 +151,7 @@ export interface TokenProvider {
 /**
  * The set of parameters passed from the client for a hint retrieval request.
  */
-export interface CredentialHintOptions {
+export interface OYCredentialHintOptions {
   /**
    * The supported authentication methods supported by the origin, described
    * as a list of absolute, hierarchical URLs with no path. See

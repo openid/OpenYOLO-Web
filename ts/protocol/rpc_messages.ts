@@ -78,27 +78,32 @@ function rpcDataValidator(dataValidator: DataValidator): DataValidator {
   };
 }
 
-export const RPC_MESSAGE_DATA_VALIDATORS:
-    {[K in RpcMessageType]: DataValidator} = {
-      'disableAutoSignIn': rpcDataValidator(isUndefined),
-      'disableAutoSignInResult': rpcDataValidator(isUndefined),
-      'retrieve': rpcDataValidator(isValidRequestOptions),
-      'hintAvailable': rpcDataValidator(isValidHintOptions),
-      'hintAvailableResult': rpcDataValidator(isBoolean),
-      'hint': rpcDataValidator(isValidHintOptions),
-      'save': rpcDataValidator(isValidCredential),
-      'saveResult': rpcDataValidator(isBoolean),
-      'proxy': rpcDataValidator(isValidCredential),
-      'proxyResult': rpcDataValidator(isValidProxyLoginResponse),
-      'wrapBrowser': rpcDataValidator(isUndefined),
-      'wrapBrowserResult': rpcDataValidator(isBoolean),
-      'showProvider': rpcDataValidator(isValidDisplayOptions),
-      'none': rpcDataValidator(isUndefined),
-      'credential': rpcDataValidator(isValidCredential),
-      'error': rpcDataValidator(isValidError),
-      'cancelLastOperation': rpcDataValidator(isUndefined),
-      'cancelLastOperationResult': rpcDataValidator(isUndefined)
-    };
+// It is required to provide such index signature to enforce the type of the map
+// association.
+export type RpcMessageDataValidators = {
+  [K in RpcMessageType]: DataValidator
+} & {[key: string]: DataValidator};
+
+export const RPC_MESSAGE_DATA_VALIDATORS: RpcMessageDataValidators = {
+  'disableAutoSignIn': rpcDataValidator(isUndefined),
+  'disableAutoSignInResult': rpcDataValidator(isUndefined),
+  'retrieve': rpcDataValidator(isValidRequestOptions),
+  'hintAvailable': rpcDataValidator(isValidHintOptions),
+  'hintAvailableResult': rpcDataValidator(isBoolean),
+  'hint': rpcDataValidator(isValidHintOptions),
+  'save': rpcDataValidator(isValidCredential),
+  'saveResult': rpcDataValidator(isBoolean),
+  'proxy': rpcDataValidator(isValidCredential),
+  'proxyResult': rpcDataValidator(isValidProxyLoginResponse),
+  'wrapBrowser': rpcDataValidator(isUndefined),
+  'wrapBrowserResult': rpcDataValidator(isBoolean),
+  'showProvider': rpcDataValidator(isValidDisplayOptions),
+  'none': rpcDataValidator(isUndefined),
+  'credential': rpcDataValidator(isValidCredential),
+  'error': rpcDataValidator(isValidError),
+  'cancelLastOperation': rpcDataValidator(isUndefined),
+  'cancelLastOperationResult': rpcDataValidator(isUndefined)
+};
 
 export interface CredentialResponseData { credential: Credential; }
 

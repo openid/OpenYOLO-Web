@@ -14,10 +14,18 @@
  * limitations under the License.
  */
 
-import {POST_MESSAGE_DATA_VALIDATORS, PostMessageType} from './post_messages';
-import {RPC_MESSAGE_DATA_VALIDATORS, RpcMessageType} from './rpc_messages';
+import {POST_MESSAGE_DATA_VALIDATORS, PostMessageData, PostMessageType} from './post_messages';
+import {RPC_MESSAGE_DATA_VALIDATORS, RpcMessageData, RpcMessageType} from './rpc_messages';
 
 export type MessageType = PostMessageType | RpcMessageType;
+
+export type MessageData<T extends MessageType> =
+    PostMessageData<T&PostMessageType>| RpcMessageData<T&RpcMessageType>;
+
+export interface Message<T extends MessageType> {
+  type: T;
+  data: MessageData<T>;
+}
 
 export function isOpenYoloMessageFormat(msgData: any) {
   return !!msgData && typeof msgData === 'object' && 'type' in msgData &&

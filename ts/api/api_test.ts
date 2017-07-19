@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {Credential, CredentialHintOptions, CredentialRequestOptions, ProxyLoginResponse} from '../protocol/data';
+import {OYCredential, OYCredentialHintOptions, OYCredentialRequestOptions, OYProxyLoginResponse} from '../protocol/data';
 import {InternalErrorCode, OpenYoloError} from '../protocol/errors';
 import {SecureChannel} from '../protocol/secure_channel';
 
@@ -29,7 +29,7 @@ import {ProxyLogin} from './proxy_login';
 import {WrapBrowserRequest} from './wrap_browser_request';
 
 describe('OpenYolo API', () => {
-  const credential: Credential = {id: 'test', authMethod: 'test'};
+  const credential: OYCredential = {id: 'test', authMethod: 'test'};
   const expectedError = new Error('ERROR!');
   const secureChannelSpy =
       jasmine.createSpyObj('SecureChannel', ['send', 'dispose']);
@@ -97,7 +97,7 @@ describe('OpenYolo API', () => {
       });
 
       describe('hintsAvailable', () => {
-        const options: CredentialHintOptions = {supportedAuthMethods: []};
+        const options: OYCredentialHintOptions = {supportedAuthMethods: []};
 
         it('works', async function(done) {
           spyOn(HintAvailableRequest.prototype, 'dispatch')
@@ -130,7 +130,7 @@ describe('OpenYolo API', () => {
       });
 
       describe('hint', () => {
-        const options: CredentialHintOptions = {supportedAuthMethods: []};
+        const options: OYCredentialHintOptions = {supportedAuthMethods: []};
 
         it('works', async function(done) {
           spyOn(HintRequest.prototype, 'dispatch')
@@ -156,7 +156,7 @@ describe('OpenYolo API', () => {
       });
 
       describe('retrieve', () => {
-        const options: CredentialRequestOptions = {supportedAuthMethods: []};
+        const options: OYCredentialRequestOptions = {supportedAuthMethods: []};
 
         it('works', async function(done) {
           spyOn(CredentialRequest.prototype, 'dispatch')
@@ -208,7 +208,7 @@ describe('OpenYolo API', () => {
       describe('proxyLogin', () => {
         it('works', async function(done) {
           const expectedResponse:
-              ProxyLoginResponse = {statusCode: 200, responseText: 'test'};
+              OYProxyLoginResponse = {statusCode: 200, responseText: 'test'};
           spyOn(ProxyLogin.prototype, 'dispatch')
               .and.returnValue(Promise.resolve(expectedResponse));
           openyolo.proxyLogin(credential).then((result) => {
@@ -259,7 +259,7 @@ describe('OpenYolo API', () => {
       });
 
       describe('hintsAvailable', () => {
-        const options: CredentialHintOptions = {supportedAuthMethods: []};
+        const options: OYCredentialHintOptions = {supportedAuthMethods: []};
 
         it('never times out', async function(done) {
           spyOn(HintAvailableRequest.prototype, 'dispatch');
@@ -276,7 +276,7 @@ describe('OpenYolo API', () => {
       });
 
       describe('hint', () => {
-        const options: CredentialHintOptions = {supportedAuthMethods: []};
+        const options: OYCredentialHintOptions = {supportedAuthMethods: []};
 
         it('never times out', async function(done) {
           spyOn(HintRequest.prototype, 'dispatch');
@@ -293,7 +293,7 @@ describe('OpenYolo API', () => {
       });
 
       describe('retrieve', () => {
-        const options: CredentialRequestOptions = {supportedAuthMethods: []};
+        const options: OYCredentialRequestOptions = {supportedAuthMethods: []};
 
         it('never times out', async function(done) {
           spyOn(CredentialRequest.prototype, 'dispatch');
@@ -404,7 +404,7 @@ describe('OpenYolo API', () => {
       });
 
       describe('hintsAvailable', () => {
-        const options: CredentialHintOptions = {supportedAuthMethods: []};
+        const options: OYCredentialHintOptions = {supportedAuthMethods: []};
 
         it('times out', async function(done) {
           openyolo.hintsAvailable(options).then(
@@ -438,7 +438,7 @@ describe('OpenYolo API', () => {
       });
 
       describe('hint', () => {
-        const options: CredentialHintOptions = {supportedAuthMethods: []};
+        const options: OYCredentialHintOptions = {supportedAuthMethods: []};
 
         it('times out', async function(done) {
           openyolo.hint(options).then(
@@ -456,7 +456,7 @@ describe('OpenYolo API', () => {
       });
 
       describe('retrieve', () => {
-        const options: CredentialRequestOptions = {supportedAuthMethods: []};
+        const options: OYCredentialRequestOptions = {supportedAuthMethods: []};
 
         it('times out', async function(done) {
           openyolo.retrieve(options).then(

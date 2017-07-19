@@ -17,7 +17,7 @@
 import {createUntypedMessageEvent} from '../test_utils/messages';
 
 import {createMessageListener, isPermittedOrigin, PostMessageListener, sendMessage} from './comms';
-import {channelReadyMessage, POST_MESSAGE_TYPES} from './post_messages';
+import {channelReadyMessage, PostMessageType} from './post_messages';
 
 describe('comms', () => {
   describe('isPermittedOrigin', () => {
@@ -52,12 +52,12 @@ describe('comms', () => {
   });
 
   describe('createMessageListener', () => {
-    let spy: PostMessageListener<typeof POST_MESSAGE_TYPES.verifyPing>;
+    let spy: PostMessageListener<typeof PostMessageType.verifyPing>;
     let listener: EventListener;
 
     beforeEach(() => {
       spy = jasmine.createSpy('listener');
-      listener = createMessageListener(POST_MESSAGE_TYPES.verifyPing, spy);
+      listener = createMessageListener(PostMessageType.verifyPing, spy);
     });
 
     it('ignores events without content', () => {
@@ -80,16 +80,16 @@ describe('comms', () => {
     it('filters events with invalid data', () => {
       // ping message data must be a string
       let event = createUntypedMessageEvent(
-          {data: {type: POST_MESSAGE_TYPES.verifyPing, data: 0}});
+          {data: {type: PostMessageType.verifyPing, data: 0}});
       listener(event);
       expect(spy).not.toHaveBeenCalled();
     });
 
     it('passes valid messages', () => {
-      let event = {data: {type: POST_MESSAGE_TYPES.verifyPing, data: '123'}};
+      let event = {data: {type: PostMessageType.verifyPing, data: '123'}};
       listener(event as MessageEvent);
       expect(spy).toHaveBeenCalledWith(
-          '123', POST_MESSAGE_TYPES.verifyPing, event);
+          '123', PostMessageType.verifyPing, event);
     });
   });
 });
