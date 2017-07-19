@@ -26,7 +26,7 @@ export class CredentialSave extends BaseRequest<void, OYCredential> {
       if (saved) {
         this.resolve();
       } else {
-        this.reject(OYInternalError.userCanceled());
+        this.reject(OYInternalError.userCanceled().toExposedError());
       }
       this.dispose();
     });

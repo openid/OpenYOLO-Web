@@ -92,16 +92,17 @@ export class ProviderFrame {
 
     } catch (err) {
       // initialization failed, be courteous and notify the client as this
-      // may not actually be their fault. However, don't send the actual
-      // root cause to the client in case this leaks sensitive information.
-
-      // TODO(iainmcgin): some messages would be safe to send to the client.
-      // we could indicate this within the OpenYoloError type, with a
-      // "client safe" flag for messages that cannot contain sensitive
-      // information, and that would be useful to the client.
-      sendMessage(
-          providerConfig.window.parent,
-          channelErrorMessage(OYInternalError.providerInitializationFailed()));
+      // may not actually be their fault.
+      if (typeof err.toExposedError === 'function') {
+        sendMessage(
+            providerConfig.window.parent,
+            channelErrorMessage(err.toExposedError()));
+      } else {
+        sendMessage(
+            providerConfig.window.parent,
+            channelErrorMessage(
+                OYInternalError.unknownError().toExposedError()));
+      }
 
       throw err;
     }
@@ -140,7 +141,7 @@ export class ProviderFrame {
   private async handleClose() {
     sendMessage(
         this.providerConfig.window.parent,
-        channelErrorMessage(OYInternalError.userCanceled()));
+        channelErrorMessage(OYInternalError.userCanceled().toExposedError()));
   }
 
   private registerListeners() {
@@ -205,8 +206,8 @@ export class ProviderFrame {
         console.info('Caught a cancel signal', error);
         // reset cancellable promise, for the next set of requests
         this.cancellable = null;
-        this.clientChannel.send(
-            msg.errorMessage(m.id, OYInternalError.operationCanceled()));
+        this.clientChannel.send(msg.errorMessage(
+            m.id, OYInternalError.operationCanceled().toExposedError()));
       } else {
         throw error;
       }
@@ -231,7 +232,8 @@ export class ProviderFrame {
 
     console.error(`Concurrent request ${requestId} received, rejecting`);
     this.clientChannel.send(msg.errorMessage(
-        requestId, OYInternalError.illegalConcurrentRequestError()));
+        requestId,
+        OYInternalError.illegalConcurrentRequestError().toExposedError()));
     return false;
   }
 
@@ -407,8 +409,8 @@ export class ProviderFrame {
    */
   private async handleUnimplementedRequest(id: string, type: string) {
     console.error(`No implementation for request of type ${type}`);
-    this.clientChannel.send(
-        msg.errorMessage(id, OYInternalError.unknownRequest(type)));
+    this.clientChannel.send(msg.errorMessage(
+        id, OYInternalError.unknownRequest(type).toExposedError()));
   }
 
   private handleUnknownMessage(ev: MessageEvent) {
@@ -437,8 +439,8 @@ export class ProviderFrame {
     const data = (ev.data.data as msg.RpcMessageData<any>);
     // the message is a known, valid, but unhandled RPC message. Send a generic
     // failure message back.
-    this.clientChannel.send(
-        msg.errorMessage(data.id, OYInternalError.unknownRequest(type)));
+    this.clientChannel.send(msg.errorMessage(
+        data.id, OYInternalError.unknownRequest(type).toExposedError()));
     return;
   }
 

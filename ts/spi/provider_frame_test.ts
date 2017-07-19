@@ -238,8 +238,9 @@ describe('ProviderFrame', () => {
             data,
             msg.errorMessage(
                 requestId,
-                OYInternalError.unknownRequest(
-                    msg.RpcMessageType.hintAvailableResult)));
+                OYInternalError
+                    .unknownRequest(msg.RpcMessageType.hintAvailableResult)
+                    .toExposedError()));
         done();
       });
 
@@ -252,7 +253,9 @@ describe('ProviderFrame', () => {
         expectMessageContents(
             data,
             msg.errorMessage(
-                requestId, OYInternalError.illegalConcurrentRequestError()));
+                requestId,
+                OYInternalError.illegalConcurrentRequestError()
+                    .toExposedError()));
         done();
       });
 
@@ -349,7 +352,9 @@ describe('ProviderFrame', () => {
         clientChannel.listen(msg.RpcMessageType.error, (data) => {
           expectMessageContents(
               data,
-              msg.errorMessage(requestId, OYInternalError.operationCanceled()));
+              msg.errorMessage(
+                  requestId,
+                  OYInternalError.operationCanceled().toExposedError()));
           errorPromise.resolve();
         });
 

@@ -86,7 +86,8 @@ describe('ProxyLogin', () => {
     it('rejects if an error message is received', async function(done) {
       let promise = request.dispatch(credential);
 
-      let expectedError = OYInternalError.requestFailed('error!');
+      let expectedError =
+          OYInternalError.requestFailed('error!').toExposedError();
       providerChannel.send(errorMessage(request.id, expectedError));
 
       try {

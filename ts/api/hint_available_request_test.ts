@@ -84,7 +84,8 @@ describe('HintAvailableRequest', () => {
 
   it('should fail if error returned', async function(done) {
     let promise = request.dispatch(passwordOnlyOptions);
-    let expectedError = OYInternalError.requestFailed('error!');
+    let expectedError =
+        OYInternalError.requestFailed('error!').toExposedError();
     providerChannel.send(errorMessage(request.id, expectedError));
 
     try {

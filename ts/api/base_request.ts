@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {InternalErrorCode, OYErrorData, OYInternalError} from '../protocol/errors';
+import {OpenYoloError, OpenYoloErrorType, OYExposedErrorData, OYInternalError} from '../protocol/errors';
 import {RpcMessageArgumentTypes, RpcMessageData, RpcMessageType} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {generateId, PromiseResolver, startTimeoutRacer, TimeoutRacer} from '../protocol/utils';
@@ -75,7 +75,7 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
       // Handle specifically a timeout error.
       this.frame.hide();
       this.dispose();
-      throw OYInternalError.requestTimeout();
+      throw OYInternalError.requestTimeout().toExposedError();
     }
   }
 
@@ -91,12 +91,12 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
   private registerBaseHandlers() {
     this.debugLog('request instantiated');
     // Register a standard error handler.
-    this.registerHandler(RpcMessageType.error, (data: OYErrorData) => {
-      let error: OYInternalError;
+    this.registerHandler(RpcMessageType.error, (data: OYExposedErrorData) => {
+      let error: OpenYoloError;
       if (data) {
-        error = new OYInternalError(data);
+        error = OpenYoloError.fromData(data);
       } else {
-        error = OYInternalError.unknownError();
+        error = OYInternalError.unknownError().toExposedError();
       }
 
       this.debugLog(`request failed: ${error}`);
@@ -126,11 +126,11 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
     this.frame.hide();
   }
 
-  reject(reason: OYInternalError) {
+  reject(reason: OpenYoloError) {
     this.promiseResolver.reject(reason);
     // Do not hide the IFrame in case of concurrent request, to allow the
     // previous one to finish.
-    if (reason.data.code !== InternalErrorCode.illegalConcurrentRequest) {
+    if (reason.type !== OpenYoloErrorType.illegalConcurrentRequest) {
       this.frame.hide();
     }
   }

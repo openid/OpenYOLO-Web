@@ -36,7 +36,7 @@ export enum InternalErrorCode {
 }
 
 /* Exposed error types meant for apps to trigger different flows. */
-export enum ExposedErrorType {
+export enum OpenYoloErrorType {
   initializationError = 'initializationError',
   configurationError = 'configurationError',
   userCanceled = 'userCanceled',
@@ -44,6 +44,7 @@ export enum ExposedErrorType {
   operationCanceled = 'operationCanceled',
   clientDisposed = 'clientDisposed',
   requestFailed = 'requestFailed',
+  illegalConcurrentRequest = 'illegalConcurrentRequest',
   unknownError = 'unknownError'
 }
 
@@ -55,7 +56,7 @@ export interface OYErrorData {
   /** Standardized error code. */
   code: InternalErrorCode;
   /** Type of the corresponding exposed error. */
-  exposedErrorType: ExposedErrorType;
+  exposedErrorType: OpenYoloErrorType;
   /** Developer visible and non sensitive error message. */
   message: string;
   /** Additional, potentially sensitive, information. */
@@ -69,7 +70,7 @@ export interface OYErrorData {
  */
 export interface OYExposedErrorData {
   /** Standardized exposed error type. */
-  type: ExposedErrorType;
+  type: OpenYoloErrorType;
   /**
    * Developer visible and non sensitive error message. It will contain the
    * InternalErrorCode for easier reference: `${code}: ${message}`.
@@ -85,7 +86,7 @@ export class OYInternalError extends Error {
     super(data.message);
   }
 
-  /** Returns the client-side exposed error. */
+  /** Returns the client-side exposed error data. */
   toExposedErrorData(): OYExposedErrorData {
     return {
       type: this.data.exposedErrorType,
@@ -93,12 +94,17 @@ export class OYInternalError extends Error {
     };
   }
 
+  /** Returns the client-side exposed error. */
+  toExposedError(): OpenYoloError {
+    return OpenYoloError.fromData(this.toExposedErrorData());
+  }
+
   /* Initialization errors. */
 
   static ackTimeout() {
     return new OYInternalError({
       code: InternalErrorCode.ackTimeout,
-      exposedErrorType: ExposedErrorType.initializationError,
+      exposedErrorType: OpenYoloErrorType.initializationError,
       message: 'A parent frame failed to acknowledge the handshake. This can ' +
           'be due, in nested context, to the absence of the handshake ' +
           'responder library.'
@@ -108,7 +114,7 @@ export class OYInternalError extends Error {
   static establishSecureChannelTimeout() {
     return new OYInternalError({
       code: InternalErrorCode.establishSecureChannelTimeout,
-      exposedErrorType: ExposedErrorType.initializationError,
+      exposedErrorType: OpenYoloErrorType.initializationError,
       message: 'The Secure Channel failed to initialize in a timely manner. ' +
           'This can be due to network latency or a wrong configuration.'
     });
@@ -117,7 +123,7 @@ export class OYInternalError extends Error {
   static parentVerifyTimeout() {
     return new OYInternalError({
       code: InternalErrorCode.parentVerifyTimeout,
-      exposedErrorType: ExposedErrorType.initializationError,
+      exposedErrorType: OpenYoloErrorType.initializationError,
       message: 'The credentials provider frame failed to verify the ancestor ' +
           'frames in a timely manner.'
     });
@@ -126,7 +132,7 @@ export class OYInternalError extends Error {
   static illegalStateError(reason: string) {
     return new OYInternalError({
       code: InternalErrorCode.illegalStateError,
-      exposedErrorType: ExposedErrorType.initializationError,
+      exposedErrorType: OpenYoloErrorType.initializationError,
       message: `An internal error happened: ${reason}`
     });
   }
@@ -134,7 +140,7 @@ export class OYInternalError extends Error {
   static providerInitializationFailed() {
     return new OYInternalError({
       code: InternalErrorCode.providerInitializationFailed,
-      exposedErrorType: ExposedErrorType.initializationError,
+      exposedErrorType: OpenYoloErrorType.initializationError,
       message: 'The credentials provider frame failed to verify the ancestor ' +
           'frames in a timely manner.'
     });
@@ -143,7 +149,7 @@ export class OYInternalError extends Error {
   static apiDisabled() {
     return new OYInternalError({
       code: InternalErrorCode.apiDisabled,
-      exposedErrorType: ExposedErrorType.initializationError,
+      exposedErrorType: OpenYoloErrorType.initializationError,
       message:
           'The API has been disabled by the user’s preference or has not been' +
           'enabled in the OpenYolo configuration.'
@@ -155,7 +161,7 @@ export class OYInternalError extends Error {
   static untrustedOrigin(origin: string) {
     return new OYInternalError({
       code: InternalErrorCode.untrustedOrigin,
-      exposedErrorType: ExposedErrorType.configurationError,
+      exposedErrorType: OpenYoloErrorType.configurationError,
       message: `A parent frame does not belong to an authorized origin. ` +
           `Ensure the configuration of OpenYolo contains '${origin}'.`
     });
@@ -164,7 +170,7 @@ export class OYInternalError extends Error {
   static parentIsNotRoot() {
     return new OYInternalError({
       code: InternalErrorCode.parentIsNotRoot,
-      exposedErrorType: ExposedErrorType.configurationError,
+      exposedErrorType: OpenYoloErrorType.configurationError,
       message:
           `The caller window is an IFrame which is not authorized in OpenYolo` +
           `configuration.`
@@ -176,7 +182,7 @@ export class OYInternalError extends Error {
   static userCanceled() {
     return new OYInternalError({
       code: InternalErrorCode.userCanceled,
-      exposedErrorType: ExposedErrorType.userCanceled,
+      exposedErrorType: OpenYoloErrorType.userCanceled,
       message: 'The user canceled the operation.'
     });
   }
@@ -184,7 +190,7 @@ export class OYInternalError extends Error {
   static noCredentialsAvailable() {
     return new OYInternalError({
       code: InternalErrorCode.noCredentialsAvailable,
-      exposedErrorType: ExposedErrorType.noCredentialsAvailable,
+      exposedErrorType: OpenYoloErrorType.noCredentialsAvailable,
       message: 'No credential is available for the current user.'
     });
   }
@@ -192,7 +198,7 @@ export class OYInternalError extends Error {
   static operationCanceled() {
     return new OYInternalError({
       code: InternalErrorCode.operationCanceled,
-      exposedErrorType: ExposedErrorType.operationCanceled,
+      exposedErrorType: OpenYoloErrorType.operationCanceled,
       message: 'The operation was canceled.'
     });
   }
@@ -200,7 +206,7 @@ export class OYInternalError extends Error {
   static clientDisposed() {
     return new OYInternalError({
       code: InternalErrorCode.clientDisposed,
-      exposedErrorType: ExposedErrorType.clientDisposed,
+      exposedErrorType: OpenYoloErrorType.clientDisposed,
       message: 'The API has been disposed from the current context.'
     });
   }
@@ -210,7 +216,7 @@ export class OYInternalError extends Error {
   static requestFailed(message: string) {
     return new OYInternalError({
       code: InternalErrorCode.requestFailed,
-      exposedErrorType: ExposedErrorType.requestFailed,
+      exposedErrorType: OpenYoloErrorType.requestFailed,
       message: `The API request failed to resolve: ${message}`
     });
   }
@@ -218,7 +224,7 @@ export class OYInternalError extends Error {
   static requestTimeout() {
     return new OYInternalError({
       code: InternalErrorCode.requestTimeout,
-      exposedErrorType: ExposedErrorType.requestFailed,
+      exposedErrorType: OpenYoloErrorType.requestFailed,
       message: 'The API request timed out.'
     });
   }
@@ -226,7 +232,7 @@ export class OYInternalError extends Error {
   static illegalConcurrentRequestError() {
     return new OYInternalError({
       code: InternalErrorCode.illegalConcurrentRequest,
-      exposedErrorType: ExposedErrorType.requestFailed,
+      exposedErrorType: OpenYoloErrorType.illegalConcurrentRequest,
       message:
           'The request could not be resolved because another operation is ' +
           'currently pending.'
@@ -236,7 +242,7 @@ export class OYInternalError extends Error {
   static unknownRequest(requestType: string) {
     return new OYInternalError({
       code: InternalErrorCode.unknownRequest,
-      exposedErrorType: ExposedErrorType.requestFailed,
+      exposedErrorType: OpenYoloErrorType.requestFailed,
       message: `The '${requestType}' request sent could not be handled by the` +
           `credentials provider.`
     });
@@ -245,7 +251,7 @@ export class OYInternalError extends Error {
   static unknownError() {
     return new OYInternalError({
       code: InternalErrorCode.unknownError,
-      exposedErrorType: ExposedErrorType.unknownError,
+      exposedErrorType: OpenYoloErrorType.unknownError,
       message: `Unkown error.`
     });
   }
@@ -263,11 +269,11 @@ export class OYInternalError extends Error {
 /**
  * Client side exposed error type.
  */
-export declare interface OYExposedError extends Error {
+export declare interface OpenYoloError extends Error {
   /** Name of the error, to differentiate from ‘Error’. */
   name: string;  // = ‘OpenYoloError’.
   /** Standardized error type. */
-  type: ExposedErrorType;
+  type: OpenYoloErrorType;
   /**
    * Developer visible and non sensitive error message. It will contain the
    * InternalErrorCode for easier reference: `${code}: ${message}`.
@@ -275,8 +281,8 @@ export declare interface OYExposedError extends Error {
   message: string;
 }
 
-export class OYExposedError extends Error {
-  constructor(message: string, public type: ExposedErrorType) {
+export class OpenYoloError extends Error {
+  constructor(message: string, public type: OpenYoloErrorType) {
     super(message);
     this.name = 'OpenYoloError';
   }
@@ -285,7 +291,7 @@ export class OYExposedError extends Error {
     return {message: this.message, type: this.type};
   }
 
-  static fromData(data: OYExposedErrorData): OYExposedError {
-    return new OYExposedError(data.message, data.type);
+  static fromData(data: OYExposedErrorData): OpenYoloError {
+    return new OpenYoloError(data.message, data.type);
   }
 }

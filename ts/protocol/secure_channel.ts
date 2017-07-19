@@ -15,7 +15,7 @@
  */
 
 import {createMessageListener, FilteringEventListener, isPermittedOrigin, RpcMessageListener, WindowLike} from './comms';
-import {OYExposedError, OYInternalError} from './errors';
+import {OpenYoloError, OYInternalError} from './errors';
 import {ackMessage, channelConnectMessage, channelReadyMessage, PostMessageType, readyForConnectMessage} from './post_messages';
 import {RpcMessage, RpcMessageData, RpcMessageType} from './rpc_messages';
 import {PromiseResolver, sha256, timeoutPromise} from './utils';
@@ -48,20 +48,20 @@ export class SecureChannel {
     await SecureChannel.providerReadyToConnect(
         clientWindow, connectionNonceHash);
 
-    let channel = new MessageChannel();
+    const channel = new MessageChannel();
 
-    let readyPromiseResolver = new PromiseResolver();
+    const readyPromiseResolver = new PromiseResolver();
     // register another listener for the success / fail of establishing the
     // connection.
 
-    let readyListener =
+    const readyListener =
         createMessageListener(PostMessageType.channelReady, () => {
           readyPromiseResolver.resolve();
         });
 
-    let errorListener =
+    const errorListener =
         createMessageListener(PostMessageType.channelError, (data) => {
-          readyPromiseResolver.reject(OYExposedError.fromData(data));
+          readyPromiseResolver.reject(OpenYoloError.fromData(data));
         });
 
     clientWindow.addEventListener('message', readyListener);
