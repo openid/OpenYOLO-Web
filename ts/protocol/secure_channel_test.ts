@@ -19,7 +19,7 @@ import {MockWindow} from '../test_utils/frames';
 import {createMessageEvent, createUntypedMessageEvent} from '../test_utils/messages';
 import {JasmineTimeoutManager} from '../test_utils/timeout';
 
-import {InternalErrorCode, OYInternalError} from './errors';
+import {InternalErrorCode, OpenYoloInternalError} from './errors';
 import {ackMessage, channelConnectMessage, channelReadyMessage, readyForConnectMessage} from './post_messages';
 import * as msg from './rpc_messages';
 import {SecureChannel} from './secure_channel';
@@ -143,7 +143,8 @@ describe('SecureChannel', () => {
             },
             (err) => {
               expect(expectReject).toBeTruthy('Failed before timeout');
-              expect(OYInternalError.errorIs(err, InternalErrorCode.ackTimeout))
+              expect(OpenYoloInternalError.errorIs(
+                         err, InternalErrorCode.ackTimeout))
                   .toBeTruthy();
               expect(port.removeEventListener)
                   .toHaveBeenCalledWith('message', jasmine.any(Function));
@@ -238,7 +239,7 @@ describe('SecureChannel', () => {
         await connectPromise;
         done.fail('Promise should reject');
       } catch (err) {
-        expect(err).toEqual(OYInternalError.untrustedOrigin(evilOrigin));
+        expect(err).toEqual(OpenYoloInternalError.untrustedOrigin(evilOrigin));
         done();
       }
     });

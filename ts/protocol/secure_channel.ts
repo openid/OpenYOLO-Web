@@ -15,7 +15,7 @@
  */
 
 import {createMessageListener, FilteringEventListener, isPermittedOrigin, RpcMessageListener, WindowLike} from './comms';
-import {OpenYoloError, OYInternalError} from './errors';
+import {OpenYoloError, OpenYoloInternalError} from './errors';
 import {ackMessage, channelConnectMessage, channelReadyMessage, PostMessageType, readyForConnectMessage} from './post_messages';
 import {RpcMessage, RpcMessageData, RpcMessageType} from './rpc_messages';
 import {PromiseResolver, sha256, timeoutPromise} from './utils';
@@ -156,7 +156,8 @@ export class SecureChannel {
             SecureChannel.debugLog(
                 'provider',
                 'connection challenge from untrusted origin - rejecting');
-            promiseResolver.reject(OYInternalError.untrustedOrigin(ev.origin));
+            promiseResolver.reject(
+                OpenYoloInternalError.untrustedOrigin(ev.origin));
             return;
           }
 
@@ -164,7 +165,7 @@ export class SecureChannel {
             SecureChannel.debugLog(
                 'provider',
                 'connection challenge did not carry a port - rejecting');
-            promiseResolver.reject(OYInternalError.illegalStateError(
+            promiseResolver.reject(OpenYoloInternalError.illegalStateError(
                 'channel initialization message does not contain ports'));
             return;
           }
@@ -244,7 +245,7 @@ export class SecureChannel {
       }
     });
     const timeout = timeoutPromise<SecureChannel>(
-        OYInternalError.ackTimeout(), ACK_TIMEOUT_MS);
+        OpenYoloInternalError.ackTimeout(), ACK_TIMEOUT_MS);
     timeout.catch((err) => {
       this.port.removeEventListener('message', ackListner);
     });
@@ -258,7 +259,7 @@ export class SecureChannel {
       messageType: T,
       listener: RpcMessageListener<T>): number {
     if (!messageType || !listener) {
-      throw OYInternalError.illegalStateError('invalid type or listener');
+      throw OpenYoloInternalError.illegalStateError('invalid type or listener');
     }
 
     let portListener = createMessageListener(

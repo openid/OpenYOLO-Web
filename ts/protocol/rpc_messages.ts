@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import {OYCredential, OYCredentialHintOptions, OYCredentialRequestOptions, OYProxyLoginResponse} from './data';
-import {OpenYoloError, OYExposedErrorData} from './errors';
+import {OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions, OpenYoloProxyLoginResponse} from './data';
+import {OpenYoloError, OpenYoloExposedErrorData} from './errors';
 import {DataValidator, isBoolean, isUndefined, isValidCredential, isValidDisplayOptions, isValidError, isValidHintOptions, isValidProxyLoginResponse, isValidRequestOptions} from './validators';
 
 export enum RpcMessageType {
@@ -42,20 +42,20 @@ export enum RpcMessageType {
 export type RpcMessageArgumentTypes = {
   'disableAutoSignIn': undefined,
   'disableAutoSignInResult': undefined,
-  'retrieve': OYCredentialRequestOptions,
-  'hintAvailable': OYCredentialHintOptions,
+  'retrieve': OpenYoloCredentialRequestOptions,
+  'hintAvailable': OpenYoloCredentialHintOptions,
   'hintAvailableResult': boolean,
-  'hint': OYCredentialHintOptions,
-  'save': OYCredential,
+  'hint': OpenYoloCredentialHintOptions,
+  'save': OpenYoloCredential,
   'saveResult': boolean,
-  'proxy': OYCredential,
-  'proxyResult': OYProxyLoginResponse,
+  'proxy': OpenYoloCredential,
+  'proxyResult': OpenYoloProxyLoginResponse,
   'showProvider': DisplayOptions,
   'wrapBrowser': undefined,
   'wrapBrowserResult': boolean,
   'none': undefined,
-  'credential': OYCredential,
-  'error': OYExposedErrorData,
+  'credential': OpenYoloCredential,
+  'error': OpenYoloExposedErrorData,
   'cancelLastOperation': undefined,
   'cancelLastOperationResult': undefined
 };
@@ -128,12 +128,12 @@ export function disableAutoSignInResultMessage(id: string) {
 }
 
 export function retrieveMessage(
-    id: string, options: OYCredentialRequestOptions) {
+    id: string, options: OpenYoloCredentialRequestOptions) {
   return rpcMessage(RpcMessageType.retrieve, id, options);
 }
 
 export function hintAvailableMessage(
-    id: string, options: OYCredentialHintOptions) {
+    id: string, options: OpenYoloCredentialHintOptions) {
   return rpcMessage(RpcMessageType.hintAvailable, id, options);
 }
 
@@ -141,16 +141,17 @@ export function hintAvailableResponseMessage(id: string, available: boolean) {
   return rpcMessage(RpcMessageType.hintAvailableResult, id, available);
 }
 
-export function hintMessage(id: string, options: OYCredentialHintOptions) {
+export function hintMessage(
+    id: string, options: OpenYoloCredentialHintOptions) {
   return rpcMessage(RpcMessageType.hint, id, options);
 }
 
-export function proxyLoginMessage(id: string, credential: OYCredential) {
+export function proxyLoginMessage(id: string, credential: OpenYoloCredential) {
   return rpcMessage(RpcMessageType.proxy, id, credential);
 }
 
 export function proxyLoginResponseMessage(
-    id: string, response: OYProxyLoginResponse) {
+    id: string, response: OpenYoloProxyLoginResponse) {
   return rpcMessage(RpcMessageType.proxyResult, id, response);
 }
 
@@ -167,7 +168,8 @@ export function noneAvailableMessage(id: string) {
   return rpcMessage(RpcMessageType.none, id, undefined);
 }
 
-export function credentialResultMessage(id: string, credential: OYCredential) {
+export function credentialResultMessage(
+    id: string, credential: OpenYoloCredential) {
   return rpcMessage(RpcMessageType.credential, id, credential);
 }
 
@@ -175,7 +177,7 @@ export function showProviderMessage(id: string, options: DisplayOptions) {
   return rpcMessage(RpcMessageType.showProvider, id, options);
 }
 
-export function saveMessage(id: string, credential: OYCredential) {
+export function saveMessage(id: string, credential: OpenYoloCredential) {
   return rpcMessage(RpcMessageType.save, id, credential);
 }
 

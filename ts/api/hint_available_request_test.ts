@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import {AUTHENTICATION_METHODS, OYCredentialHintOptions} from '../protocol/data';
-import {OYInternalError} from '../protocol/errors';
+import {AUTHENTICATION_METHODS, OpenYoloCredentialHintOptions} from '../protocol/data';
+import {OpenYoloInternalError} from '../protocol/errors';
 import {errorMessage, hintAvailableMessage, hintAvailableResponseMessage} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {FakeProviderConnection} from '../test_utils/channels';
@@ -28,7 +28,7 @@ describe('HintAvailableRequest', () => {
   let clientChannel: SecureChannel;
   let providerChannel: SecureChannel;
   let frame: any;
-  let passwordOnlyOptions: OYCredentialHintOptions = {
+  let passwordOnlyOptions: OpenYoloCredentialHintOptions = {
     supportedAuthMethods: [AUTHENTICATION_METHODS.ID_AND_PASSWORD]
   };
 
@@ -85,7 +85,7 @@ describe('HintAvailableRequest', () => {
   it('should fail if error returned', async function(done) {
     let promise = request.dispatch(passwordOnlyOptions);
     let expectedError =
-        OYInternalError.requestFailed('error!').toExposedError();
+        OpenYoloInternalError.requestFailed('error!').toExposedError();
     providerChannel.send(errorMessage(request.id, expectedError));
 
     try {

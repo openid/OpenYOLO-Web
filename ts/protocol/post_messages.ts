@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {OpenYoloError, OYExposedErrorData} from './errors';
+import {OpenYoloError, OpenYoloExposedErrorData} from './errors';
 import {DataValidator, isNonEmptyString, isValidError} from './validators';
 
 /**
@@ -51,7 +51,7 @@ export type PostMessageDataTypes = {
   'channelReady': string,
   'channelConnect': string,
   // Ensure only exposable data is sent through the message channel.
-  'channelError': OYExposedErrorData
+  'channelError': OpenYoloExposedErrorData
 };
 
 export type PostMessageData<T extends PostMessageType> =

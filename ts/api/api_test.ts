@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {OYCredential, OYCredentialHintOptions, OYCredentialRequestOptions, OYProxyLoginResponse} from '../protocol/data';
+import {OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions, OpenYoloProxyLoginResponse} from '../protocol/data';
 import {SecureChannel} from '../protocol/secure_channel';
 import {PromiseResolver} from '../protocol/utils';
 
@@ -25,7 +25,7 @@ import {WrapBrowserRequest} from './wrap_browser_request';
 type OpenYoloWithTimeoutApiMethods = keyof OpenYoloWithTimeoutApi;
 
 describe('OpenYolo API', () => {
-  const credential: OYCredential = {id: 'test', authMethod: 'test'};
+  const credential: OpenYoloCredential = {id: 'test', authMethod: 'test'};
   const expectedError = new Error('ERROR!');
   const secureChannelSpy =
       jasmine.createSpyObj('SecureChannel', ['send', 'listen', 'dispose']);
@@ -216,7 +216,8 @@ describe('OpenYolo API', () => {
       });
 
       it('hintsAvailable', (done) => {
-        const options: OYCredentialHintOptions = {supportedAuthMethods: []};
+        const options:
+            OpenYoloCredentialHintOptions = {supportedAuthMethods: []};
         openYoloApiImplSpy.hintsAvailable.and.returnValue(
             Promise.resolve(true));
         openyolo.hintsAvailable(options).then((result) => {
@@ -228,7 +229,8 @@ describe('OpenYolo API', () => {
       });
 
       it('hint', (done) => {
-        const options: OYCredentialHintOptions = {supportedAuthMethods: []};
+        const options:
+            OpenYoloCredentialHintOptions = {supportedAuthMethods: []};
         openYoloApiImplSpy.hint.and.returnValue(Promise.resolve(credential));
         openyolo.hint(options).then((cred) => {
           expect(cred).toBe(credential);
@@ -239,7 +241,8 @@ describe('OpenYolo API', () => {
       });
 
       it('retrieve', (done) => {
-        const options: OYCredentialRequestOptions = {supportedAuthMethods: []};
+        const options:
+            OpenYoloCredentialRequestOptions = {supportedAuthMethods: []};
         openYoloApiImplSpy.retrieve.and.returnValue(
             Promise.resolve(credential));
         openyolo.retrieve(options).then((cred) => {
@@ -251,8 +254,10 @@ describe('OpenYolo API', () => {
       });
 
       it('proxyLogin', (done) => {
-        const expectedResponse:
-            OYProxyLoginResponse = {statusCode: 200, responseText: 'test'};
+        const expectedResponse: OpenYoloProxyLoginResponse = {
+          statusCode: 200,
+          responseText: 'test'
+        };
         openYoloApiImplSpy.proxyLogin.and.returnValue(
             Promise.resolve(expectedResponse));
         openyolo.proxyLogin(credential).then((response) => {

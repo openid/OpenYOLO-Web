@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {OpenYoloError, OpenYoloErrorType, OYExposedErrorData, OYInternalError} from '../protocol/errors';
+import {OpenYoloError, OpenYoloErrorType, OpenYoloExposedErrorData, OpenYoloInternalError} from '../protocol/errors';
 import {RpcMessageArgumentTypes, RpcMessageData, RpcMessageType} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {generateId, PromiseResolver, startTimeoutRacer, TimeoutRacer} from '../protocol/utils';
@@ -75,7 +75,7 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
       // Handle specifically a timeout error.
       this.frame.hide();
       this.dispose();
-      throw OYInternalError.requestTimeout().toExposedError();
+      throw OpenYoloInternalError.requestTimeout().toExposedError();
     }
   }
 
@@ -91,18 +91,19 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
   private registerBaseHandlers() {
     this.debugLog('request instantiated');
     // Register a standard error handler.
-    this.registerHandler(RpcMessageType.error, (data: OYExposedErrorData) => {
-      let error: OpenYoloError;
-      if (data) {
-        error = OpenYoloError.fromData(data);
-      } else {
-        error = OYInternalError.unknownError().toExposedError();
-      }
+    this.registerHandler(
+        RpcMessageType.error, (data: OpenYoloExposedErrorData) => {
+          let error: OpenYoloError;
+          if (data) {
+            error = OpenYoloError.fromData(data);
+          } else {
+            error = OpenYoloInternalError.unknownError().toExposedError();
+          }
 
-      this.debugLog(`request failed: ${error}`);
-      this.reject(error);
-      this.dispose();
-    });
+          this.debugLog(`request failed: ${error}`);
+          this.reject(error);
+          this.dispose();
+        });
 
     // Register a standard handler for displaying the provider - when UI is
     // shown, the timeouts are also canceled to allow the operation to proceed

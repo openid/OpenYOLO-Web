@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import {AUTHENTICATION_METHODS, OYCredential as OpenYoloCredential, OYCredentialHintOptions, OYCredentialRequestOptions as OpenYoloCredentialRequestOptions, OYProxyLoginResponse} from '../protocol/data';
-import {OYInternalError} from '../protocol/errors';
+import {AUTHENTICATION_METHODS, OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions, OpenYoloProxyLoginResponse} from '../protocol/data';
+import {OpenYoloInternalError} from '../protocol/errors';
 
 import {OpenYoloApi} from './api';
 
@@ -152,7 +152,7 @@ export class NavigatorCredentials implements OpenYoloApi {
     let convertedOptions = convertRequestOptions(options);
     return this.cmApi.get(convertedOptions).then((cred) => {
       if (!cred) {
-        throw OYInternalError.userCanceled();
+        throw OpenYoloInternalError.userCanceled();
       }
       this.credentialsMap.insert(cred);
       return convertCredentialToOpenYolo(
@@ -168,9 +168,9 @@ export class NavigatorCredentials implements OpenYoloApi {
     });
   }
 
-  hint(options?: OYCredentialHintOptions): Promise<OpenYoloCredential> {
+  hint(options?: OpenYoloCredentialHintOptions): Promise<OpenYoloCredential> {
     // Reject with a canceled error as no hints can be retrieved.
-    return Promise.reject(OYInternalError.userCanceled());
+    return Promise.reject(OpenYoloInternalError.userCanceled());
   }
 
   hintsAvailable(): Promise<boolean> {
@@ -178,10 +178,11 @@ export class NavigatorCredentials implements OpenYoloApi {
   }
 
   cancelLastOperation(): Promise<void> {
-    return Promise.reject(OYInternalError.apiDisabled());
+    return Promise.reject(OpenYoloInternalError.apiDisabled());
   }
 
-  proxyLogin(credential: OpenYoloCredential): Promise<OYProxyLoginResponse> {
+  proxyLogin(credential: OpenYoloCredential):
+      Promise<OpenYoloProxyLoginResponse> {
     // TODO(tch): Fetch the URL from configuration.
     let url = `${window.location.protocol}//${window.location.host}/signin`;
     const cred = this.credentialsMap.retrieve(
@@ -190,11 +191,11 @@ export class NavigatorCredentials implements OpenYoloApi {
       return Promise.reject(new Error('Invalid credential!'));
     }
 
-    return new Promise<OYProxyLoginResponse>((resolve, reject) => {
+    return new Promise<OpenYoloProxyLoginResponse>((resolve, reject) => {
       fetch(url, {method: 'POST', credentials: cred}).then(resp => {
         if (resp.status !== 200) {
-          reject(OYInternalError.requestFailed(
-              `Error: status code ${resp.status}`));
+          reject(OpenYoloInternalError.requestFailed(
+              `Status code ${resp.status}`));
         }
         resp.text().then(responseText => {
           resolve({statusCode: resp.status, responseText: responseText});
