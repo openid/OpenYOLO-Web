@@ -19,7 +19,7 @@ import {MockWindow} from '../test_utils/frames';
 import {createMessageEvent, createUntypedMessageEvent} from '../test_utils/messages';
 import {JasmineTimeoutManager} from '../test_utils/timeout';
 
-import {InternalErrorCode, OpenYoloError} from './errors';
+import {InternalErrorCode, OpenYoloInternalError} from './errors';
 import {ackMessage, channelConnectMessage, channelReadyMessage, readyForConnectMessage} from './post_messages';
 import * as msg from './rpc_messages';
 import {SecureChannel} from './secure_channel';
@@ -70,32 +70,6 @@ describe('SecureChannel', () => {
       } catch (err) {
         done.fail('Promise should resolve');
       }
-    });
-
-    it('times out automatically if no response', (done) => {
-      let timeoutMs = 100;
-      let expectReject = false;
-      SecureChannel
-          .clientConnect(
-              clientWindow, providerWindow, '1234', 'hash', timeoutMs)
-          .then(
-              () => {
-                done.fail('Creation should not succeed!');
-              },
-              (err: Error) => {
-                expect(expectReject).toBeTruthy('Failed before timeout');
-                expect(
-                    OpenYoloError.errorIs(
-                        err, InternalErrorCode.establishSecureChannelTimeout))
-                    .toBeTruthy();
-                done();
-              });
-
-      // move the clock forward to just before the timeout
-      jasmine.clock().tick(99);
-      // then move the clock past it
-      expectReject = true;
-      jasmine.clock().tick(1);
     });
   });
 
@@ -169,7 +143,8 @@ describe('SecureChannel', () => {
             },
             (err) => {
               expect(expectReject).toBeTruthy('Failed before timeout');
-              expect(OpenYoloError.errorIs(err, InternalErrorCode.ackTimeout))
+              expect(OpenYoloInternalError.errorIs(
+                         err, InternalErrorCode.ackTimeout))
                   .toBeTruthy();
               expect(port.removeEventListener)
                   .toHaveBeenCalledWith('message', jasmine.any(Function));
@@ -264,7 +239,7 @@ describe('SecureChannel', () => {
         await connectPromise;
         done.fail('Promise should reject');
       } catch (err) {
-        expect(err).toEqual(OpenYoloError.untrustedOrigin(evilOrigin));
+        expect(err).toEqual(OpenYoloInternalError.untrustedOrigin(evilOrigin));
         done();
       }
     });

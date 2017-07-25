@@ -15,7 +15,7 @@
  */
 
 import {PrimaryClientConfiguration} from '../protocol/client_config';
-import {OYCredential, OYCredentialHintOptions, OYCredentialRequestOptions} from '../protocol/data';
+import {OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions} from '../protocol/data';
 import {DisplayOptions} from '../protocol/rpc_messages';
 
 /**
@@ -102,27 +102,30 @@ export interface CredentialDataProvider {
   /**
    * Retrieves all hint credentials, based upon the provided options.
    */
-  getAllHints(options: OYCredentialHintOptions): Promise<OYCredential[]>;
+  getAllHints(options: OpenYoloCredentialHintOptions):
+      Promise<OpenYoloCredential[]>;
 
   /**
    * Retrieves all credentials for the specified authentication domains
    * (derived from the request) and the specified request options.
    */
-  getAllCredentials(authDomains: string[], options: OYCredentialRequestOptions):
-      Promise<OYCredential[]>;
+  getAllCredentials(
+      authDomains: string[],
+      options: OpenYoloCredentialRequestOptions): Promise<OpenYoloCredential[]>;
 
   /**
    * Creates or updates an existing credential. If the credential cannot be
    * created or updated, the promise should be rejected.
    */
-  upsertCredential(credential: OYCredential, original?: OYCredential):
-      Promise<OYCredential>;
+  upsertCredential(
+      credential: OpenYoloCredential,
+      original?: OpenYoloCredential): Promise<OpenYoloCredential>;
 
   /**
    * Deletes the provided credential from the store. If delete is not
    * permitted for this credential, the returned promise will be rejected.
    */
-  deleteCredential(credential: OYCredential): Promise<void>;
+  deleteCredential(credential: OpenYoloCredential): Promise<void>;
 }
 
 export interface DisplayCallbacks {
@@ -139,9 +142,9 @@ export interface InteractionProvider {
    * or reject if the action is cancelled or fails for any reason.
    */
   showCredentialPicker(
-      credentials: OYCredential[],
-      options: OYCredentialRequestOptions,
-      displayCallbacks: DisplayCallbacks): Promise<OYCredential>;
+      credentials: OpenYoloCredential[],
+      options: OpenYoloCredentialRequestOptions,
+      displayCallbacks: DisplayCallbacks): Promise<OpenYoloCredential>;
 
   /**
    * Requests the display of a hint picker containing the provided list of
@@ -150,9 +153,9 @@ export interface InteractionProvider {
    * not select a credential, the promise should be rejected.
    */
   showHintPicker(
-      hints: OYCredential[],
-      options: OYCredentialHintOptions,
-      displayCallbacks: DisplayCallbacks): Promise<OYCredential>;
+      hints: OpenYoloCredential[],
+      options: OpenYoloCredentialHintOptions,
+      displayCallbacks: DisplayCallbacks): Promise<OpenYoloCredential>;
 
   /**
    * Requests the display of a confirmation screen, allowing the user to
@@ -161,15 +164,16 @@ export interface InteractionProvider {
    * credential, false otherwise.
    */
   showSaveConfirmation(
-      credential: OYCredential,
+      credential: OpenYoloCredential,
       displayCallbacks: DisplayCallbacks): Promise<boolean>;
 
   /**
    * Requests the display of an auto sign in screen. The promise should always
    * resolve, as no action is required.
    */
-  showAutoSignIn(credential: OYCredential, displayCallbacks: DisplayCallbacks):
-      Promise<any>;
+  showAutoSignIn(
+      credential: OpenYoloCredential,
+      displayCallbacks: DisplayCallbacks): Promise<any>;
 
   /**
    * Requests the immediate tear down of any presently active UI.
@@ -205,8 +209,9 @@ export interface LocalStateProvider {
    * timescale equivalent to what sessionStorage provides - not permanent, but
    * able to survive page turns / reinstantiation of the provider frame.
    */
-  retainCredentialForSession(authDomain: string, credential: OYCredential):
-      Promise<void>;
+  retainCredentialForSession(
+      authDomain: string,
+      credential: OpenYoloCredential): Promise<void>;
 
   /**
    * Retrieves a retained credential for the specified authentication domain
@@ -218,5 +223,5 @@ export interface LocalStateProvider {
    * of this interface, such that subsequent calls to this method for the same
    * domain would also return a rejected promise.
    */
-  getRetainedCredential(authDomain: string): Promise<OYCredential>;
+  getRetainedCredential(authDomain: string): Promise<OpenYoloCredential>;
 }

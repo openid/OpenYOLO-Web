@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {AUTHENTICATION_METHODS, OYCredential, OYCredentialHintOptions} from '../protocol/data';
+import {AUTHENTICATION_METHODS, OpenYoloCredential, OpenYoloCredentialHintOptions} from '../protocol/data';
 import {credentialResultMessage, hintMessage, noneAvailableMessage, showProviderMessage} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {FakeProviderConnection} from '../test_utils/channels';
@@ -27,8 +27,8 @@ describe('HintRequest', () => {
   let clientChannel: SecureChannel;
   let providerChannel: SecureChannel;
   let frame: any;
-  let hint: OYCredential;
-  let passwordOnlyOptions: OYCredentialHintOptions = {
+  let hint: OpenYoloCredential;
+  let passwordOnlyOptions: OpenYoloCredentialHintOptions = {
     supportedAuthMethods: [AUTHENTICATION_METHODS.ID_AND_PASSWORD]
   };
 
@@ -54,7 +54,7 @@ describe('HintRequest', () => {
   describe('dispatch', () => {
     it('should send a RPC message to the frame', () => {
       spyOn(clientChannel, 'send').and.callThrough();
-      let options: OYCredentialHintOptions = {
+      let options: OpenYoloCredentialHintOptions = {
         supportedAuthMethods: ['openyolo://id-and-password']
       };
       request.dispatch(options);

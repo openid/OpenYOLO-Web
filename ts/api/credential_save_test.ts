@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import {OYCredential} from '../protocol/data';
+import {OpenYoloCredential} from '../protocol/data';
 import {AUTHENTICATION_METHODS} from '../protocol/data';
-import {InternalErrorCode, OpenYoloError} from '../protocol/errors';
+import {OpenYoloErrorType, OpenYoloInternalError} from '../protocol/errors';
 import {errorMessage, saveMessage, saveResultMessage} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {FakeProviderConnection} from '../test_utils/channels';
@@ -29,7 +29,7 @@ describe('CredentialSave', () => {
   let providerChannel: SecureChannel;
   let request: CredentialSave;
   let frame: any;
-  let credential: OYCredential = {
+  let credential: OpenYoloCredential = {
     id: 'user@example.com',
     authMethod: AUTHENTICATION_METHODS.ID_AND_PASSWORD,
     displayName: 'User',
@@ -77,8 +77,7 @@ describe('CredentialSave', () => {
       await promise;
       done.fail('promise should be rejected');
     } catch (err) {
-      expect(OpenYoloError.errorIs(err, InternalErrorCode.userCanceled))
-          .toBeTruthy();
+      expect(err.type).toEqual(OpenYoloErrorType.userCanceled);
       expect(request.dispose).toHaveBeenCalled();
       done();
     }
@@ -87,14 +86,14 @@ describe('CredentialSave', () => {
   it('should reject if error received', async function(done) {
     let promise = request.dispatch(credential);
 
-    providerChannel.send(
-        errorMessage(request.id, OpenYoloError.requestFailed('ERROR!')));
+    providerChannel.send(errorMessage(
+        request.id,
+        OpenYoloInternalError.requestFailed('ERROR!').toExposedError()));
     try {
       await promise;
       done.fail('Promise should be rejected');
     } catch (err) {
-      expect(OpenYoloError.errorIs(err, InternalErrorCode.requestFailed))
-          .toBeTruthy();
+      expect(err.type).toEqual(OpenYoloErrorType.requestFailed);
       expect(request.dispose).toHaveBeenCalled();
       done();
     }

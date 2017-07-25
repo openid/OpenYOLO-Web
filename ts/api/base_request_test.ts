@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {InternalErrorCode, OpenYoloError} from '../protocol/errors';
+import {OpenYoloErrorType, OpenYoloInternalError} from '../protocol/errors';
 import {errorMessage, noneAvailableMessage, RpcMessageType, showProviderMessage} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {startTimeoutRacer} from '../protocol/utils';
@@ -97,9 +97,7 @@ describe('BaseRequest', () => {
                 done.fail('Should not be a success!');
               },
               (error) => {
-                expect(OpenYoloError.errorIs(
-                           error, InternalErrorCode.requestTimeout))
-                    .toBe(true);
+                expect(error.type).toEqual(OpenYoloErrorType.requestFailed);
                 expect(frame.hide).toHaveBeenCalled();
                 done();
               });
@@ -146,7 +144,8 @@ describe('BaseRequest', () => {
     });
 
     it('listens to error and disposes', async function(done) {
-      const expectedError = OpenYoloError.illegalStateError('ERROR!');
+      const expectedError =
+          OpenYoloInternalError.illegalStateError('ERROR!').toExposedError();
       const promise = request.dispatch(undefined);
       providerChannel.send(errorMessage(request.id, expectedError));
       try {
@@ -162,7 +161,9 @@ describe('BaseRequest', () => {
 
     it('listens to illegalConcurrentError and disposes but not hide the iframe',
        async function(done) {
-         const expectedError = OpenYoloError.illegalConcurrentRequestError();
+         const expectedError =
+             OpenYoloInternalError.illegalConcurrentRequestError()
+                 .toExposedError();
          const promise = request.dispatch(undefined);
          providerChannel.send(errorMessage(request.id, expectedError));
          try {

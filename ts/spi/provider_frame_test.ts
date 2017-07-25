@@ -15,8 +15,8 @@
  */
 
 import {PrimaryClientConfiguration} from '../protocol/client_config';
-import {AUTHENTICATION_METHODS, OYCredential, OYCredentialHintOptions, OYCredentialRequestOptions} from '../protocol/data';
-import {OpenYoloError} from '../protocol/errors';
+import {AUTHENTICATION_METHODS, OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions} from '../protocol/data';
+import {OpenYoloInternalError} from '../protocol/errors';
 import * as msg from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {PromiseResolver} from '../protocol/utils';
@@ -46,11 +46,11 @@ describe('ProviderFrame', () => {
 
   let frameConfig: ProviderConfiguration;
 
-  let alicePwdCred: OYCredential;
-  let bobPwdCred: OYCredential;
-  let carlGoogCred: OYCredential;
-  let deliaFbCred: OYCredential;
-  let elisaOtherDomainCred: OYCredential;
+  let alicePwdCred: OpenYoloCredential;
+  let bobPwdCred: OpenYoloCredential;
+  let carlGoogCred: OpenYoloCredential;
+  let deliaFbCred: OpenYoloCredential;
+  let elisaOtherDomainCred: OpenYoloCredential;
 
   let timeoutManager = new JasmineTimeoutManager();
 
@@ -146,7 +146,7 @@ describe('ProviderFrame', () => {
     });
 
     it('should fail if secure channel connection fails', async function(done) {
-      let expectedError = OpenYoloError.establishSecureChannelTimeout();
+      let expectedError = OpenYoloInternalError.establishSecureChannelTimeout();
 
       spyOn(AncestorOriginVerifier, 'verifyOnlyParent')
           .and.returnValue(Promise.resolve(TEST_AUTH_DOMAIN));
@@ -179,7 +179,7 @@ describe('ProviderFrame', () => {
         await initPromise;
         done.fail('Initialization should not succeed');
       } catch (err) {
-        expect(err).toEqual(OpenYoloError.apiDisabled());
+        expect(err).toEqual(OpenYoloInternalError.apiDisabled());
         done();
       }
     });
@@ -187,8 +187,8 @@ describe('ProviderFrame', () => {
     it('should fail if the parent origin is invalid', () => {
       let parentOrigin = 'https://www.3vil.com';
       spyOn(AncestorOriginVerifier, 'verifyOnlyParent')
-          .and.returnValue(
-              Promise.reject(OpenYoloError.untrustedOrigin(parentOrigin)));
+          .and.returnValue(Promise.reject(
+              OpenYoloInternalError.untrustedOrigin(parentOrigin)));
       clientConfigurationProvider.configMap[TEST_AUTH_DOMAIN] = {
         type: 'primary',
         apiEnabled: true
@@ -238,8 +238,9 @@ describe('ProviderFrame', () => {
             data,
             msg.errorMessage(
                 requestId,
-                OpenYoloError.unknownRequest(
-                    msg.RpcMessageType.hintAvailableResult)));
+                OpenYoloInternalError
+                    .unknownRequest(msg.RpcMessageType.hintAvailableResult)
+                    .toExposedError()));
         done();
       });
 
@@ -252,7 +253,9 @@ describe('ProviderFrame', () => {
         expectMessageContents(
             data,
             msg.errorMessage(
-                requestId, OpenYoloError.illegalConcurrentRequestError()));
+                requestId,
+                OpenYoloInternalError.illegalConcurrentRequestError()
+                    .toExposedError()));
         done();
       });
 
@@ -283,7 +286,7 @@ describe('ProviderFrame', () => {
 
     describe('handling credential retrieval', () => {
 
-      let passwordOnlyRequest: OYCredentialRequestOptions = {
+      let passwordOnlyRequest: OpenYoloCredentialRequestOptions = {
         supportedAuthMethods: [AUTHENTICATION_METHODS.ID_AND_PASSWORD]
       };
 
@@ -301,7 +304,7 @@ describe('ProviderFrame', () => {
 
            (interactionProvider.showAutoSignIn as jasmine.Spy)
                .and.callFake(
-                   (credential: OYCredential,
+                   (credential: OpenYoloCredential,
                     displayCallbacks: DisplayCallbacks) => {
                      expect(credential).toBe(alicePwdCred);
                      return Promise.resolve();
@@ -322,7 +325,7 @@ describe('ProviderFrame', () => {
 
         (interactionProvider.showAutoSignIn as jasmine.Spy)
             .and.callFake(
-                (credential: OYCredential,
+                (credential: OpenYoloCredential,
                  displayCallbacks: DisplayCallbacks) => {
                   expect(credential).toBe(alicePwdCred);
                   // return a promise that's not going to resolve
@@ -349,7 +352,9 @@ describe('ProviderFrame', () => {
         clientChannel.listen(msg.RpcMessageType.error, (data) => {
           expectMessageContents(
               data,
-              msg.errorMessage(requestId, OpenYoloError.clientCancelled()));
+              msg.errorMessage(
+                  requestId,
+                  OpenYoloInternalError.operationCanceled().toExposedError()));
           errorPromise.resolve();
         });
 
@@ -381,8 +386,8 @@ describe('ProviderFrame', () => {
 
            (interactionProvider.showCredentialPicker as jasmine.Spy)
                .and.callFake(
-                   (credentials: OYCredential[],
-                    options: OYCredentialRequestOptions,
+                   (credentials: OpenYoloCredential[],
+                    options: OpenYoloCredentialRequestOptions,
                     displayCallbacks: DisplayCallbacks) => {
                      expect(credentials).toEqual([alicePwdCred]);
                      expect(options).toBeDefined();
@@ -418,8 +423,8 @@ describe('ProviderFrame', () => {
 
         (interactionProvider.showCredentialPicker as jasmine.Spy)
             .and.callFake(
-                (credentials: OYCredential[],
-                 options: OYCredentialRequestOptions,
+                (credentials: OpenYoloCredential[],
+                 options: OpenYoloCredentialRequestOptions,
                  displayCallbacks: DisplayCallbacks) => {
                   displayCallbacks.requestDisplayOptions(uiConfig).then(done);
                 });
@@ -436,8 +441,8 @@ describe('ProviderFrame', () => {
 
            (interactionProvider.showCredentialPicker as jasmine.Spy)
                .and.callFake(
-                   (credentials: OYCredential[],
-                    options: OYCredentialRequestOptions,
+                   (credentials: OpenYoloCredential[],
+                    options: OpenYoloCredentialRequestOptions,
                     displayCallbacks: DisplayCallbacks) => {
                      expect(credentials).toEqual([alicePwdCred, bobPwdCred]);
                      expect(options).toBeDefined();
@@ -466,11 +471,12 @@ describe('ProviderFrame', () => {
 
            (interactionProvider.showCredentialPicker as jasmine.Spy)
                .and.callFake(
-                   (credentials: OYCredential[],
-                    options: OYCredentialRequestOptions,
+                   (credentials: OpenYoloCredential[],
+                    options: OpenYoloCredentialRequestOptions,
                     displayCallbacks: DisplayCallbacks) => {
                      expectFinalResult = true;
-                     return Promise.reject(OpenYoloError.canceled());
+                     return Promise.reject(
+                         OpenYoloInternalError.userCanceled());
                    });
 
            clientChannel.listen(msg.RpcMessageType.none, (data) => {
@@ -527,7 +533,7 @@ describe('ProviderFrame', () => {
     });
 
     // tests can use this to emulate user interaction in the credential picker
-    const pwdOrFbHintOptions: OYCredentialHintOptions = {
+    const pwdOrFbHintOptions: OpenYoloCredentialHintOptions = {
       supportedAuthMethods: [
         AUTHENTICATION_METHODS.ID_AND_PASSWORD,
         AUTHENTICATION_METHODS.FACEBOOK
@@ -587,8 +593,8 @@ describe('ProviderFrame', () => {
       // this is checked for as a follow-up message, otherwise a pick cancel
       // message is expected.
       function expectPickFromHints(
-          expectedHints: OYCredential[],
-          selection: OYCredential|null,
+          expectedHints: OpenYoloCredential[],
+          selection: OpenYoloCredential|null,
           expectedResult: msg.RpcMessage<msg.RpcMessageType.credential>|
           msg.RpcMessage<msg.RpcMessageType.none>,
           neverResolve: boolean = false) {
@@ -597,8 +603,8 @@ describe('ProviderFrame', () => {
 
         (interactionProvider.showHintPicker as jasmine.Spy)
             .and.callFake(
-                (hints: OYCredential[],
-                 options: OYCredentialHintOptions,
+                (hints: OpenYoloCredential[],
+                 options: OpenYoloCredentialHintOptions,
                  displayCallbacks: DisplayCallbacks) => {
                   expect(hints).toEqual(expectedHints);
                   expect(options).toBeDefined();
@@ -612,7 +618,8 @@ describe('ProviderFrame', () => {
                     if (selection) {
                       return Promise.resolve(selection);
                     } else {
-                      return Promise.reject(OpenYoloError.canceled());
+                      return Promise.reject(
+                          OpenYoloInternalError.userCanceled());
                     }
                   }
                 });
@@ -666,7 +673,7 @@ describe('ProviderFrame', () => {
 
       it('should return selected hint', async function(done) {
         credentialDataProvider.credentials = [elisaOtherDomainCred];
-        let redactedElisaCred: OYCredential = {
+        let redactedElisaCred: OpenYoloCredential = {
           id: elisaOtherDomainCred.id,
           authMethod: elisaOtherDomainCred.authMethod,
           authDomain: TEST_AUTH_DOMAIN
@@ -735,7 +742,7 @@ describe('ProviderFrame', () => {
          });
 
       it('should prioritize hints with a display name', async function(done) {
-        let deliaFbCredWithName: OYCredential = {
+        let deliaFbCredWithName: OpenYoloCredential = {
           id: deliaFbCred.id,
           authMethod: deliaFbCred.authMethod,
           authDomain: deliaFbCred.authDomain,
@@ -751,7 +758,7 @@ describe('ProviderFrame', () => {
 
       it('should prioritize hints with a profile picture',
          async function(done) {
-           let deliaFbCredWithPicture: OYCredential = {
+           let deliaFbCredWithPicture: OpenYoloCredential = {
              id: deliaFbCred.id,
              authMethod: deliaFbCred.authMethod,
              authDomain: deliaFbCred.authDomain,
@@ -811,24 +818,25 @@ class TestClientConfigurationProvider implements ClientConfigurationProvider {
   configMap: {[key: string]: PrimaryClientConfiguration} = {};
 
   async getConfiguration(authDomain: string):
-      Promise<PrimaryClientConfiguration|null> {
+      Promise<PrimaryClientConfiguration> {
     if (authDomain in this.configMap) {
       return this.configMap[authDomain];
     }
-    return null;
+    throw new Error('The Test Client Configuration does not exist!');
   }
 }
 
 class TestCredentialDataProvider implements CredentialDataProvider {
-  credentials: OYCredential[] = [];
+  credentials: OpenYoloCredential[] = [];
   neverSave: {[key: string]: boolean} = {};
 
-  async getAllCredentials(authDomains: string[]): Promise<OYCredential[]> {
+  async getAllCredentials(authDomains: string[]):
+      Promise<OpenYoloCredential[]> {
     if (authDomains.length < 1) {
       return this.credentials;
     }
 
-    let filteredCredentials: OYCredential[] = [];
+    let filteredCredentials: OpenYoloCredential[] = [];
 
     for (let i = 0; i < this.credentials.length; i++) {
       let credential = this.credentials[i];
@@ -841,7 +849,8 @@ class TestCredentialDataProvider implements CredentialDataProvider {
     return filteredCredentials;
   }
 
-  async getAllHints(options: OYCredentialHintOptions): Promise<OYCredential[]> {
+  async getAllHints(options: OpenYoloCredentialHintOptions):
+      Promise<OpenYoloCredential[]> {
     // no filtering required in the hints case
     return this.credentials;
   }
@@ -869,15 +878,16 @@ class TestCredentialDataProvider implements CredentialDataProvider {
   /**
    * Determines whether the provided credential can be saved to this store.
    */
-  async canSave(credential: OYCredential): Promise<boolean> {
+  async canSave(credential: OpenYoloCredential): Promise<boolean> {
     return true;
   }
 
   /**
    * Creates or updates an existing credential.
    */
-  async upsertCredential(credential: OYCredential, original?: OYCredential):
-      Promise<OYCredential> {
+  async upsertCredential(
+      credential: OpenYoloCredential,
+      original?: OpenYoloCredential): Promise<OpenYoloCredential> {
     if (original) {
       await this.deleteCredential(original);
     }
@@ -888,7 +898,7 @@ class TestCredentialDataProvider implements CredentialDataProvider {
   /**
    * Determines whether the provided credential can be deleted.
    */
-  async canDelete(credential: OYCredential): Promise<boolean> {
+  async canDelete(credential: OpenYoloCredential): Promise<boolean> {
     return true;
   }
 
@@ -896,7 +906,7 @@ class TestCredentialDataProvider implements CredentialDataProvider {
    * Deletes the provided credential from the store. If delete is not
    * permitted for this credential, the returned promise will be rejected.
    */
-  async deleteCredential(credential: OYCredential): Promise<void> {
+  async deleteCredential(credential: OpenYoloCredential): Promise<void> {
     let existing = this.credentials.findIndex(
         (c) => c.authDomain === credential.authDomain &&
             c.id === credential.id && c.authMethod === credential.authMethod);
@@ -911,7 +921,7 @@ class TestCredentialDataProvider implements CredentialDataProvider {
 
 class TestLocalStateProvider implements LocalStateProvider {
   autoSignIn: {[label: string]: boolean} = {};
-  retained: {[authDomain: string]: OYCredential} = {};
+  retained: {[authDomain: string]: OpenYoloCredential} = {};
 
   async isAutoSignInEnabled(authDomain: string): Promise<boolean> {
     let result: boolean;
@@ -930,11 +940,11 @@ class TestLocalStateProvider implements LocalStateProvider {
 
   async retainCredentialForSession(
       authDomain: string,
-      credential: OYCredential) {
+      credential: OpenYoloCredential) {
     this.retained[authDomain] = credential;
   }
 
-  async getRetainedCredential(authDomain: string): Promise<OYCredential> {
+  async getRetainedCredential(authDomain: string): Promise<OpenYoloCredential> {
     if (this.retained[authDomain]) {
       let credential = this.retained[authDomain];
       delete this.retained[authDomain];

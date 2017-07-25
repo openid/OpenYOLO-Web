@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import {OYCredential as OpenYoloCredential, OYCredentialRequestOptions as OpenYoloCredentialRequestOptions} from '../protocol/data';
+import {OpenYoloCredential as OpenYoloCredential, OpenYoloCredentialRequestOptions as OpenYoloCredentialRequestOptions} from '../protocol/data';
 import {AUTHENTICATION_METHODS} from '../protocol/data';
-import {InternalErrorCode, OpenYoloError} from '../protocol/errors';
+import {InternalErrorCode, OpenYoloInternalError} from '../protocol/errors';
 
 import {NavigatorCredentials} from './navigator_credentials';
 
@@ -102,8 +102,8 @@ describe('NavigatorCredentials', () => {
             done.fail('Should not resolve!');
           },
           (error) => {
-            expect(
-                OpenYoloError.errorIs(error, InternalErrorCode.userCanceled));
+            expect(OpenYoloInternalError.errorIs(
+                error, InternalErrorCode.userCanceled));
             done();
           });
     });
@@ -254,7 +254,9 @@ describe('NavigatorCredentials', () => {
               done.fail('Unexpected success!');
             },
             (error) => {
-              expect(error.message).toEqual('Error: status code 400');
+              expect(error.message)
+                  .toEqual(
+                      'The API request failed to resolve: Status code 400');
               done();
             });
       });

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+/* Internal, detailed, error codes. */
 export enum InternalErrorCode {
   ackTimeout = 'ackTimeout',
   establishSecureChannelTimeout = 'establishSecureChannelTimeout',
@@ -31,132 +32,263 @@ export enum InternalErrorCode {
   requestTimeout = 'requestTimeout',
   illegalConcurrentRequest = 'illegalConcurrentRequest',
   unknownRequest = 'unknownRequest',
-  unknown = 'unknown'
+  unknownError = 'unknownError'
 }
 
+/* Exposed error types meant for apps to trigger different flows. */
+export enum OpenYoloErrorType {
+  initializationError = 'initializationError',
+  configurationError = 'configurationError',
+  userCanceled = 'userCanceled',
+  noCredentialsAvailable = 'noCredentialsAvailable',
+  operationCanceled = 'operationCanceled',
+  clientDisposed = 'clientDisposed',
+  requestFailed = 'requestFailed',
+  illegalConcurrentRequest = 'illegalConcurrentRequest',
+  unknownError = 'unknownError'
+}
+
+/**
+ * Data containing additional information on the error, used only in the
+ * provider frame.
+ */
 export interface OpenYoloErrorData {
+  /** Standardized error code. */
   code: InternalErrorCode;
+  /** Type of the corresponding exposed error. */
+  exposedErrorType: OpenYoloErrorType;
+  /** Developer visible and non sensitive error message. */
   message: string;
-  info?: {[key: string]: string};
+  /** Additional, potentially sensitive, information. */
+  additionalInformation?: {[key in string]: string};
 }
 
-export interface OpenYoloExtendedError extends Error {
-  data: OpenYoloErrorData;
+/**
+ * Data containing additional information on the error, stripped of potentially
+ * sensitive data. It is the interface of the object sent through the
+ * SecureChannel to the client.
+ */
+export interface OpenYoloExposedErrorData {
+  /** Standardized exposed error type. */
+  type: OpenYoloErrorType;
+  /**
+   * Developer visible and non sensitive error message. It will contain the
+   * InternalErrorCode for easier reference: `${code}: ${message}`.
+   */
+  message: string;
 }
 
-export class OpenYoloError {
+/**
+ * Internal error.
+ */
+export class OpenYoloInternalError extends Error {
+  constructor(public data: OpenYoloErrorData) {
+    super(data.message);
+  }
+
+  /** Returns the client-side exposed error. */
+  toExposedError(): OpenYoloError {
+    return OpenYoloError.fromData(this.toExposedErrorData());
+  }
+
+  /** Returns the client-side exposed error data. */
+  private toExposedErrorData(): OpenYoloExposedErrorData {
+    return {
+      type: this.data.exposedErrorType,
+      message: `${this.data.code}: ${this.data.message}`
+    };
+  }
+
+  /* Initialization errors. */
+
   static ackTimeout() {
-    return OpenYoloError.createError({
+    return new OpenYoloInternalError({
       code: InternalErrorCode.ackTimeout,
-      message: 'Message acknowledgement timed out.'
-    });
-  }
-
-  static canceled() {
-    return OpenYoloError.createError(
-        {code: InternalErrorCode.userCanceled, message: 'User canceled'});
-  }
-
-  static clientCancelled() {
-    return OpenYoloError.createError({
-      code: InternalErrorCode.operationCanceled,
-      message: 'Operation cancelled'
-    });
-  }
-
-  static clientDisposed() {
-    return OpenYoloError.createError({
-      code: InternalErrorCode.clientDisposed,
-      message: 'Client is disposed and no longer usable'
-    });
-  }
-
-  static untrustedOrigin(origin: string) {
-    return OpenYoloError.createError({
-      code: InternalErrorCode.untrustedOrigin,
-      message: `Untrusted origin: ${origin}`
-    });
-  }
-
-  static requestFailed(message: string) {
-    return OpenYoloError.createError(
-        {code: InternalErrorCode.requestFailed, message});
-  }
-
-  static requestTimeout() {
-    return OpenYoloError.createError(
-        {code: InternalErrorCode.requestTimeout, message: 'Request timed out'});
-  }
-
-  static illegalStateError(reason: string) {
-    return OpenYoloError.createError(
-        {code: InternalErrorCode.illegalStateError, message: reason});
-  }
-
-  static illegalConcurrentRequestError() {
-    return OpenYoloError.createError({
-      code: InternalErrorCode.illegalConcurrentRequest,
-      message: 'Concurrent requests are not permitted'
+      exposedErrorType: OpenYoloErrorType.initializationError,
+      message: 'A parent frame failed to acknowledge the handshake. This can ' +
+          'be due, in nested context, to the absence of the handshake ' +
+          'responder library.'
     });
   }
 
   static establishSecureChannelTimeout() {
-    return OpenYoloError.createError({
+    return new OpenYoloInternalError({
       code: InternalErrorCode.establishSecureChannelTimeout,
-      message: 'SecureConnection establishment timed out'
+      exposedErrorType: OpenYoloErrorType.initializationError,
+      message: 'The Secure Channel failed to initialize in a timely manner. ' +
+          'This can be due to network latency or a wrong configuration.'
     });
   }
 
-  static unknownRequest(requestType: string) {
-    return OpenYoloError.createError({
-      code: InternalErrorCode.unknownRequest,
-      message: `Unknown request type ${requestType}`
+  static parentVerifyTimeout() {
+    return new OpenYoloInternalError({
+      code: InternalErrorCode.parentVerifyTimeout,
+      exposedErrorType: OpenYoloErrorType.initializationError,
+      message: 'The credentials provider frame failed to verify the ancestor ' +
+          'frames in a timely manner.'
+    });
+  }
+
+  static illegalStateError(reason: string) {
+    return new OpenYoloInternalError({
+      code: InternalErrorCode.illegalStateError,
+      exposedErrorType: OpenYoloErrorType.initializationError,
+      message: `An internal error happened: ${reason}`
+    });
+  }
+
+  static providerInitializationFailed() {
+    return new OpenYoloInternalError({
+      code: InternalErrorCode.providerInitializationFailed,
+      exposedErrorType: OpenYoloErrorType.initializationError,
+      message: 'The credentials provider frame failed to initialize.'
     });
   }
 
   static apiDisabled() {
-    return OpenYoloError.createError(
-        {code: InternalErrorCode.apiDisabled, message: 'API is disabled'});
+    return new OpenYoloInternalError({
+      code: InternalErrorCode.apiDisabled,
+      exposedErrorType: OpenYoloErrorType.initializationError,
+      message:
+          'The API has been disabled by the user’s preference or has not been' +
+          ' enabled in the OpenYolo configuration.'
+    });
   }
 
-  static ancestorVerifyTimeout() {
-    return OpenYoloError.createError({
-      code: InternalErrorCode.parentVerifyTimeout,
-      message: `Frame ancestor origin verification timed out`
+  /* Configuration errors. */
+
+  static untrustedOrigin(origin: string) {
+    return new OpenYoloInternalError({
+      code: InternalErrorCode.untrustedOrigin,
+      exposedErrorType: OpenYoloErrorType.configurationError,
+      message: `A parent frame does not belong to an authorized origin. ` +
+          `Ensure the configuration of OpenYolo contains '${origin}'.`
     });
   }
 
   static parentIsNotRoot() {
-    return OpenYoloError.createError({
+    return new OpenYoloInternalError({
       code: InternalErrorCode.parentIsNotRoot,
-      message: `Parent frame is not a root window`
+      exposedErrorType: OpenYoloErrorType.configurationError,
+      message:
+          `The caller window is an IFrame which is not authorized in OpenYolo` +
+          `configuration.`
     });
   }
 
-  static providerInitFailed() {
-    return OpenYoloError.createError({
-      code: InternalErrorCode.providerInitializationFailed,
-      message: `Provider failed to initialize`
+  /* Flow errors. */
+
+  static userCanceled() {
+    return new OpenYoloInternalError({
+      code: InternalErrorCode.userCanceled,
+      exposedErrorType: OpenYoloErrorType.userCanceled,
+      message: 'The user canceled the operation.'
     });
   }
 
-  static unknown() {
-    return OpenYoloError.createError(
-        {code: InternalErrorCode.unknown, message: `Unkown error.`});
+  static noCredentialsAvailable() {
+    return new OpenYoloInternalError({
+      code: InternalErrorCode.noCredentialsAvailable,
+      exposedErrorType: OpenYoloErrorType.noCredentialsAvailable,
+      message: 'No credential is available for the current user.'
+    });
   }
 
-  static createError(errorData: OpenYoloErrorData): OpenYoloExtendedError {
-    let err = (new Error(errorData.message) as any);
-    err.data = errorData;
-    return err;
+  static operationCanceled() {
+    return new OpenYoloInternalError({
+      code: InternalErrorCode.operationCanceled,
+      exposedErrorType: OpenYoloErrorType.operationCanceled,
+      message: 'The operation was canceled.'
+    });
+  }
+
+  static clientDisposed() {
+    return new OpenYoloInternalError({
+      code: InternalErrorCode.clientDisposed,
+      exposedErrorType: OpenYoloErrorType.clientDisposed,
+      message: 'The API has been disposed from the current context.'
+    });
+  }
+
+  /* Request errors. */
+
+  static requestFailed(message: string) {
+    return new OpenYoloInternalError({
+      code: InternalErrorCode.requestFailed,
+      exposedErrorType: OpenYoloErrorType.requestFailed,
+      message: `The API request failed to resolve: ${message}`
+    });
+  }
+
+  static requestTimeout() {
+    return new OpenYoloInternalError({
+      code: InternalErrorCode.requestTimeout,
+      exposedErrorType: OpenYoloErrorType.requestFailed,
+      message: 'The API request timed out.'
+    });
+  }
+
+  static illegalConcurrentRequestError() {
+    return new OpenYoloInternalError({
+      code: InternalErrorCode.illegalConcurrentRequest,
+      exposedErrorType: OpenYoloErrorType.illegalConcurrentRequest,
+      message:
+          'The request could not be resolved because another operation is ' +
+          'currently pending.'
+    });
+  }
+
+  static unknownRequest(requestType: string) {
+    return new OpenYoloInternalError({
+      code: InternalErrorCode.unknownRequest,
+      exposedErrorType: OpenYoloErrorType.requestFailed,
+      message: `The '${requestType}' request sent could not be handled by the` +
+          ` credentials provider.`
+    });
+  }
+
+  static unknownError() {
+    return new OpenYoloInternalError({
+      code: InternalErrorCode.unknownError,
+      exposedErrorType: OpenYoloErrorType.unknownError,
+      message: `Unkown error.`
+    });
   }
 
   static errorIs(err: any, code: InternalErrorCode) {
-    // force comparability for the purposes of this dynamic check
+    // Force comparability for the purposes of this dynamic check.
     if ('data' in err) {
       return err['data']['code'] === code;
     }
 
     return false;
+  }
+}
+
+/**
+ * Client side exposed error type.
+ */
+export declare interface OpenYoloError extends Error {
+  /** Standardized error type. */
+  type: OpenYoloErrorType;
+  /**
+   * Developer visible and non sensitive error message. It will contain the
+   * InternalErrorCode for easier reference: `${code}: ${message}`.
+   */
+  message: string;
+}
+
+export class OpenYoloError extends Error {
+  constructor(message: string, public type: OpenYoloErrorType) {
+    super(message);
+    this.name = 'OpenYoloError';
+  }
+
+  toData(): OpenYoloExposedErrorData {
+    return {message: this.message, type: this.type};
+  }
+
+  static fromData(data: OpenYoloExposedErrorData): OpenYoloError {
+    return new OpenYoloError(data.message, data.type);
   }
 }

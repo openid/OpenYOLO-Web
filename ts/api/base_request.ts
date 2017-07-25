@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {InternalErrorCode, OpenYoloError, OpenYoloErrorData, OpenYoloExtendedError} from '../protocol/errors';
+import {OpenYoloError, OpenYoloErrorType, OpenYoloExposedErrorData, OpenYoloInternalError} from '../protocol/errors';
 import {RpcMessageArgumentTypes, RpcMessageData, RpcMessageType} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {generateId, PromiseResolver, startTimeoutRacer, TimeoutRacer} from '../protocol/utils';
@@ -75,7 +75,7 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
       // Handle specifically a timeout error.
       this.frame.hide();
       this.dispose();
-      throw OpenYoloError.requestTimeout();
+      throw OpenYoloInternalError.requestTimeout().toExposedError();
     }
   }
 
@@ -91,18 +91,19 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
   private registerBaseHandlers() {
     this.debugLog('request instantiated');
     // Register a standard error handler.
-    this.registerHandler(RpcMessageType.error, (data: OpenYoloErrorData) => {
-      let error: OpenYoloExtendedError;
-      if (data) {
-        error = OpenYoloError.createError(data);
-      } else {
-        error = OpenYoloError.unknown();
-      }
+    this.registerHandler(
+        RpcMessageType.error, (data: OpenYoloExposedErrorData) => {
+          let error: OpenYoloError;
+          if (data) {
+            error = OpenYoloError.fromData(data);
+          } else {
+            error = OpenYoloInternalError.unknownError().toExposedError();
+          }
 
-      this.debugLog(`request failed: ${error}`);
-      this.reject(error);
-      this.dispose();
-    });
+          this.debugLog(`request failed: ${error}`);
+          this.reject(error);
+          this.dispose();
+        });
 
     // Register a standard handler for displaying the provider - when UI is
     // shown, the timeouts are also canceled to allow the operation to proceed
@@ -126,11 +127,11 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
     this.frame.hide();
   }
 
-  reject(reason: OpenYoloExtendedError) {
+  reject(reason: OpenYoloError) {
     this.promiseResolver.reject(reason);
     // Do not hide the IFrame in case of concurrent request, to allow the
     // previous one to finish.
-    if (reason.data.code !== InternalErrorCode.illegalConcurrentRequest) {
+    if (reason.type !== OpenYoloErrorType.illegalConcurrentRequest) {
       this.frame.hide();
     }
   }

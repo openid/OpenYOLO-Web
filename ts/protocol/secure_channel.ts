@@ -15,12 +15,10 @@
  */
 
 import {createMessageListener, FilteringEventListener, isPermittedOrigin, RpcMessageListener, WindowLike} from './comms';
-import {OpenYoloError} from './errors';
+import {OpenYoloError, OpenYoloInternalError} from './errors';
 import {ackMessage, channelConnectMessage, channelReadyMessage, PostMessageType, readyForConnectMessage} from './post_messages';
 import {RpcMessage, RpcMessageData, RpcMessageType} from './rpc_messages';
 import {PromiseResolver, sha256, timeoutPromise} from './utils';
-
-const DEFAULT_TIMEOUT_MS = 3000;
 
 /**
  * The timeout for ack message.
@@ -39,28 +37,7 @@ export class SecureChannel {
   private listeners: Array<ListenerPair|null> = [];
   private fallbackListeners: UnknownMessageEventListener[] = [];
 
-  /**
-   * Connect method that an OpenYOLO client calls to establish contact with
-   * the provider.
-   */
-  static clientConnect(
-      clientWindow: WindowLike,
-      providerWindow: WindowLike,
-      connectionNonce: string,
-      connectionNonceHash: string,
-      timeoutMs?: number): Promise<SecureChannel> {
-    timeoutMs = (timeoutMs && timeoutMs > 0) ? timeoutMs : DEFAULT_TIMEOUT_MS;
-
-    let timeout = timeoutPromise<SecureChannel>(
-        OpenYoloError.establishSecureChannelTimeout(), timeoutMs);
-
-    let connectPromise = SecureChannel.clientConnectNoTimeout(
-        clientWindow, providerWindow, connectionNonce, connectionNonceHash);
-
-    return Promise.race([timeout, connectPromise]);
-  }
-
-  static async clientConnectNoTimeout(
+  static async clientConnect(
       clientWindow: WindowLike,
       providerWindow: WindowLike,
       connectionNonce: string,
@@ -71,20 +48,20 @@ export class SecureChannel {
     await SecureChannel.providerReadyToConnect(
         clientWindow, connectionNonceHash);
 
-    let channel = new MessageChannel();
+    const channel = new MessageChannel();
 
-    let readyPromiseResolver = new PromiseResolver();
+    const readyPromiseResolver = new PromiseResolver();
     // register another listener for the success / fail of establishing the
     // connection.
 
-    let readyListener =
+    const readyListener =
         createMessageListener(PostMessageType.channelReady, () => {
           readyPromiseResolver.resolve();
         });
 
-    let errorListener =
-        createMessageListener(PostMessageType.channelError, (err) => {
-          readyPromiseResolver.reject(OpenYoloError.createError(err));
+    const errorListener =
+        createMessageListener(PostMessageType.channelError, (data) => {
+          readyPromiseResolver.reject(OpenYoloError.fromData(data));
         });
 
     clientWindow.addEventListener('message', readyListener);
@@ -179,7 +156,8 @@ export class SecureChannel {
             SecureChannel.debugLog(
                 'provider',
                 'connection challenge from untrusted origin - rejecting');
-            promiseResolver.reject(OpenYoloError.untrustedOrigin(ev.origin));
+            promiseResolver.reject(
+                OpenYoloInternalError.untrustedOrigin(ev.origin));
             return;
           }
 
@@ -187,7 +165,7 @@ export class SecureChannel {
             SecureChannel.debugLog(
                 'provider',
                 'connection challenge did not carry a port - rejecting');
-            promiseResolver.reject(OpenYoloError.illegalStateError(
+            promiseResolver.reject(OpenYoloInternalError.illegalStateError(
                 'channel initialization message does not contain ports'));
             return;
           }
@@ -267,7 +245,7 @@ export class SecureChannel {
       }
     });
     const timeout = timeoutPromise<SecureChannel>(
-        OpenYoloError.ackTimeout(), ACK_TIMEOUT_MS);
+        OpenYoloInternalError.ackTimeout(), ACK_TIMEOUT_MS);
     timeout.catch((err) => {
       this.port.removeEventListener('message', ackListner);
     });
@@ -281,7 +259,7 @@ export class SecureChannel {
       messageType: T,
       listener: RpcMessageListener<T>): number {
     if (!messageType || !listener) {
-      throw OpenYoloError.illegalStateError('invalid type or listener');
+      throw OpenYoloInternalError.illegalStateError('invalid type or listener');
     }
 
     let portListener = createMessageListener(

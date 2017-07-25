@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import {AUTHENTICATION_METHODS, OYCredential} from '../protocol/data';
-import {OpenYoloError} from '../protocol/errors';
+import {AUTHENTICATION_METHODS, OpenYoloCredential} from '../protocol/data';
+import {OpenYoloInternalError} from '../protocol/errors';
 import {errorMessage, proxyLoginMessage, proxyLoginResponseMessage} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {FakeProviderConnection} from '../test_utils/channels';
@@ -28,7 +28,7 @@ describe('ProxyLogin', () => {
   let clientChannel: SecureChannel;
   let providerChannel: SecureChannel;
   let frame: any;
-  let credential: OYCredential = {
+  let credential: OpenYoloCredential = {
     id: 'user@example.com',
     displayName: 'User',
     password: 'password',
@@ -86,7 +86,8 @@ describe('ProxyLogin', () => {
     it('rejects if an error message is received', async function(done) {
       let promise = request.dispatch(credential);
 
-      let expectedError = OpenYoloError.requestFailed('error!');
+      let expectedError =
+          OpenYoloInternalError.requestFailed('error!').toExposedError();
       providerChannel.send(errorMessage(request.id, expectedError));
 
       try {

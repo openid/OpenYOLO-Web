@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {OYCredential, OYCredentialRequestOptions} from '../protocol/data';
+import {OpenYoloCredential, OpenYoloCredentialRequestOptions} from '../protocol/data';
 import {retrieveMessage, RpcMessageType} from '../protocol/rpc_messages';
 
 import {BaseRequest} from './base_request';
@@ -23,17 +23,18 @@ import {BaseRequest} from './base_request';
  * Handles the get credential request, by displaying the IFrame or not to let
  * the user selects a credential, if any is available.
  */
-export class CredentialRequest extends
-    BaseRequest<OYCredential|null, OYCredentialRequestOptions|undefined> {
+export class CredentialRequest extends BaseRequest<
+    OpenYoloCredential|null,
+    OpenYoloCredentialRequestOptions|undefined> {
   /**
    * Starts the Credential Request flow.
    */
-  dispatchInternal(options: OYCredentialRequestOptions) {
+  dispatchInternal(options: OpenYoloCredentialRequestOptions) {
     // the final outcome will either be a credential, or a notification that
     // none are available / none was selected by the user.
     this.registerHandler(
         RpcMessageType.credential,
-        (credential: OYCredential) => this.handleResult(credential));
+        (credential: OpenYoloCredential) => this.handleResult(credential));
     this.registerHandler(RpcMessageType.none, () => this.handleResult(null));
 
     // send the request
@@ -43,7 +44,7 @@ export class CredentialRequest extends
   /**
    * Handles the initial response from a credential request.
    */
-  private handleResult(credential: OYCredential|null): void {
+  private handleResult(credential: OpenYoloCredential|null): void {
     this.resolve(credential);
     this.dispose();
   }

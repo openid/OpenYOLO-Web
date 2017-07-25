@@ -16,8 +16,8 @@
 
 import {PrimaryClientConfiguration} from '../protocol/client_config';
 import {sendMessage} from '../protocol/comms';
-import {AUTHENTICATION_METHODS, OYCredential, OYCredentialHintOptions, OYCredentialRequestOptions} from '../protocol/data';
-import {OpenYoloError} from '../protocol/errors';
+import {AUTHENTICATION_METHODS, OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions} from '../protocol/data';
+import {OpenYoloInternalError} from '../protocol/errors';
 import {isOpenYoloMessageFormat} from '../protocol/messages';
 import {channelErrorMessage} from '../protocol/post_messages';
 import * as msg from '../protocol/rpc_messages';
@@ -40,7 +40,7 @@ export class ProviderFrame {
   private closeListener: EventListener;
   private window: WindowLike;
 
-  private proxyLoginCredential: OYCredential|null = null;
+  private proxyLoginCredential: OpenYoloCredential|null = null;
 
   /**
    * Performs the initial validation of the execution context, and then
@@ -56,7 +56,7 @@ export class ProviderFrame {
               providerConfig.clientAuthDomain);
       if (!clientConfiguration || !clientConfiguration.apiEnabled) {
         console.info('OpenYOLO API is not enabled for the client origin');
-        throw OpenYoloError.apiDisabled();
+        throw OpenYoloInternalError.apiDisabled();
       }
 
       // Verify the ancestor frame(s), based on the client configuration and
@@ -92,16 +92,18 @@ export class ProviderFrame {
 
     } catch (err) {
       // initialization failed, be courteous and notify the client as this
-      // may not actually be their fault. However, don't send the actual
-      // root cause to the client in case this leaks sensitive information.
-
-      // TODO(iainmcgin): some messages would be safe to send to the client.
-      // we could indicate this within the OpenYoloError type, with a
-      // "client safe" flag for messages that cannot contain sensitive
-      // information, and that would be useful to the client.
-      sendMessage(
-          providerConfig.window.parent,
-          channelErrorMessage(OpenYoloError.providerInitFailed()));
+      // may not actually be their fault.
+      if (typeof err.toExposedError === 'function') {
+        sendMessage(
+            providerConfig.window.parent,
+            channelErrorMessage(err.toExposedError()));
+      } else {
+        sendMessage(
+            providerConfig.window.parent,
+            channelErrorMessage(
+                OpenYoloInternalError.providerInitializationFailed()
+                    .toExposedError()));
+      }
 
       throw err;
     }
@@ -140,7 +142,8 @@ export class ProviderFrame {
   private async handleClose() {
     sendMessage(
         this.providerConfig.window.parent,
-        channelErrorMessage(OpenYoloError.canceled()));
+        channelErrorMessage(
+            OpenYoloInternalError.userCanceled().toExposedError()));
   }
 
   private registerListeners() {
@@ -205,8 +208,8 @@ export class ProviderFrame {
         console.info('Caught a cancel signal', error);
         // reset cancellable promise, for the next set of requests
         this.cancellable = null;
-        this.clientChannel.send(
-            msg.errorMessage(m.id, OpenYoloError.clientCancelled()));
+        this.clientChannel.send(msg.errorMessage(
+            m.id, OpenYoloInternalError.operationCanceled().toExposedError()));
       } else {
         throw error;
       }
@@ -231,7 +234,9 @@ export class ProviderFrame {
 
     console.error(`Concurrent request ${requestId} received, rejecting`);
     this.clientChannel.send(msg.errorMessage(
-        requestId, OpenYoloError.illegalConcurrentRequestError()));
+        requestId,
+        OpenYoloInternalError.illegalConcurrentRequestError()
+            .toExposedError()));
     return false;
   }
 
@@ -256,7 +261,7 @@ export class ProviderFrame {
 
   private async handleHintRequest(
       requestId: string,
-      options: OYCredentialHintOptions) {
+      options: OpenYoloCredentialHintOptions) {
     console.info('Handling hint request');
 
     let hints = await this.cancellablePromise(this.getHints(options));
@@ -301,7 +306,7 @@ export class ProviderFrame {
 
   private async handleHintAvailableRequest(
       id: string,
-      options: OYCredentialHintOptions) {
+      options: OpenYoloCredentialHintOptions) {
     console.info('Handling hintAvailable request');
 
     let hints = await this.cancellablePromise(this.getHints(options));
@@ -311,7 +316,7 @@ export class ProviderFrame {
 
   private async handleGetCredentialRequest(
       requestId: string,
-      options: OYCredentialRequestOptions) {
+      options: OpenYoloCredentialRequestOptions) {
     console.info('Handling credential retrieve request');
 
     let credentials = await this.cancellablePromise(
@@ -320,7 +325,7 @@ export class ProviderFrame {
 
     // filter out the credentials which don't match the request options
     let pertinentCredentials =
-        credentials.filter((credential: OYCredential) => {
+        credentials.filter((credential: OpenYoloCredential) => {
           return options.supportedAuthMethods.find(
               (value) => value === credential.authMethod);
         });
@@ -376,12 +381,14 @@ export class ProviderFrame {
 
   private async handleSaveCredentialRequest(
       id: string,
-      credential: OYCredential) {
+      credential: OpenYoloCredential) {
     // TODO(iainmcgin): implement
     return this.handleUnimplementedRequest(id, msg.RpcMessageType.save);
   }
 
-  private async handleProxyLoginRequest(id: string, credential: OYCredential) {
+  private async handleProxyLoginRequest(
+      id: string,
+      credential: OpenYoloCredential) {
     // TODO(iainmcgin): implement
     return this.handleUnimplementedRequest(id, msg.RpcMessageType.proxy);
   }
@@ -407,8 +414,8 @@ export class ProviderFrame {
    */
   private async handleUnimplementedRequest(id: string, type: string) {
     console.error(`No implementation for request of type ${type}`);
-    this.clientChannel.send(
-        msg.errorMessage(id, OpenYoloError.unknownRequest(type)));
+    this.clientChannel.send(msg.errorMessage(
+        id, OpenYoloInternalError.unknownRequest(type).toExposedError()));
   }
 
   private handleUnknownMessage(ev: MessageEvent) {
@@ -437,8 +444,8 @@ export class ProviderFrame {
     const data = (ev.data.data as msg.RpcMessageData<any>);
     // the message is a known, valid, but unhandled RPC message. Send a generic
     // failure message back.
-    this.clientChannel.send(
-        msg.errorMessage(data.id, OpenYoloError.unknownRequest(type)));
+    this.clientChannel.send(msg.errorMessage(
+        data.id, OpenYoloInternalError.unknownRequest(type).toExposedError()));
     return;
   }
 
@@ -447,7 +454,7 @@ export class ProviderFrame {
    * {@code this.proxyLoginCredential} and return a redacted version of the
    * credential. Otherwise, just an unredacted copy of the credential.
    */
-  private storeForProxyLogin(credential: OYCredential) {
+  private storeForProxyLogin(credential: OpenYoloCredential) {
     if (!credential.password ||
         (this.providerConfig.allowDirectAuth &&
          !this.clientConfig.requireProxyLogin)) {
@@ -468,12 +475,15 @@ export class ProviderFrame {
    * Provides a shallow copy of a credential, optionally redacting sensitive
    * data.
    */
-  private copyCredential(credential: OYCredential, redactSensitive?: boolean):
-      OYCredential {
+  private copyCredential(
+      credential: OpenYoloCredential,
+      redactSensitive?: boolean): OpenYoloCredential {
     let redact = !!redactSensitive;
 
-    let copy:
-        OYCredential = {id: credential.id, authMethod: credential.authMethod};
+    let copy: OpenYoloCredential = {
+      id: credential.id,
+      authMethod: credential.authMethod
+    };
 
     if (credential.authDomain) {
       copy.authDomain = credential.authDomain;
@@ -515,8 +525,8 @@ export class ProviderFrame {
    * Creates a list of all hints that are compatible with the specified hint
    * options, ordered from most- to least- frequently used.
    */
-  private async getHints(options: OYCredentialHintOptions):
-      Promise<OYCredential[]> {
+  private async getHints(options: OpenYoloCredentialHintOptions):
+      Promise<OpenYoloCredential[]> {
     // get all credentials across all domains; from this, we can filter down
     // to the set of credentials
     let allCredentials = await this.cancellablePromise(
@@ -528,7 +538,7 @@ export class ProviderFrame {
 
     // consolidate credentials into a map based on the credential id, and
     // record the number of credentials with that identifier.
-    let credentialsById = ({} as {[key: string]: OYCredential});
+    let credentialsById = ({} as {[key: string]: OpenYoloCredential});
     let credentialCount = ({} as {[key: string]: number});
     let numRetained = 0;
     allCredentials.forEach((credential) => {
@@ -562,7 +572,7 @@ export class ProviderFrame {
     // extract and reorder the credentials from the map into a most- to
     // least-frequently ocurring order.
 
-    let hintCredentials: OYCredential[] = [];
+    let hintCredentials: OpenYoloCredential[] = [];
     for (let credentialId in credentialsById) {
       if (credentialsById.hasOwnProperty(credentialId)) {
         hintCredentials.push(credentialsById[credentialId]);
@@ -587,7 +597,7 @@ export class ProviderFrame {
    * information it contains is. This can be used to compare credentials and
    * favor those with more information.
    */
-  private completenessScore(credential: OYCredential): number {
+  private completenessScore(credential: OpenYoloCredential): number {
     let score = 0;
     if (credential.authMethod !== AUTHENTICATION_METHODS.ID_AND_PASSWORD) {
       score += 4;

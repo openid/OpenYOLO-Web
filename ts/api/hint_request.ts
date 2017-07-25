@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {OYCredential, OYCredentialHintOptions} from '../protocol/data';
+import {OpenYoloCredential, OpenYoloCredentialHintOptions} from '../protocol/data';
 import {hintMessage, RpcMessageType} from '../protocol/rpc_messages';
 
 import {BaseRequest} from './base_request';
@@ -23,15 +23,16 @@ import {BaseRequest} from './base_request';
  * Handles the get hint request, by displaying the IFrame or not to let
  * the user selects a hint, if any is available.
  */
-export class HintRequest extends
-    BaseRequest<OYCredential|null, OYCredentialHintOptions|undefined> {
+export class HintRequest extends BaseRequest<
+    OpenYoloCredential|null,
+    OpenYoloCredentialHintOptions|undefined> {
   /**
    * Starts the Hint Request flow.
    */
-  dispatchInternal(options: OYCredentialHintOptions) {
+  dispatchInternal(options: OpenYoloCredentialHintOptions) {
     this.registerHandler(
         RpcMessageType.credential,
-        (credential: OYCredential) => this.handleResult(credential));
+        (credential: OpenYoloCredential) => this.handleResult(credential));
     this.registerHandler(RpcMessageType.none, () => this.handleResult(null));
 
     this.debugLog(`Sending hint request`);
@@ -41,7 +42,7 @@ export class HintRequest extends
   /**
    * Handles the initial response from a hint request.
    */
-  private handleResult(credential: OYCredential|null): void {
+  private handleResult(credential: OpenYoloCredential|null): void {
     this.debugLog(`Hint request complete`);
     this.resolve(credential);
     this.dispose();
