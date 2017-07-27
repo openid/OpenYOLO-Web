@@ -209,6 +209,9 @@ export const enum RenderMode {
   fullScreen = 'fullScreen'
 }
 
+export const RENDER_MODES: RenderMode[] =
+    [RenderMode.bottomSheet, RenderMode.navPopout, RenderMode.fullScreen];
+
 /**
  * A set of commonly-used federated authentication methods. This list is not
  * intended to be an exhaustive enumeration of all identity providers. When

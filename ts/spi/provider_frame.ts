@@ -448,7 +448,6 @@ export class ProviderFrame {
           ev);
       return;
     }
-    console.log(msg.RPC_MESSAGE_TYPES, ev.data.type);
     if (msg.RPC_MESSAGE_TYPES.indexOf(ev.data.type) === -1) {
       console.warn('Non-RPC message received on secure channel, ignoring');
       return;
