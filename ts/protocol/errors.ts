@@ -32,6 +32,7 @@ export const enum InternalErrorCode {
   requestTimeout = 'requestTimeout',
   illegalConcurrentRequest = 'illegalConcurrentRequest',
   unknownRequest = 'unknownRequest',
+  browserWrappingRequired = 'browserWrappingRequired',
   unknownError = 'unknownError'
 }
 
@@ -45,6 +46,7 @@ export const enum OpenYoloErrorType {
   clientDisposed = 'clientDisposed',
   requestFailed = 'requestFailed',
   illegalConcurrentRequest = 'illegalConcurrentRequest',
+  browserWrappingRequired = 'browserWrappingRequired',
   unknownError = 'unknownError'
 }
 
@@ -259,6 +261,14 @@ export class OpenYoloInternalError implements CustomError {
       exposedErrorType: OpenYoloErrorType.requestFailed,
       message: `The '${requestType}' request sent could not be handled by the` +
           ` credentials provider.`
+    });
+  }
+
+  static browserWrappingRequired() {
+    return new OpenYoloInternalError({
+      code: InternalErrorCode.browserWrappingRequired,
+      exposedErrorType: OpenYoloErrorType.browserWrappingRequired,
+      message: 'The current request required using navigator.credentials.'
     });
   }
 

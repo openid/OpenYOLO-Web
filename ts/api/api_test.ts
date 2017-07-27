@@ -19,8 +19,7 @@ import {SecureChannel} from '../protocol/secure_channel';
 import {PromiseResolver} from '../protocol/utils';
 
 import {InitializeOnDemandApi, openyolo, OpenYoloWithTimeoutApi} from './api';
-import {DisableAutoSignIn} from './disable_auto_sign_in';
-import {WrapBrowserRequest} from './wrap_browser_request';
+import {CancelLastOperationRequest} from './cancel_last_operation_request';
 
 type OpenYoloWithTimeoutApiMethods = keyof OpenYoloWithTimeoutApi;
 
@@ -107,43 +106,6 @@ describe('OpenYolo API', () => {
           });
     });
 
-    it('wrap browser fails', (done) => {
-      spyOn(SecureChannel, 'clientConnect')
-          .and.returnValue(Promise.resolve(secureChannelSpy));
-      spyOn(WrapBrowserRequest.prototype, 'dispatch')
-          .and.returnValue(Promise.reject(expectedError));
-      spyOn(DisableAutoSignIn.prototype, 'dispatch')
-          .and.returnValue(Promise.resolve());
-      // The operation does not matter here.
-      openyolo.disableAutoSignIn().then(
-          () => {
-            // Ignore the failed request.
-            openyolo.reset();
-            done();
-          },
-          (error) => {
-            done.fail('Should not reject!');
-          });
-    });
-
-    it('wrap browser succeeds', (done) => {
-      spyOn(SecureChannel, 'clientConnect')
-          .and.returnValue(Promise.resolve(secureChannelSpy));
-      spyOn(WrapBrowserRequest.prototype, 'dispatch')
-          .and.returnValue(Promise.resolve(false));
-      spyOn(DisableAutoSignIn.prototype, 'dispatch')
-          .and.returnValue(Promise.resolve());
-      // The operation does not matter here.
-      openyolo.disableAutoSignIn().then(
-          () => {
-            openyolo.reset();
-            done();
-          },
-          (error) => {
-            done.fail('Should not reject!');
-          });
-    });
-
     describe('timeouts', () => {
       beforeEach(() => {
         jasmine.clock().install();
@@ -157,13 +119,12 @@ describe('OpenYolo API', () => {
         const promiseResolver = new PromiseResolver<void>();
         spyOn(SecureChannel, 'clientConnect')
             .and.returnValue(promiseResolver.promise);
-        spyOn(WrapBrowserRequest.prototype, 'dispatch')
-            .and.returnValue(Promise.resolve(false));
-        spyOn(DisableAutoSignIn.prototype, 'dispatch')
+        // Avoid using DisableAutoSignIn here as it uses navigator.credentials.
+        spyOn(CancelLastOperationRequest.prototype, 'dispatch')
             .and.returnValue(Promise.resolve());
         openyolo.setTimeouts(0);
         // The operation does not matter here.
-        openyolo.disableAutoSignIn().then(
+        openyolo.cancelLastOperation().then(
             () => {
               openyolo.reset();
               done();

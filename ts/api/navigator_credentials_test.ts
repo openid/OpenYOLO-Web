@@ -16,7 +16,7 @@
 
 import {OpenYoloCredential as OpenYoloCredential, OpenYoloCredentialRequestOptions as OpenYoloCredentialRequestOptions} from '../protocol/data';
 import {AUTHENTICATION_METHODS} from '../protocol/data';
-import {InternalErrorCode, OpenYoloInternalError} from '../protocol/errors';
+import {InternalErrorCode, OpenYoloErrorType, OpenYoloInternalError} from '../protocol/errors';
 
 import {NavigatorCredentials} from './navigator_credentials';
 
@@ -116,15 +116,15 @@ describe('NavigatorCredentials', () => {
             done.fail('Unexpected success!');
           },
           error => {
-            expect(error).toBe(expectedError);
+            expect(error.type).toEqual(OpenYoloErrorType.requestFailed);
             done();
           });
     });
   });
 
   describe('cancelLastOperation', () => {
-    it('always rejects', done => {
-      navigatorCredentials.cancelLastOperation().then(fail).catch(done);
+    it('always resolves', done => {
+      navigatorCredentials.cancelLastOperation().then(done);
     });
   });
 
@@ -185,7 +185,7 @@ describe('NavigatorCredentials', () => {
                 done.fail('Unexpected success!');
               },
               error => {
-                expect(error).toBe(expectedError);
+                expect(error.type).toEqual(OpenYoloErrorType.requestFailed);
                 done();
               });
     });
@@ -254,8 +254,9 @@ describe('NavigatorCredentials', () => {
               done.fail('Unexpected success!');
             },
             (error) => {
+              expect(error.type).toEqual(OpenYoloErrorType.requestFailed);
               expect(error.message)
-                  .toEqual(
+                  .toContain(
                       'The API request failed to resolve: Status code 400');
               done();
             });
@@ -275,7 +276,8 @@ describe('NavigatorCredentials', () => {
             done.fail('Unexpected success!');
           },
           (error) => {
-            expect(error.message).toEqual('Invalid credential!');
+            expect(error.type).toEqual(OpenYoloErrorType.requestFailed);
+            expect(error.message).toContain('Invalid credential.');
             done();
           });
     });

@@ -19,9 +19,14 @@
  * implement the OpenYOLO Web protocol.
  */
 
+import {OpenYoloInternalError} from '../protocol/errors';
+
 import {ProviderFrame} from './provider_frame';
 
+export {OpenYoloInternalError} from '../protocol/errors';
+
 export {ProviderFrame} from './provider_frame';
+
 export * from './provider_config';
 export * from '../protocol/data';
 export * from '../protocol/client_config';
@@ -31,3 +36,11 @@ const windowAsAny = window as any;
 windowAsAny['openyolo_spi'] = windowAsAny['openyolo_spi'] || {};
 windowAsAny['openyolo_spi']['ProviderFrame'] = ProviderFrame;
 ProviderFrame['initialize'] = ProviderFrame.initialize;
+windowAsAny['openyolo_spi']['Error'] = OpenYoloInternalError;
+// Expose a subset of errors that providers' implementations can use to trigger
+// specific flows or propagate particular errors back to the client.
+OpenYoloInternalError['noCredentialsAvailable'] =
+    OpenYoloInternalError.noCredentialsAvailable;
+OpenYoloInternalError['userCanceled'] = OpenYoloInternalError.userCanceled;
+OpenYoloInternalError['browserWrappingRequired'] =
+    OpenYoloInternalError.browserWrappingRequired;
