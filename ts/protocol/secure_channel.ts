@@ -270,6 +270,7 @@ export class SecureChannel {
           // with resolving RpcMessageDataTypes[T]. Cast to any until this
           // is resolved
           const anyData = data as any;
+          console.log(anyData);
           if (anyData.ack) {
             this.port.postMessage(ackMessage(anyData.id));
           }

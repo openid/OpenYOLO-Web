@@ -23,9 +23,8 @@ import {BaseRequest} from './base_request';
  * Handles the get hint request, by displaying the IFrame or not to let
  * the user selects a hint, if any is available.
  */
-export class HintRequest extends BaseRequest<
-    OpenYoloCredential|null,
-    OpenYoloCredentialHintOptions|undefined> {
+export class HintRequest extends
+    BaseRequest<OpenYoloCredential, OpenYoloCredentialHintOptions|undefined> {
   /**
    * Starts the Hint Request flow.
    */
@@ -33,16 +32,13 @@ export class HintRequest extends BaseRequest<
     this.registerHandler(
         RpcMessageType.credential,
         (credential: OpenYoloCredential) => this.handleResult(credential));
-    this.registerHandler(RpcMessageType.none, () => this.handleResult(null));
-
-    this.debugLog(`Sending hint request`);
     this.channel.send(hintMessage(this.id, options));
   }
 
   /**
    * Handles the initial response from a hint request.
    */
-  private handleResult(credential: OpenYoloCredential|null): void {
+  private handleResult(credential: OpenYoloCredential): void {
     this.debugLog(`Hint request complete`);
     this.resolve(credential);
     this.dispose();

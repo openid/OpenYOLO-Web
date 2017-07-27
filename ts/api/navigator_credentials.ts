@@ -213,7 +213,6 @@ export class NavigatorCredentials implements OpenYoloApi {
 
   async hint(options?: OpenYoloCredentialHintOptions):
       Promise<OpenYoloCredential> {
-    // Reject with a canceled error as no hints can be retrieved.
     throw OpenYoloInternalError.noCredentialsAvailable().toExposedError();
   }
 

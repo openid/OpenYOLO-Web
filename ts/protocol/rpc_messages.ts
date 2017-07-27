@@ -29,10 +29,7 @@ export const enum RpcMessageType {
   saveResult = 'saveResult',
   proxy = 'proxy',
   proxyResult = 'proxyResult',
-  wrapBrowser = 'wrapBrowser',
-  wrapBrowserResult = 'wrapBrowserResult',
   showProvider = 'showProvider',
-  none = 'none',
   credential = 'credential',
   error = 'error',
   cancelLastOperation = 'cancelLastOperation',
@@ -73,9 +70,6 @@ export type RpcMessageArgumentTypes = {
   'proxy': OpenYoloCredential,
   'proxyResult': OpenYoloProxyLoginResponse,
   'showProvider': DisplayOptions,
-  'wrapBrowser': undefined,
-  'wrapBrowserResult': boolean,
-  'none': undefined,
   'credential': OpenYoloCredential,
   'error': OpenYoloExposedErrorData,
   'cancelLastOperation': undefined,
@@ -117,10 +111,7 @@ export const RPC_MESSAGE_DATA_VALIDATORS: RpcMessageDataValidators = {
   'saveResult': rpcDataValidator(isBoolean),
   'proxy': rpcDataValidator(isValidCredential),
   'proxyResult': rpcDataValidator(isValidProxyLoginResponse),
-  'wrapBrowser': rpcDataValidator(isUndefined),
-  'wrapBrowserResult': rpcDataValidator(isBoolean),
   'showProvider': rpcDataValidator(isValidDisplayOptions),
-  'none': rpcDataValidator(isUndefined),
   'credential': rpcDataValidator(isValidCredential),
   'error': rpcDataValidator(isValidError),
   'cancelLastOperation': rpcDataValidator(isUndefined),
@@ -175,19 +166,6 @@ export function proxyLoginMessage(id: string, credential: OpenYoloCredential) {
 export function proxyLoginResponseMessage(
     id: string, response: OpenYoloProxyLoginResponse) {
   return rpcMessage(RpcMessageType.proxyResult, id, response);
-}
-
-export function wrapBrowserMessage(id: string) {
-  return rpcMessage(RpcMessageType.wrapBrowser, id, undefined);
-}
-
-export function wrapBrowserResultMessage(id: string, wrapBrowser: boolean) {
-  console.log(`wrapBrowserResult ${id} ${wrapBrowser}`);
-  return rpcMessage(RpcMessageType.wrapBrowserResult, id, wrapBrowser);
-}
-
-export function noneAvailableMessage(id: string) {
-  return rpcMessage(RpcMessageType.none, id, undefined);
 }
 
 export function credentialResultMessage(

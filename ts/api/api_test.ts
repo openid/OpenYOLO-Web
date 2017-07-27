@@ -279,6 +279,13 @@ describe('OpenYolo API', () => {
     type methodSignatures =
         {[key in keyof OpenYoloApi]: typeof OpenYoloApiImpl.prototype[key]};
 
+    /**
+     * Tests the behavior of operations implementations.
+     * @param methodName The method of OpenYoloApi being tested.
+     * @param operationRequest The request class's prototype being mocked.
+     * @param options The request's options.
+     * @param expectedResult The expected result when successful.
+     */
     function testOperationImpl<M extends keyof methodSignatures, Opt, Res>(
         methodName: M,
         operationRequest: RelayRequest<Res, Opt>,

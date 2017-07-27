@@ -15,7 +15,7 @@
  */
 
 import {AUTHENTICATION_METHODS, OpenYoloCredential, OpenYoloCredentialHintOptions} from '../protocol/data';
-import {credentialResultMessage, hintMessage, noneAvailableMessage, showProviderMessage} from '../protocol/rpc_messages';
+import {credentialResultMessage, hintMessage, showProviderMessage} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {FakeProviderConnection} from '../test_utils/channels';
 import {createSpyFrame} from '../test_utils/frames';
@@ -63,26 +63,10 @@ describe('HintRequest', () => {
     });
   });
 
-  describe('handleRequestResult', () => {
-    it('should display the frame if there are hints available', () => {
-      request.dispatch(passwordOnlyOptions);
-      providerChannel.send(showProviderMessage(request.id, {height: 200}));
-      expect(frame.display).toHaveBeenCalled();
-    });
-
-    it('should resolve with nothing if no hints', async function(done) {
-      let promise = request.dispatch(passwordOnlyOptions);
-      providerChannel.send(noneAvailableMessage(request.id));
-
-      try {
-        let result = await promise;
-        expect(result).toBeNull();
-        expect(request.dispose).toHaveBeenCalled();
-        done();
-      } catch (err) {
-        done.fail('Promise should resolve');
-      }
-    });
+  it('should display the frame if there are hints available', () => {
+    request.dispatch(passwordOnlyOptions);
+    providerChannel.send(showProviderMessage(request.id, {height: 200}));
+    expect(frame.display).toHaveBeenCalled();
   });
 
   it('should return hint selected', async function(done) {

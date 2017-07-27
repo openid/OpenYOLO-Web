@@ -89,7 +89,7 @@ describe('SecureChannel', () => {
     });
 
     it('sends messages', () => {
-      let message = msg.noneAvailableMessage('1234');
+      let message = msg.showProviderMessage('1234', {});
       channel.send(message);
       expect(port.postMessage).toHaveBeenCalledWith(message);
     });
@@ -97,10 +97,13 @@ describe('SecureChannel', () => {
     it('adds and removes listener', () => {
       let listener1 = jasmine.createSpy('listener1');
       let listener2 = jasmine.createSpy('listener2');
-      let listenerKey1 = channel.listen(msg.RpcMessageType.none, listener1);
-      let listenerKey2 = channel.listen(msg.RpcMessageType.none, listener2);
+      let listenerKey1 =
+          channel.listen(msg.RpcMessageType.showProvider, listener1);
+      let listenerKey2 =
+          channel.listen(msg.RpcMessageType.showProvider, listener2);
 
-      port.dispatchEvent(createMessageEvent(msg.noneAvailableMessage('123')));
+      port.dispatchEvent(
+          createMessageEvent(msg.showProviderMessage('123', {})));
 
       expect(listener1).toHaveBeenCalled();
       expect(listener2).toHaveBeenCalled();
@@ -111,7 +114,8 @@ describe('SecureChannel', () => {
       // after removing the first listener, only the second listener should
       // be triggered when a message arrives
       expect(channel.unlisten(listenerKey1)).toBe(listener1);
-      port.dispatchEvent(createMessageEvent(msg.noneAvailableMessage('123')));
+      port.dispatchEvent(
+          createMessageEvent(msg.showProviderMessage('123', {})));
       expect(listener1).not.toHaveBeenCalled();
       expect(listener2).toHaveBeenCalled();
 
@@ -124,7 +128,7 @@ describe('SecureChannel', () => {
 
     describe('acknowledgement', () => {
       it('sends and waits for acknowledgement', (done) => {
-        let message = msg.noneAvailableMessage('1234');
+        let message = msg.showProviderMessage('1234', {});
         channel.sendAndWaitAck(message).then(() => {
           expect(port.removeEventListener)
               .toHaveBeenCalledWith('message', jasmine.any(Function));
@@ -135,7 +139,7 @@ describe('SecureChannel', () => {
       });
 
       it('sends and waits for acknowledgement until timeout', (done) => {
-        let message = msg.noneAvailableMessage('1234');
+        let message = msg.showProviderMessage('1234', {});
         let expectReject = false;
         channel.sendAndWaitAck(message).then(
             () => {
@@ -159,9 +163,9 @@ describe('SecureChannel', () => {
 
       it('sends back ack when required', () => {
         const listener1 = jasmine.createSpy('listener1');
-        channel.listen(msg.RpcMessageType.none, listener1);
+        channel.listen(msg.RpcMessageType.showProvider, listener1);
 
-        const message = msg.noneAvailableMessage('123');
+        const message = msg.showProviderMessage('123', {});
         message.data.ack = true;
         port.dispatchEvent(createMessageEvent(message));
         const expectedMessage = ackMessage('123');
@@ -173,8 +177,8 @@ describe('SecureChannel', () => {
       it('removes listeners and closes', () => {
         let listener1 = jasmine.createSpy('listener1');
         let listener2 = jasmine.createSpy('listener2');
-        channel.listen(msg.RpcMessageType.credential, listener1);
-        channel.listen(msg.RpcMessageType.credential, listener2);
+        channel.listen(msg.RpcMessageType.showProvider, listener1);
+        channel.listen(msg.RpcMessageType.showProvider, listener2);
         channel.dispose();
 
         // internally, only a single listener is added to a port, so we only
