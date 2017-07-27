@@ -310,7 +310,7 @@ describe('ProviderFrame', () => {
                      return Promise.resolve();
                    });
 
-           clientChannel.listen(msg.RpcMessageType.credential, (data) => {
+           clientChannel.listen(msg.RpcMessageType.credential, async (data) => {
              expectMessageContents(
                  data, msg.credentialResultMessage(requestId, alicePwdCred));
              done();
@@ -398,8 +398,11 @@ describe('ProviderFrame', () => {
                      return Promise.resolve(alicePwdCred);
                    });
 
-           clientChannel.listen(msg.RpcMessageType.credential, (data) => {
+           clientChannel.listen(msg.RpcMessageType.credential, async (data) => {
              expect(expectFinalResult).toBeTruthy();
+             const enabled =
+                 await localStateProvider.isAutoSignInEnabled(TEST_AUTH_DOMAIN);
+             expect(enabled).toBe(true);
              expectMessageContents(
                  data, msg.credentialResultMessage(requestId, alicePwdCred));
              done();
@@ -672,6 +675,7 @@ describe('ProviderFrame', () => {
       });
 
       it('should return selected hint', async function(done) {
+        localStateProvider.autoSignIn[TEST_AUTH_DOMAIN] = false;
         credentialDataProvider.credentials = [elisaOtherDomainCred];
         let redactedElisaCred: OpenYoloCredential = {
           id: elisaOtherDomainCred.id,
@@ -691,7 +695,13 @@ describe('ProviderFrame', () => {
             [elisaOtherDomainCred],
             elisaOtherDomainCred,
             msg.credentialResultMessage(requestId, redactedElisaCred))
-            .then(done);
+            .then(() => {
+              return localStateProvider.isAutoSignInEnabled(TEST_AUTH_DOMAIN);
+            })
+            .then((enabled) => {
+              expect(enabled).toBe(true);
+              done();
+            });
         clientChannel.send(msg.hintMessage(requestId, pwdOrFbHintOptions));
       });
 
