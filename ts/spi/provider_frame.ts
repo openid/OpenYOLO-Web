@@ -282,6 +282,11 @@ export class ProviderFrame {
       console.info('awaiting user selection of hint');
       let selectedHint = await this.cancellablePromise(selectionPromise);
 
+      // once selected we want to set auto sign in enabled to true again
+      await this.cancellablePromise(
+          this.localStateProvider.setAutoSignInEnabled(
+              this.providerConfig.clientAuthDomain, true));
+
       // once selected, we redact the credential of any sensitive details
       selectedHint = this.copyCredential(selectedHint, true);
 
@@ -369,6 +374,12 @@ export class ProviderFrame {
     // client
     try {
       let selectedCredential = await this.cancellablePromise(selectionPromise);
+
+      // once selected we want to set auto sign in enabled to true again
+      await this.cancellablePromise(
+          this.localStateProvider.setAutoSignInEnabled(
+              this.providerConfig.clientAuthDomain, true));
+
       console.info('Returning selected credential');
       this.clientChannel.send(msg.credentialResultMessage(
           requestId, this.storeForProxyLogin(selectedCredential)));
