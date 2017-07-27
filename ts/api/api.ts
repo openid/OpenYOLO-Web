@@ -187,7 +187,7 @@ function verifyOrDetectRenderMode(renderMode: RenderMode|null): RenderMode {
  * Provides access to the user's preferred credential provider, in order to
  * retrieve credentials.
  */
-class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
+export class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
   private disposed: boolean = false;
   /** The fallback when navigator.credentials should be used. */
   private navigatorCredentials: OpenYoloApi;
@@ -209,7 +209,7 @@ class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
       if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
         return this.navigatorCredentials.hintsAvailable(options);
       }
-      return false;
+      throw e;
     }
   }
 
