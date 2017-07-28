@@ -268,7 +268,7 @@ export class OpenYoloInternalError implements CustomError {
     return new OpenYoloInternalError({
       code: InternalErrorCode.browserWrappingRequired,
       exposedErrorType: OpenYoloErrorType.browserWrappingRequired,
-      message: 'The current request required using navigator.credentials.'
+      message: 'The current request requires using navigator.credentials.'
     });
   }
 

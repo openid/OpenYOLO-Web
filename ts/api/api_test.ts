@@ -264,7 +264,6 @@ describe('OpenYolo API', () => {
         OpenYoloInternalError.browserWrappingRequired().toExposedError();
     const otherError =
         OpenYoloInternalError.noCredentialsAvailable().toExposedError();
-    ;
 
     let openYoloApiImpl: OpenYoloApiImpl;
     let timeoutRacerSpy: jasmine.SpyObj<TimeoutRacer>;

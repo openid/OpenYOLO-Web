@@ -298,7 +298,7 @@ export class ProviderFrame {
     } catch (err) {
       this.handleWellKnownErrors(err);
       console.info(`Hint selection cancelled: ${err}`);
-      if (typeof err.toExposedError === 'function') {
+      if (err instanceof OpenYoloInternalError) {
         this.clientChannel.send(
             msg.errorMessage(requestId, err.toExposedError()));
       } else {
@@ -389,7 +389,7 @@ export class ProviderFrame {
     } catch (err) {
       this.handleWellKnownErrors(err);
       console.info(`Credential selection cancelled: ${err}`);
-      if (typeof err.toExposedError === 'function') {
+      if (err instanceof OpenYoloInternalError) {
         this.clientChannel.send(
             msg.errorMessage(requestId, err.toExposedError()));
       } else {

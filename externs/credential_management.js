@@ -47,7 +47,7 @@ function FederatedCredential(data) {};
 let CredentialsContainer;
 
 /**
- * @param {CredentialRequestOptions=} options
+ * @param {!CredentialRequestOptions=} options
  * @return {!Promise<?Credential>}
  */
 CredentialsContainer.prototype.get = function(options) {};
