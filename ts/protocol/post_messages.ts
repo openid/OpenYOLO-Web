@@ -30,7 +30,7 @@ import {DataValidator, isNonEmptyString, isValidError} from './validators';
  *     indicate it is ready to accept requests.
  * - channelError: sent when establishing the message channel fails.
  */
-export enum PostMessageType {
+export const enum PostMessageType {
   ack = 'ack',
   verifyPing = 'verifyPing',
   verifyAck = 'verifyAck',

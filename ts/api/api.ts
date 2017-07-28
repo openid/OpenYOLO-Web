@@ -166,11 +166,15 @@ const DEFAULT_TIMEOUTS: {[key in OpenYoloApiMethods]: number} = {
   cancelLastOperation: 3000
 };
 
+// This is a hack to be able to list the values of a "const enum"
+const RENDER_MODES: RenderMode[] =
+    [RenderMode.bottomSheet, RenderMode.navPopout, RenderMode.fullScreen];
+
 /**
  * Sanitzes the input for renderMode, selecting the default one if invalid.
  */
 function verifyOrDetectRenderMode(renderMode: RenderMode|null): RenderMode {
-  if (renderMode && renderMode in RenderMode) {
+  if (renderMode && RENDER_MODES.indexOf(renderMode) !== -1) {
     return renderMode;
   }
   const isNested = window.parent !== window;
