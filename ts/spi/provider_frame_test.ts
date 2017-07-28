@@ -231,7 +231,7 @@ describe('ProviderFrame', () => {
       });
     });
 
-    xit('rejects unknown requests', async function(done) {
+    it('rejects unknown requests', async function(done) {
       clientChannel.listen(msg.RpcMessageType.error, (data) => {
         expectMessageContents(
             data,
