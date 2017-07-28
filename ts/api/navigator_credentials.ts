@@ -180,7 +180,12 @@ export class NavigatorCredentials implements OpenYoloApi {
   constructor(private cmApi: CredentialsContainer) {}
 
   async disableAutoSignIn(): Promise<void> {
-    return this.cmApi.requireUserMediation();
+    try {
+      return await this.cmApi.requireUserMediation();
+    } catch (e) {
+      // Ignore error (i.e. non secure origins for instance).
+      return;
+    }
   }
 
   async retrieve(options?: OpenYoloCredentialRequestOptions):

@@ -40,3 +40,38 @@ function PasswordCredential(data) {};
  * @constructor
  */
 function FederatedCredential(data) {};
+
+/**
+ * @interface
+ */
+let CredentialsContainer;
+
+/**
+ * @param {CredentialRequestOptions=} options
+ * @return {!Promise<?Credential>}
+ */
+CredentialsContainer.prototype.get = function(options) {};
+
+/**
+ * @param {!Credential} credential
+ * @return {!Promise<!Credential>}
+ */
+CredentialsContainer.prototype.store = function(credential) {};
+
+/**
+ * Pre M62 API.
+ * @return {!Promise<void>}
+ */
+CredentialsContainer.prototype.requireUserMediation = function() {};
+
+/**
+ * Post M62 API.
+ * @return {!Promise<void>}
+ */
+CredentialsContainer.prototype.preventSilentAccess = function() {};
+
+/**
+ * @const {!CredentialsContainer}
+ * @readonly
+ */
+Navigator.prototype.credentials;

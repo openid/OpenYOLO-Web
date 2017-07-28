@@ -33,6 +33,19 @@ describe('NavigatorCredentials', () => {
     navigatorCredentials = new NavigatorCredentials(cmApi);
   });
 
+  describe('disableAutoSignIn', () => {
+    it('resolves when success', (done) => {
+      spyOn(cmApi, 'requireUserMediation').and.returnValue(Promise.resolve());
+      navigatorCredentials.disableAutoSignIn().then(done);
+    });
+
+    it('resolves when insecure origin error', (done) => {
+      spyOn(cmApi, 'requireUserMediation')
+          .and.returnValue(Promise.reject(new Error('Insecure origin!')));
+      navigatorCredentials.disableAutoSignIn().then(done);
+    });
+  });
+
   describe('retrieve', () => {
     it('returns the federated credential', done => {
       const options: OpenYoloCredentialRequestOptions = {
