@@ -51,7 +51,7 @@ describe('NavigatorCredentials', () => {
       const options: OpenYoloCredentialRequestOptions = {
         supportedAuthMethods: [AUTHENTICATION_METHODS.GOOGLE]
       };
-      let federatedCredential: FederatedCredential = {
+      const federatedCredential: FederatedCredential = {
         provider: AUTHENTICATION_METHODS.GOOGLE,
         protocol: null,
         name: 'Name',
@@ -82,7 +82,7 @@ describe('NavigatorCredentials', () => {
       const options: OpenYoloCredentialRequestOptions = {
         supportedAuthMethods: [AUTHENTICATION_METHODS.ID_AND_PASSWORD]
       };
-      let passwordCredential: PasswordCredential = {
+      const passwordCredential: PasswordCredential = {
         name: 'Name',
         iconURL: 'icon.jpg',
         type: 'password',
@@ -129,7 +129,7 @@ describe('NavigatorCredentials', () => {
       const options: OpenYoloCredentialRequestOptions = {
         supportedAuthMethods: [AUTHENTICATION_METHODS.GOOGLE]
       };
-      let expectedError = new Error('ERROR!');
+      const expectedError = new Error('ERROR!');
       spyOn(cmApi, 'get').and.returnValue(Promise.reject(expectedError));
       navigatorCredentials.retrieve(options).then(
           () => {
@@ -150,7 +150,7 @@ describe('NavigatorCredentials', () => {
 
   describe('save', () => {
     it('saves the password credential', done => {
-      let credential: OpenYoloCredential = {
+      const credential: OpenYoloCredential = {
         id: 'user@example.com',
         authMethod: AUTHENTICATION_METHODS.ID_AND_PASSWORD,
         displayName: 'Name',
@@ -158,7 +158,7 @@ describe('NavigatorCredentials', () => {
         proxiedAuthRequired: false,  // Does not matter but required.
         password: 'password'
       };
-      let fakeSavedCred = {};
+      const fakeSavedCred = {};
       spyOn(cmApi, 'store').and.callFake((cred: any) => {
         expect(cred instanceof PasswordCredential).toBe(true);
         expect(cred.id).toEqual('user@example.com');
@@ -170,14 +170,14 @@ describe('NavigatorCredentials', () => {
     });
 
     it('saves the federated credential', done => {
-      let credential: OpenYoloCredential = {
+      const credential: OpenYoloCredential = {
         id: 'user@example.com',
         authMethod: AUTHENTICATION_METHODS.GOOGLE,
         displayName: 'Name',
         profilePicture: 'http://www.example.com/icon.jpg',
         proxiedAuthRequired: false  // Does not matter but required.
       };
-      let fakeSavedCred = {};
+      const fakeSavedCred = {};
       spyOn(cmApi, 'store').and.callFake((cred: any) => {
         expect(cred instanceof FederatedCredential).toBe(true);
         expect(cred.id).toEqual('user@example.com');
@@ -190,9 +190,9 @@ describe('NavigatorCredentials', () => {
     });
 
     it('fails', done => {
-      let expectedError = new Error('ERROR!');
+      const expectedError = new Error('ERROR!');
       spyOn(cmApi, 'store').and.returnValue(Promise.reject(expectedError));
-      let credential: OpenYoloCredential = {
+      const credential: OpenYoloCredential = {
         id: 'user@example.com',
         authMethod: AUTHENTICATION_METHODS.GOOGLE,
         displayName: 'Name',
@@ -231,7 +231,7 @@ describe('NavigatorCredentials', () => {
     });
 
     it('fetches with the correct credential', done => {
-      let otherCredential: PasswordCredential = {
+      const otherCredential: PasswordCredential = {
         name: 'Name 2',
         iconURL: 'icon.jpg',
         type: 'password',
@@ -240,13 +240,13 @@ describe('NavigatorCredentials', () => {
         passwordName: 'password',
         additionalData: null
       };
-      let expectedResponse = {
+      const expectedResponse = {
         status: 200,
         text: () => {
           return Promise.resolve('Signed in!');
         }
       };
-      let getSpy = spyOn(cmApi, 'get');
+      const getSpy = spyOn(cmApi, 'get');
       getSpy.and.returnValue(Promise.resolve(otherCredential));
       // We cannot test for the value of credentials passed to fetch method, as
       // once the Request object is created (with the `credentials` param), its
@@ -270,7 +270,7 @@ describe('NavigatorCredentials', () => {
     });
 
     it('fetches return status different than 200 reject the promise', done => {
-      let expectedResponse = {status: 400};
+      const expectedResponse = {status: 400};
       spyOn(cmApi, 'get').and.returnValue(Promise.resolve(credential));
       spyOn(window, 'fetch').and.returnValue(Promise.resolve(expectedResponse));
       navigatorCredentials.retrieve(options).then((cred) => {
@@ -289,7 +289,7 @@ describe('NavigatorCredentials', () => {
     });
 
     it('requires the credential to be fetched first', done => {
-      let cred = {
+      const cred = {
         id: 'user@example.com',
         authMethod: AUTHENTICATION_METHODS.ID_AND_PASSWORD,
         displayName: 'Name',
@@ -345,7 +345,7 @@ describe('NavigatorCredentials', () => {
     });
 
     it('save', (done) => {
-      let cred = {
+      const cred = {
         id: 'user@example.com',
         authMethod: AUTHENTICATION_METHODS.ID_AND_PASSWORD,
         displayName: 'Name',
@@ -356,7 +356,7 @@ describe('NavigatorCredentials', () => {
     });
 
     it('proxyLogin', (done) => {
-      let cred = {
+      const cred = {
         id: 'user@example.com',
         authMethod: AUTHENTICATION_METHODS.ID_AND_PASSWORD,
         displayName: 'Name',

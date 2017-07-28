@@ -238,23 +238,25 @@ export class NavigatorCredentials implements OpenYoloApi {
           .toExposedError();
     }
 
-    return new Promise<OpenYoloProxyLoginResponse>((resolve, reject) => {
-      fetch(url, {method: 'POST', credentials: cred}).then(resp => {
-        if (resp.status !== 200) {
-          reject(
-              OpenYoloInternalError.requestFailed(`Status code ${resp.status}`)
-                  .toExposedError());
-        }
-        resp.text().then(responseText => {
-          resolve({statusCode: resp.status, responseText: responseText});
-        });
-      });
-    });
+    let resp;
+    try {
+      resp = await fetch(url, {method: 'POST', credentials: cred});
+    } catch (e) {
+      throw OpenYoloInternalError.requestFailed(e.message).toExposedError();
+    }
+    if (resp.status !== 200) {
+      throw OpenYoloInternalError.requestFailed(`Status code ${resp.status}`)
+          .toExposedError();
+    }
+    const responseText = await resp.text();
+    return {statusCode: resp.status, responseText: responseText};
   }
 }
 
 /**
- * Returns the navigator.credentials wrapper according to the environment.
+ * Returns the navigator.credentials wrapper according to the environment. If
+ * navigator.credentials is not defined, it will create a n-op version of the
+ * API.
  */
 export function createNavigatorCredentialsApi(): OpenYoloApi {
   if (navigator.credentials !== undefined) {

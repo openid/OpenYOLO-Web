@@ -728,6 +728,21 @@ describe('ProviderFrame', () => {
         clientChannel.send(msg.hintMessage(requestId, pwdOrFbHintOptions));
       });
 
+      it('should notify the client when an hint operation is cancelled',
+         async function(done) {
+           expectPickFromHints(
+               [deliaFbCred],
+               null,
+               msg.errorMessage(
+                   requestId,
+                   OpenYoloInternalError.operationCanceled().toExposedError()),
+               true /* neverResolve */)
+               .then(done);
+
+           clientChannel.send(msg.hintMessage(requestId, pwdOrFbHintOptions));
+           clientChannel.send(msg.cancelLastOperationMessage(requestId));
+         });
+
       it('should prioritize federated hints over password hints',
          async function(done) {
            let aliceFbCred = {
