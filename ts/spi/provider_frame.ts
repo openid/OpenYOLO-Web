@@ -93,7 +93,7 @@ export class ProviderFrame {
     } catch (err) {
       // initialization failed, be courteous and notify the client as this
       // may not actually be their fault.
-      if (typeof err.toExposedError === 'function') {
+      if (err instanceof OpenYoloInternalError) {
         sendMessage(
             providerConfig.window.parent,
             channelErrorMessage(err.toExposedError()));
@@ -437,8 +437,8 @@ export class ProviderFrame {
           ev);
       return;
     }
-
-    if (!(ev.data.type in msg.RpcMessageType)) {
+    console.log(msg.RPC_MESSAGE_TYPES, ev.data.type);
+    if (msg.RPC_MESSAGE_TYPES.indexOf(ev.data.type) === -1) {
       console.warn('Non-RPC message received on secure channel, ignoring');
       return;
     }

@@ -31,10 +31,7 @@
 import {OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions} from './data';
 
 
-export enum PreloadRequestType {
-  hint = 'hint',
-  retrieve = 'retrieve'
-}
+export const enum PreloadRequestType {hint = 'hint', retrieve = 'retrieve'}
 
 export interface HintPreloadRequest {
   type: PreloadRequestType;

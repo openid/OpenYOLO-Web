@@ -15,7 +15,7 @@
  */
 
 /* Internal, detailed, error codes. */
-export enum InternalErrorCode {
+export const enum InternalErrorCode {
   ackTimeout = 'ackTimeout',
   establishSecureChannelTimeout = 'establishSecureChannelTimeout',
   parentVerifyTimeout = 'parentVerifyTimeout',
@@ -36,7 +36,7 @@ export enum InternalErrorCode {
 }
 
 /* Exposed error types meant for apps to trigger different flows. */
-export enum OpenYoloErrorType {
+export const enum OpenYoloErrorType {
   initializationError = 'initializationError',
   configurationError = 'configurationError',
   userCanceled = 'userCanceled',
@@ -79,11 +79,26 @@ export interface OpenYoloExposedErrorData {
 }
 
 /**
+ * It is not possible to subclass Error, Array, Map... in TS anymore. It is
+ * recommended to create our own Error classes.
+ * https://github.com/Microsoft/TypeScript/issues/13965
+ */
+export interface CustomError {
+  /** Name of the error. */
+  name: string;
+  /** Message of the error. */
+  message: string;
+}
+
+/**
  * Internal error.
  */
-export class OpenYoloInternalError extends Error {
+export class OpenYoloInternalError implements CustomError {
+  name = 'OpenYoloInternalError';
+  message: string;
+
   constructor(public data: OpenYoloErrorData) {
-    super(data.message);
+    this.message = data.message;
   }
 
   /** Returns the client-side exposed error. */
@@ -268,7 +283,7 @@ export class OpenYoloInternalError extends Error {
 /**
  * Client side exposed error type.
  */
-export declare interface OpenYoloError extends Error {
+export declare interface OpenYoloError extends CustomError {
   /** Standardized error type. */
   type: OpenYoloErrorType;
   /**
@@ -278,10 +293,12 @@ export declare interface OpenYoloError extends Error {
   message: string;
 }
 
-export class OpenYoloError extends Error {
+export class OpenYoloError {
+  name = 'OpenYoloError';
+  message: string;
+
   constructor(message: string, public type: OpenYoloErrorType) {
-    super(message);
-    this.name = 'OpenYoloError';
+    this.message = message;
   }
 
   toData(): OpenYoloExposedErrorData {

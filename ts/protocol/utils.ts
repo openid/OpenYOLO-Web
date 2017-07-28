@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import {CustomError} from './errors';
+
 let subtleCrypto: SubtleCrypto|null = null;
 if (window.crypto) {
   // Fix for Safari.
@@ -133,7 +135,7 @@ export function stringValidator(value: any): boolean {
 export class PromiseResolver<T> {
   readonly promise: Promise<T>;
   protected resolveFn: ((result?: T) => void)|null;
-  protected rejectFn: ((error: Error) => void)|null;
+  protected rejectFn: ((error: CustomError) => void)|null;
 
   constructor() {
     this.promise = new Promise((resolve, reject) => {
@@ -165,7 +167,7 @@ export class PromiseResolver<T> {
  */
 export class TimeoutPromiseResolver<T> extends PromiseResolver<T> {
   private timeoutId: number;
-  constructor(private timeoutError: Error, timeoutMs: number) {
+  constructor(private timeoutError: CustomError, timeoutMs: number) {
     super();
     this.timeoutId = setTimeout(this.timeoutReject.bind(this), timeoutMs);
   }
@@ -175,7 +177,7 @@ export class TimeoutPromiseResolver<T> extends PromiseResolver<T> {
     this.clear();
   }
 
-  reject(error: Error): void {
+  reject(error: CustomError): void {
     super.reject(error);
     this.clear();
   }
@@ -192,7 +194,8 @@ export class TimeoutPromiseResolver<T> extends PromiseResolver<T> {
   }
 }
 
-export function timeoutPromise<T>(error: Error, timeoutMs: number): Promise<T> {
+export function timeoutPromise<T>(
+    error: CustomError, timeoutMs: number): Promise<T> {
   const promiseResolver = new TimeoutPromiseResolver<T>(error, timeoutMs);
   return promiseResolver.promise;
 }
@@ -220,9 +223,12 @@ export class CancellablePromise<T> extends PromiseResolver<T> {
  * Error specific to timeout racer, allows to know whether the a timeout error
  * has been raised by a specific instance of a TimeoutRacer.
  */
-class TimeoutRacerError extends Error {
+class TimeoutRacerError implements CustomError {
+  name = 'TimeoutRacerError';
+  message: string;
+
   constructor() {
-    super('The timeout has expired.');
+    this.message = 'The timeout has expired.';
   }
 }
 
@@ -233,8 +239,8 @@ class TimeoutRacerError extends Error {
 export interface TimeoutRacer {
   race<R>(promise: Promise<R>): Promise<R>;
   stop(): void;
-  rethrowIfTimeoutError(error: Error): void;
-  rethrowUnlessTimeoutError(error: Error): void;
+  rethrowIfTimeoutError(error: CustomError): void;
+  rethrowUnlessTimeoutError(error: CustomError): void;
   dispose(): void;
 }
 
@@ -271,7 +277,7 @@ class EnabledTimeoutRacer implements TimeoutRacer {
   /**
    * Rethrows the error given if it is the timeout racer's error.
    */
-  rethrowIfTimeoutError(error: Error) {
+  rethrowIfTimeoutError(error: CustomError) {
     if (error === this.error) {
       throw error;
     }
@@ -280,7 +286,7 @@ class EnabledTimeoutRacer implements TimeoutRacer {
   /**
    * Rethrows anhy error given unless it is the timeout racer's error.
    */
-  rethrowUnlessTimeoutError(error: Error) {
+  rethrowUnlessTimeoutError(error: CustomError) {
     if (error !== this.error) {
       throw error;
     }
@@ -313,12 +319,12 @@ class DisabledTimeoutRacer implements TimeoutRacer {
   /**
    * Rethrows the error given if it is the timeout racer's error.
    */
-  rethrowIfTimeoutError(error: Error) {}
+  rethrowIfTimeoutError(error: CustomError) {}
 
   /**
    * Rethrows anhy error given unless it is the timeout racer's error.
    */
-  rethrowUnlessTimeoutError(error: Error) {
+  rethrowUnlessTimeoutError(error: CustomError) {
     throw error;
   }
 

@@ -189,8 +189,21 @@ export interface OpenYoloCredentialHintOptions {
  *
  * - navPopout: The provider is rendered in a pop-up style at the top of the
  *   screen, with a fixed width. The
+ *
+ * A const enum is required as string enums in TypeScript get compiled with
+ * properties in quotes. For instance, the following RenderMode would be:
+ *
+ * RenderMode = {
+ *   'bottomSheet': 'bottomSheet',
+ *   'navPopout': 'navPopout',
+ *   'fullScreen': 'fullScreen'
+ * }
+ *
+ * The issue is that the references to this enum are made WITHOUT bracket
+ * notations, so the Closure Compiler does not link the reference to the
+ * definition.
  */
-export enum RenderMode {
+export const enum RenderMode {
   bottomSheet = 'bottomSheet',
   navPopout = 'navPopout',
   fullScreen = 'fullScreen'

@@ -18,7 +18,7 @@ import {OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialReq
 import {OpenYoloError, OpenYoloExposedErrorData} from './errors';
 import {DataValidator, isBoolean, isUndefined, isValidCredential, isValidDisplayOptions, isValidError, isValidHintOptions, isValidProxyLoginResponse, isValidRequestOptions} from './validators';
 
-export enum RpcMessageType {
+export const enum RpcMessageType {
   disableAutoSignIn = 'disableAutoSignIn',
   disableAutoSignInResult = 'disableAutoSignInResult',
   retrieve = 'retrieve',
@@ -38,6 +38,28 @@ export enum RpcMessageType {
   cancelLastOperation = 'cancelLastOperation',
   cancelLastOperationResult = 'cancelLastOperationResult'
 }
+
+// Hack to be able to use the list of values of the const enum above.
+export const RPC_MESSAGE_TYPES: RpcMessageType[] = [
+  RpcMessageType.disableAutoSignIn,
+  RpcMessageType.disableAutoSignInResult,
+  RpcMessageType.retrieve,
+  RpcMessageType.hintAvailable,
+  RpcMessageType.hintAvailableResult,
+  RpcMessageType.hint,
+  RpcMessageType.save,
+  RpcMessageType.saveResult,
+  RpcMessageType.proxy,
+  RpcMessageType.proxyResult,
+  RpcMessageType.wrapBrowser,
+  RpcMessageType.wrapBrowserResult,
+  RpcMessageType.showProvider,
+  RpcMessageType.none,
+  RpcMessageType.credential,
+  RpcMessageType.error,
+  RpcMessageType.cancelLastOperation,
+  RpcMessageType.cancelLastOperationResult
+];
 
 export type RpcMessageArgumentTypes = {
   'disableAutoSignIn': undefined,

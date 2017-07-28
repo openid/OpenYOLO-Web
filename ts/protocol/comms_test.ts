@@ -52,7 +52,7 @@ describe('comms', () => {
   });
 
   describe('createMessageListener', () => {
-    let spy: PostMessageListener<typeof PostMessageType.verifyPing>;
+    let spy: PostMessageListener<PostMessageType.verifyPing>;
     let listener: EventListener;
 
     beforeEach(() => {
