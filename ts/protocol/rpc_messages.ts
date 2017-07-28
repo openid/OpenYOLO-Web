@@ -39,7 +39,7 @@ export const enum RpcMessageType {
   cancelLastOperationResult = 'cancelLastOperationResult'
 }
 
-// Hack to be able to sue the list of values of the const enum above.
+// Hack to be able to use the list of values of the const enum above.
 export const RPC_MESSAGE_TYPES: RpcMessageType[] = [
   RpcMessageType.disableAutoSignIn,
   RpcMessageType.disableAutoSignInResult,
