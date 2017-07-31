@@ -32,14 +32,14 @@ let FederatedCredentialData;
  * @param {!PasswordCredentialData} data
  * @constructor
  */
-function PasswordCredential(data) {};
+function PasswordCredential(data) {}
 
 /**
  * Creates a PasswordCredential.
  * @param {!FederatedCredentialData} data
  * @constructor
  */
-function FederatedCredential(data) {};
+function FederatedCredential(data) {}
 
 /**
  * @interface
