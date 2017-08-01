@@ -15,7 +15,7 @@
  */
 
 import {AUTHENTICATION_METHODS, OpenYoloCredential, OpenYoloCredentialRequestOptions} from '../protocol/data';
-import {credentialResultMessage, noneAvailableMessage, retrieveMessage, showProviderMessage} from '../protocol/rpc_messages';
+import {credentialResultMessage, retrieveMessage, showProviderMessage} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {FakeProviderConnection} from '../test_utils/channels';
 import {createSpyFrame} from '../test_utils/frames';
@@ -64,19 +64,6 @@ describe('CredentialRequest', () => {
       expect(frame.display).toHaveBeenCalled();
     });
 
-    it('should resolve with nothing if no credential', async function(done) {
-      let dispatchPromise = request.dispatch(options);
-      providerChannel.send(noneAvailableMessage(request.id));
-      try {
-        let result = await dispatchPromise;
-        expect(result).toBeNull();
-        expect(request.dispose).toHaveBeenCalled();
-        done();
-      } catch (err) {
-        done.fail(`Dispatch failed: ${err}`);
-      }
-    });
-
     it('should resolve with credential on success', async function(done) {
       let credential: OpenYoloCredential = {
         id: 'alice@gmail.com',
@@ -92,18 +79,6 @@ describe('CredentialRequest', () => {
         done();
       } catch (err) {
         fail('Result promise was rejected');
-      }
-    });
-
-    it('should return null when no credentials', async function(done) {
-      let resultPromise = request.dispatch(options);
-      providerChannel.send(noneAvailableMessage(request.id));
-      try {
-        let result = await resultPromise;
-        expect(result).toBeNull();
-        done();
-      } catch (err) {
-        fail('Promise should resolve');
       }
     });
 

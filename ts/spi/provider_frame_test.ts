@@ -16,7 +16,7 @@
 
 import {PrimaryClientConfiguration} from '../protocol/client_config';
 import {AUTHENTICATION_METHODS, OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions} from '../protocol/data';
-import {OpenYoloInternalError} from '../protocol/errors';
+import {OpenYoloErrorType, OpenYoloInternalError} from '../protocol/errors';
 import * as msg from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {PromiseResolver} from '../protocol/utils';
@@ -77,7 +77,6 @@ describe('ProviderFrame', () => {
     frameConfig = {
       clientAuthDomain: TEST_AUTH_DOMAIN,
       clientNonce: TEST_CLIENT_NONCE,
-      delegateToBrowser: false,
       window,
       affiliationProvider,
       clientConfigurationProvider,
@@ -249,6 +248,10 @@ describe('ProviderFrame', () => {
     });
 
     it('rejects concurrent requests', async function(done) {
+      // Simulate a never resolve situation to be able to start the two
+      // requests.
+      spyOn(credentialDataProvider, 'getAllCredentials')
+          .and.returnValue(new Promise(() => {}));
       clientChannel.listen(msg.RpcMessageType.error, (data) => {
         expectMessageContents(
             data,
@@ -290,10 +293,14 @@ describe('ProviderFrame', () => {
         supportedAuthMethods: [AUTHENTICATION_METHODS.ID_AND_PASSWORD]
       };
 
-      it('should return no credentials when the store is empty',
+      it('should return noCredentialsAvailable when the store is empty',
          async function(done) {
            credentialDataProvider.credentials = [];
-           clientChannel.listen(msg.RpcMessageType.none, done);
+           clientChannel.listen(msg.RpcMessageType.error, (data) => {
+             expect(data.args.type)
+                 .toEqual(OpenYoloErrorType.noCredentialsAvailable);
+             done();
+           });
            clientChannel.send(
                msg.retrieveMessage(requestId, passwordOnlyRequest));
          });
@@ -370,8 +377,9 @@ describe('ProviderFrame', () => {
         // we expect the "carl" credential to be filtered out, as it has
         // an authentication method that is not on the request list.
         credentialDataProvider.credentials = [carlGoogCred];
-        clientChannel.listen(msg.RpcMessageType.none, (data) => {
-          expectMessageContents(data, msg.noneAvailableMessage(requestId));
+        clientChannel.listen(msg.RpcMessageType.error, (data) => {
+          expect(data.args.type)
+              .toEqual(OpenYoloErrorType.noCredentialsAvailable);
           done();
         });
 
@@ -482,9 +490,9 @@ describe('ProviderFrame', () => {
                          OpenYoloInternalError.userCanceled());
                    });
 
-           clientChannel.listen(msg.RpcMessageType.none, (data) => {
+           clientChannel.listen(msg.RpcMessageType.error, (data) => {
              expect(expectFinalResult).toBeTruthy();
-             expectMessageContents(data, msg.noneAvailableMessage(requestId));
+             expect(data.args.type).toEqual(OpenYoloErrorType.userCanceled);
              done();
            });
 
@@ -599,7 +607,7 @@ describe('ProviderFrame', () => {
           expectedHints: OpenYoloCredential[],
           selection: OpenYoloCredential|null,
           expectedResult: msg.RpcMessage<msg.RpcMessageType.credential>|
-          msg.RpcMessage<msg.RpcMessageType.none>,
+          msg.RpcMessage<msg.RpcMessageType.error>,
           neverResolve: boolean = false) {
         let promiseResolver = new PromiseResolver<void>();
         let expectFinalResult = false;
@@ -630,17 +638,16 @@ describe('ProviderFrame', () => {
         clientChannel.listen(msg.RpcMessageType.credential, (data) => {
           expect(expectFinalResult).toBeTruthy();
           if (expectedResult.type !== msg.RpcMessageType.credential) {
-            fail('Received unexpected credential result');
+            fail('Not a valid message.');
             return;
           }
           expectMessageContents(data, expectedResult);
           promiseResolver.resolve();
         });
 
-        clientChannel.listen(msg.RpcMessageType.none, (data) => {
-          expect(expectFinalResult).toBeTruthy();
-          if (expectedResult.type !== msg.RpcMessageType.none) {
-            fail('Received cancelation instead of expected credential');
+        clientChannel.listen(msg.RpcMessageType.error, (data) => {
+          if (expectedResult.type !== msg.RpcMessageType.error) {
+            fail('Not a valid message.');
             return;
           }
           expectMessageContents(data, expectedResult);
@@ -654,7 +661,9 @@ describe('ProviderFrame', () => {
          async function(done) {
            credentialDataProvider.credentials = [];
 
-           clientChannel.listen(msg.RpcMessageType.none, (m) => {
+           clientChannel.listen(msg.RpcMessageType.error, (data) => {
+             expect(data.args.type)
+                 .toEqual(OpenYoloErrorType.noCredentialsAvailable);
              done();
            });
 
@@ -667,7 +676,9 @@ describe('ProviderFrame', () => {
         // generated.
         credentialDataProvider.credentials = [carlGoogCred];
 
-        clientChannel.listen(msg.RpcMessageType.none, (m) => {
+        clientChannel.listen(msg.RpcMessageType.error, (data) => {
+          expect(data.args.type)
+              .toEqual(OpenYoloErrorType.noCredentialsAvailable);
           done();
         });
 
@@ -708,29 +719,25 @@ describe('ProviderFrame', () => {
       it('should notify the client of user cancellation', async function(done) {
         credentialDataProvider.credentials = [deliaFbCred];
         expectPickFromHints(
-            [deliaFbCred], null, msg.noneAvailableMessage(requestId))
+            [deliaFbCred],
+            null,
+            msg.errorMessage(
+                requestId,
+                OpenYoloInternalError.userCanceled().toExposedError()))
             .then(done);
         clientChannel.send(msg.hintMessage(requestId, pwdOrFbHintOptions));
       });
 
       it('should notify the client when an hint operation is cancelled',
          async function(done) {
-           credentialDataProvider.credentials = [deliaFbCred];
            expectPickFromHints(
                [deliaFbCred],
                null,
-               msg.noneAvailableMessage(requestId),
+               msg.errorMessage(
+                   requestId,
+                   OpenYoloInternalError.operationCanceled().toExposedError()),
                true /* neverResolve */)
-               .then((result) => {
-                 fail();
-               });
-
-           clientChannel.listen(
-               msg.RpcMessageType.cancelLastOperationResult, (data) => {
-                 expectMessageContents(
-                     data, msg.cancelLastOperationResultMessage(requestId));
-                 done();
-               });
+               .then(done);
 
            clientChannel.send(msg.hintMessage(requestId, pwdOrFbHintOptions));
            clientChannel.send(msg.cancelLastOperationMessage(requestId));
@@ -746,7 +753,9 @@ describe('ProviderFrame', () => {
 
            credentialDataProvider.credentials = [alicePwdCred, aliceFbCred];
            expectPickFromHints(
-               [aliceFbCred], null, msg.noneAvailableMessage(requestId))
+               [aliceFbCred],
+               aliceFbCred,
+               msg.credentialResultMessage(requestId, aliceFbCred))
                .then(done);
            clientChannel.send(msg.hintMessage(requestId, pwdOrFbHintOptions));
          });
@@ -761,7 +770,9 @@ describe('ProviderFrame', () => {
 
         credentialDataProvider.credentials = [deliaFbCred, deliaFbCredWithName];
         expectPickFromHints(
-            [deliaFbCredWithName], null, msg.noneAvailableMessage(requestId))
+            [deliaFbCredWithName],
+            deliaFbCredWithName,
+            msg.credentialResultMessage(requestId, deliaFbCredWithName))
             .then(done);
         clientChannel.send(msg.hintMessage(requestId, pwdOrFbHintOptions));
       });
@@ -779,8 +790,8 @@ describe('ProviderFrame', () => {
                [deliaFbCred, deliaFbCredWithPicture];
            expectPickFromHints(
                [deliaFbCredWithPicture],
-               null,
-               msg.noneAvailableMessage(requestId))
+               deliaFbCredWithPicture,
+               msg.credentialResultMessage(requestId, deliaFbCredWithPicture))
                .then(done);
            clientChannel.send(msg.hintMessage(requestId, pwdOrFbHintOptions));
          });
@@ -803,8 +814,8 @@ describe('ProviderFrame', () => {
 
         expectPickFromHints(
             [bobPwdCred, deliaFbCred, alicePwdCred],
-            null,
-            msg.noneAvailableMessage(requestId))
+            deliaFbCred,
+            msg.credentialResultMessage(requestId, deliaFbCred))
             .then(done);
         clientChannel.send(msg.hintMessage(requestId, pwdOrFbHintOptions));
       });

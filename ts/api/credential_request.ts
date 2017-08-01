@@ -24,18 +24,16 @@ import {BaseRequest} from './base_request';
  * the user selects a credential, if any is available.
  */
 export class CredentialRequest extends BaseRequest<
-    OpenYoloCredential|null,
+    OpenYoloCredential,
     OpenYoloCredentialRequestOptions|undefined> {
   /**
    * Starts the Credential Request flow.
    */
   dispatchInternal(options: OpenYoloCredentialRequestOptions) {
-    // the final outcome will either be a credential, or a notification that
-    // none are available / none was selected by the user.
+    // the final outcome will either be a credential, or an error.
     this.registerHandler(
         RpcMessageType.credential,
         (credential: OpenYoloCredential) => this.handleResult(credential));
-    this.registerHandler(RpcMessageType.none, () => this.handleResult(null));
 
     // send the request
     this.channel.send(retrieveMessage(this.id, options));
@@ -44,7 +42,7 @@ export class CredentialRequest extends BaseRequest<
   /**
    * Handles the initial response from a credential request.
    */
-  private handleResult(credential: OpenYoloCredential|null): void {
+  private handleResult(credential: OpenYoloCredential): void {
     this.resolve(credential);
     this.dispose();
   }

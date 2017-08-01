@@ -148,10 +148,6 @@ export class ProviderFrame {
 
   private registerListeners() {
     this.addRpcListener(
-        msg.RpcMessageType.wrapBrowser,
-        (m) => this.handleWrapBrowserRequest(m.id));
-
-    this.addRpcListener(
         msg.RpcMessageType.disableAutoSignIn,
         (m) => this.handleDisableAutoSignInRequest(m.id));
 
@@ -244,11 +240,6 @@ export class ProviderFrame {
     this.requestInProgress = false;
   }
 
-  private async handleWrapBrowserRequest(requestId: string) {
-    this.clientChannel.send(msg.wrapBrowserResultMessage(
-        requestId, this.providerConfig.delegateToBrowser));
-  }
-
   private async handleDisableAutoSignInRequest(requestId: string) {
     try {
       await this.localStateProvider.setAutoSignInEnabled(
@@ -267,7 +258,9 @@ export class ProviderFrame {
     let hints = await this.cancellablePromise(this.getHints(options));
     if (hints.length < 1) {
       console.info('no hints available');
-      this.clientChannel.send(msg.noneAvailableMessage(requestId));
+      this.clientChannel.send(msg.errorMessage(
+          requestId,
+          OpenYoloInternalError.noCredentialsAvailable().toExposedError()));
       return;
     }
 
@@ -305,7 +298,15 @@ export class ProviderFrame {
     } catch (err) {
       this.handleWellKnownErrors(err);
       console.info(`Hint selection cancelled: ${err}`);
-      this.clientChannel.send(msg.noneAvailableMessage(requestId));
+      if (err instanceof OpenYoloInternalError) {
+        this.clientChannel.send(
+            msg.errorMessage(requestId, err.toExposedError()));
+      } else {
+        this.clientChannel.send(msg.errorMessage(
+            requestId,
+            OpenYoloInternalError.requestFailed('Implementation error.')
+                .toExposedError()));
+      }
     }
   }
 
@@ -339,7 +340,9 @@ export class ProviderFrame {
     // this is the case and the request will complete
     if (pertinentCredentials.length < 1) {
       console.info('no credentials available');
-      this.clientChannel.send(msg.noneAvailableMessage(requestId));
+      this.clientChannel.send(msg.errorMessage(
+          requestId,
+          OpenYoloInternalError.noCredentialsAvailable().toExposedError()));
       return;
     }
 
@@ -386,7 +389,15 @@ export class ProviderFrame {
     } catch (err) {
       this.handleWellKnownErrors(err);
       console.info(`Credential selection cancelled: ${err}`);
-      this.clientChannel.send(msg.noneAvailableMessage(requestId));
+      if (err instanceof OpenYoloInternalError) {
+        this.clientChannel.send(
+            msg.errorMessage(requestId, err.toExposedError()));
+      } else {
+        this.clientChannel.send(msg.errorMessage(
+            requestId,
+            OpenYoloInternalError.requestFailed('Implementation error.')
+                .toExposedError()));
+      }
     }
   }
 
@@ -437,7 +448,6 @@ export class ProviderFrame {
           ev);
       return;
     }
-    console.log(msg.RPC_MESSAGE_TYPES, ev.data.type);
     if (msg.RPC_MESSAGE_TYPES.indexOf(ev.data.type) === -1) {
       console.warn('Non-RPC message received on secure channel, ignoring');
       return;

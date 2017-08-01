@@ -15,12 +15,20 @@
  */
 
 import {OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions, OpenYoloProxyLoginResponse} from '../protocol/data';
+import {OpenYoloInternalError} from '../protocol/errors';
 import {SecureChannel} from '../protocol/secure_channel';
-import {PromiseResolver} from '../protocol/utils';
+import {PromiseResolver, TimeoutRacer} from '../protocol/utils';
 
-import {InitializeOnDemandApi, openyolo, OpenYoloWithTimeoutApi} from './api';
+import {InitializeOnDemandApi, openyolo, OpenYoloApi, OpenYoloApiImpl, OpenYoloWithTimeoutApi} from './api';
+import {RelayRequest} from './base_request';
+import {CancelLastOperationRequest} from './cancel_last_operation_request';
+import {CredentialRequest} from './credential_request';
+import {CredentialSave} from './credential_save';
 import {DisableAutoSignIn} from './disable_auto_sign_in';
-import {WrapBrowserRequest} from './wrap_browser_request';
+import {HintAvailableRequest} from './hint_available_request';
+import {HintRequest} from './hint_request';
+import {NavigatorCredentials} from './navigator_credentials';
+import {ProxyLogin} from './proxy_login';
 
 type OpenYoloWithTimeoutApiMethods = keyof OpenYoloWithTimeoutApi;
 
@@ -74,7 +82,7 @@ describe('OpenYolo API', () => {
       spyOn(InitializeOnDemandApi, 'createOpenYoloApi')
           .and.returnValue(Promise.reject(expectedError));
       // The operation does not matter here.
-      openyolo.disableAutoSignIn()
+      openyolo.cancelLastOperation()
           .then(
               () => {
                 done.fail('Should not resolve!');
@@ -87,7 +95,7 @@ describe('OpenYolo API', () => {
                 // Successful operation.
                 openYoloApiImplSpy.disableAutoSignIn.and.returnValue(
                     Promise.resolve());
-                return openyolo.disableAutoSignIn();
+                return openyolo.cancelLastOperation();
               })
           .then(done);
     });
@@ -96,7 +104,7 @@ describe('OpenYolo API', () => {
       spyOn(SecureChannel, 'clientConnect')
           .and.returnValue(Promise.reject(expectedError));
       // The operation does not matter here.
-      openyolo.disableAutoSignIn().then(
+      openyolo.cancelLastOperation().then(
           () => {
             done.fail('Should not resolve!');
           },
@@ -104,43 +112,6 @@ describe('OpenYolo API', () => {
             expect(error).toBe(expectedError);
             openyolo.reset();
             done();
-          });
-    });
-
-    it('wrap browser fails', (done) => {
-      spyOn(SecureChannel, 'clientConnect')
-          .and.returnValue(Promise.resolve(secureChannelSpy));
-      spyOn(WrapBrowserRequest.prototype, 'dispatch')
-          .and.returnValue(Promise.reject(expectedError));
-      spyOn(DisableAutoSignIn.prototype, 'dispatch')
-          .and.returnValue(Promise.resolve());
-      // The operation does not matter here.
-      openyolo.disableAutoSignIn().then(
-          () => {
-            // Ignore the failed request.
-            openyolo.reset();
-            done();
-          },
-          (error) => {
-            done.fail('Should not reject!');
-          });
-    });
-
-    it('wrap browser succeeds', (done) => {
-      spyOn(SecureChannel, 'clientConnect')
-          .and.returnValue(Promise.resolve(secureChannelSpy));
-      spyOn(WrapBrowserRequest.prototype, 'dispatch')
-          .and.returnValue(Promise.resolve(false));
-      spyOn(DisableAutoSignIn.prototype, 'dispatch')
-          .and.returnValue(Promise.resolve());
-      // The operation does not matter here.
-      openyolo.disableAutoSignIn().then(
-          () => {
-            openyolo.reset();
-            done();
-          },
-          (error) => {
-            done.fail('Should not reject!');
           });
     });
 
@@ -157,13 +128,12 @@ describe('OpenYolo API', () => {
         const promiseResolver = new PromiseResolver<void>();
         spyOn(SecureChannel, 'clientConnect')
             .and.returnValue(promiseResolver.promise);
-        spyOn(WrapBrowserRequest.prototype, 'dispatch')
-            .and.returnValue(Promise.resolve(false));
-        spyOn(DisableAutoSignIn.prototype, 'dispatch')
+        // Avoid using DisableAutoSignIn here as it uses navigator.credentials.
+        spyOn(CancelLastOperationRequest.prototype, 'dispatch')
             .and.returnValue(Promise.resolve());
         openyolo.setTimeouts(0);
         // The operation does not matter here.
-        openyolo.disableAutoSignIn().then(
+        openyolo.cancelLastOperation().then(
             () => {
               openyolo.reset();
               done();
@@ -183,7 +153,7 @@ describe('OpenYolo API', () => {
         let timeoutExpired = false;
         openyolo.setTimeouts(100);
         // The operation does not matter here.
-        openyolo.disableAutoSignIn().then(
+        openyolo.cancelLastOperation().then(
             () => {
               done.fail('Should not resolve!');
             },
@@ -283,6 +253,175 @@ describe('OpenYolo API', () => {
         openyolo.cancelLastOperation().then(() => {
           expect(openYoloApiImplSpy.cancelLastOperation)
               .toHaveBeenCalledWith(jasmine.any(Object));
+          done();
+        });
+      });
+    });
+  });
+
+  describe('OpenYoloApiImpl', () => {
+    const wrapBrowserError =
+        OpenYoloInternalError.browserWrappingRequired().toExposedError();
+    const otherError =
+        OpenYoloInternalError.noCredentialsAvailable().toExposedError();
+
+    let openYoloApiImpl: OpenYoloApiImpl;
+    let timeoutRacerSpy: jasmine.SpyObj<TimeoutRacer>;
+
+    beforeEach(() => {
+      const frameManager =
+          jasmine.createSpyObj('ProviderFrameElement', ['display']);
+      openYoloApiImpl = new OpenYoloApiImpl(frameManager, secureChannelSpy);
+      timeoutRacerSpy = jasmine.createSpyObj('TimeoutRacer', ['race']);
+    });
+
+    type methodSignatures =
+        {[key in keyof OpenYoloApi]: typeof OpenYoloApiImpl.prototype[key]};
+
+    /**
+     * Tests the behavior of operations implementations.
+     * @param methodName The method of OpenYoloApi being tested.
+     * @param operationRequest The request class's prototype being mocked.
+     * @param options The request's options.
+     * @param expectedResult The expected result when successful.
+     */
+    function testOperationImpl<M extends keyof methodSignatures, Opt, Res>(
+        methodName: M,
+        operationRequest: RelayRequest<Res, Opt>,
+        options: Opt,
+        expectedResult: Res) {
+      let dispatchSpy: jasmine.Spy;
+      let navCredentialsSpy: jasmine.Spy;
+
+      beforeEach(() => {
+        dispatchSpy = spyOn(operationRequest, 'dispatch');
+        navCredentialsSpy = spyOn(NavigatorCredentials.prototype, methodName);
+      });
+
+      it('dispatches the request', (done) => {
+        dispatchSpy.and.returnValue(Promise.resolve(expectedResult));
+        (openYoloApiImpl[methodName] as methodSignatures[M])(
+            options, timeoutRacerSpy)
+            .then((result: Res) => {
+              expect(result).toBe(expectedResult);
+              expect(dispatchSpy)
+                  .toHaveBeenCalledWith(options, timeoutRacerSpy);
+              done();
+            });
+      });
+
+      it('propagates error', (done) => {
+        dispatchSpy.and.returnValue(Promise.reject(otherError));
+        (openYoloApiImpl[methodName] as methodSignatures[M])(
+            options, timeoutRacerSpy)
+            .then(
+                () => {
+                  done.fail('Should not resolve!');
+                },
+                (error: Error) => {
+                  expect(error).toBe(otherError);
+                  done();
+                });
+      });
+
+      it('delegates to credential', (done) => {
+        dispatchSpy.and.returnValue(Promise.reject(wrapBrowserError));
+        navCredentialsSpy.and.returnValue(Promise.resolve(expectedResult));
+        (openYoloApiImpl[methodName] as methodSignatures[M])(
+            options, timeoutRacerSpy)
+            .then((result: Res) => {
+              expect(result).toBe(expectedResult);
+              expect(navCredentialsSpy).toHaveBeenCalledWith(options);
+              done();
+            });
+      });
+    }
+
+    describe('hintsAvailable', () => {
+      const options: OpenYoloCredentialHintOptions = {
+        supportedAuthMethods: ['https://accounts.google.com']
+      };
+
+      testOperationImpl(
+          'hintsAvailable', HintAvailableRequest.prototype, options, true);
+    });
+
+    describe('hint', () => {
+      const options: OpenYoloCredentialHintOptions = {
+        supportedAuthMethods: ['https://accounts.google.com']
+      };
+
+      testOperationImpl('hint', HintRequest.prototype, options, credential);
+    });
+
+    describe('retrieve', () => {
+      const options: OpenYoloCredentialRequestOptions = {
+        supportedAuthMethods: ['https://accounts.google.com']
+      };
+
+      testOperationImpl(
+          'retrieve', CredentialRequest.prototype, options, credential);
+    });
+
+    describe('save', () => {
+      testOperationImpl(
+          'save', CredentialSave.prototype, credential, undefined);
+    });
+
+    describe('proxyLogin', () => {
+      testOperationImpl(
+          'proxyLogin', ProxyLogin.prototype, credential, undefined);
+    });
+
+    describe('cancelLastOperation', () => {
+      let dispatchSpy: jasmine.Spy;
+
+      beforeEach(() => {
+        dispatchSpy = spyOn(CancelLastOperationRequest.prototype, 'dispatch');
+      });
+
+      it('dispatches the request', (done) => {
+        dispatchSpy.and.returnValue(Promise.resolve());
+        openYoloApiImpl.cancelLastOperation(timeoutRacerSpy).then(() => {
+          expect(dispatchSpy).toHaveBeenCalledWith(undefined, timeoutRacerSpy);
+          done();
+        });
+      });
+
+      it('propagates the error', (done) => {
+        dispatchSpy.and.returnValue(Promise.reject(otherError));
+        openYoloApiImpl.cancelLastOperation(timeoutRacerSpy)
+            .then(
+                () => {
+                  done.fail('Should not resolve!');
+                },
+                (error) => {
+                  expect(error).toBe(otherError);
+                  done();
+                });
+      });
+
+      it('delegates to credential', (done) => {
+        dispatchSpy.and.returnValue(Promise.reject(wrapBrowserError));
+        spyOn(NavigatorCredentials.prototype, 'cancelLastOperation')
+            .and.returnValue(Promise.resolve());
+        openYoloApiImpl.cancelLastOperation(timeoutRacerSpy).then(() => {
+          expect(NavigatorCredentials.prototype.cancelLastOperation)
+              .toHaveBeenCalled();
+          done();
+        });
+      });
+    });
+
+    describe('disableAutoSignIn', () => {
+      it('dispatches the request and calls navigator.credentials', (done) => {
+        spyOn(DisableAutoSignIn.prototype, 'dispatch')
+            .and.returnValue(Promise.resolve());
+        spyOn(NavigatorCredentials.prototype, 'disableAutoSignIn')
+            .and.returnValue(Promise.resolve());
+        openYoloApiImpl.disableAutoSignIn(timeoutRacerSpy).then(() => {
+          expect(DisableAutoSignIn.prototype.dispatch)
+              .toHaveBeenCalledWith(undefined, timeoutRacerSpy);
           done();
         });
       });

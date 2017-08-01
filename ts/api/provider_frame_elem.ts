@@ -15,10 +15,9 @@
  */
 
 import {WindowLike} from '../protocol/comms';
+import {RenderMode} from '../protocol/data';
 import {PreloadRequest} from '../protocol/preload_request';
 import {DisplayOptions} from '../protocol/rpc_messages';
-
-import {RenderMode} from './api';
 
 export const HIDDEN_FRAME_CLASS = 'openyolo-hidden';
 export const VISIBLE_FRAME_CLASS = 'openyolo-visible';

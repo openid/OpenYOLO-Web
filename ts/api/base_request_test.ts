@@ -15,7 +15,7 @@
  */
 
 import {OpenYoloErrorType, OpenYoloInternalError} from '../protocol/errors';
-import {errorMessage, noneAvailableMessage, RpcMessageType, showProviderMessage} from '../protocol/rpc_messages';
+import {errorMessage, RpcMessageType, saveResultMessage, showProviderMessage} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {startTimeoutRacer} from '../protocol/utils';
 import {FakeProviderConnection} from '../test_utils/channels';
@@ -60,19 +60,19 @@ describe('BaseRequest', () => {
 
   describe('registerHandler', () => {
     beforeEach(() => {
-      request.registerHandler(RpcMessageType.none, handlerSpy);
+      request.registerHandler(RpcMessageType.saveResult, handlerSpy);
     });
 
     it('should unlisten when disposed', () => {
       // Listener for a different message type.
       request.registerHandler(
-          RpcMessageType.credential, jasmine.createSpy('messageSpy'));
+          RpcMessageType.proxy, jasmine.createSpy('messageSpy'));
       request.dispose();
       expect(unlistenSpy).toHaveBeenCalledTimes(2);
     });
 
     it('should respond to valid message', () => {
-      providerChannel.send(noneAvailableMessage(request.id));
+      providerChannel.send(saveResultMessage(request.id, true));
       expect(handlerSpy).toHaveBeenCalled();
     });
 
@@ -83,7 +83,7 @@ describe('BaseRequest', () => {
     });
 
     it('should filter invalid id', () => {
-      providerChannel.send(noneAvailableMessage('differentId'));
+      providerChannel.send(saveResultMessage('differentId', true));
       expect(handlerSpy).not.toHaveBeenCalled();
     });
   });

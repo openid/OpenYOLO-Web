@@ -41,14 +41,6 @@ export interface ProviderConfiguration {
    */
   window: WindowLike;
 
-  /**
-   * Whether the client should use the browser credential management API
-   * for core operations, instead of this frame. This setting is not typically
-   * client-specific, and is usually determined either by the type of
-   * user agent, or by global user / provider settings.
-   */
-  delegateToBrowser: boolean;
-
   affiliationProvider: AffiliationProvider;
   clientConfigurationProvider: ClientConfigurationProvider;
   credentialDataProvider: CredentialDataProvider;

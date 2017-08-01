@@ -327,7 +327,6 @@ LocalStateProvider.prototype.getRetainedCredential = function(authDomain) {};
  *   clientAuthDomain: string,
  *   clientNonce: string,
  *   window: Object,
- *   delegateToBrowser: boolean,
  *   affiliationProvider: AffiliationProvider,
  *   clientConfigurationProvider: ClientConfigurationProvider,
  *   credentialDataProvider: CredentialDataProvider,

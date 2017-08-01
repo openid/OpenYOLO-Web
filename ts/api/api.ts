@@ -16,7 +16,7 @@
 
 import {OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions, OpenYoloProxyLoginResponse} from '../protocol/data';
 import {RenderMode} from '../protocol/data';
-import {OpenYoloInternalError} from '../protocol/errors';
+import {OpenYoloErrorType, OpenYoloInternalError} from '../protocol/errors';
 import {PreloadRequest, PreloadRequestType} from '../protocol/preload_request';
 import {SecureChannel} from '../protocol/secure_channel';
 import {generateId, sha256, startTimeoutRacer, TimeoutRacer} from '../protocol/utils';
@@ -27,14 +27,10 @@ import {CredentialSave} from './credential_save';
 import {DisableAutoSignIn} from './disable_auto_sign_in';
 import {HintAvailableRequest} from './hint_available_request';
 import {HintRequest} from './hint_request';
+import {createNavigatorCredentialsApi} from './navigator_credentials';
 import {ProviderFrameElement} from './provider_frame_elem';
 import {ProxyLogin} from './proxy_login';
 import {respondToHandshake} from './verify';
-import {WrapBrowserRequest} from './wrap_browser_request';
-
-// re-export all the data types
-export * from '../protocol/data';
-export {OpenYoloInternalError, InternalErrorCode} from '../protocol/errors';
 
 const MOBILE_USER_AGENT_REGEX = /android|iphone|ipod|iemobile/i;
 
@@ -68,8 +64,7 @@ export interface OpenYoloApi {
    *     A promise for a credential hint. The promise will be rejected if the
    *     user cancels the hint selection process.
    */
-  hint(options: OpenYoloCredentialHintOptions):
-      Promise<OpenYoloCredential|null>;
+  hint(options: OpenYoloCredentialHintOptions): Promise<OpenYoloCredential>;
 
   /**
    * Attempts to retrieve a credential for the current origin.
@@ -83,7 +78,7 @@ export interface OpenYoloApi {
    *     can use.
    */
   retrieve(options: OpenYoloCredentialRequestOptions):
-      Promise<OpenYoloCredential|null>;
+      Promise<OpenYoloCredential>;
 
   /**
    * Attempts to save the provided credential, which will update or create
@@ -138,10 +133,10 @@ export interface OpenYoloWithTimeoutApi {
       options: OpenYoloCredentialHintOptions,
       timeoutRacer: TimeoutRacer): Promise<boolean>;
   hint(options: OpenYoloCredentialHintOptions, timeoutRacer: TimeoutRacer):
-      Promise<OpenYoloCredential|null>;
+      Promise<OpenYoloCredential>;
   retrieve(
       options: OpenYoloCredentialRequestOptions,
-      timeoutRacer: TimeoutRacer): Promise<OpenYoloCredential|null>;
+      timeoutRacer: TimeoutRacer): Promise<OpenYoloCredential>;
   save(credential: OpenYoloCredential, timeoutRacer: TimeoutRacer):
       Promise<void>;
   disableAutoSignIn(timeoutRacer: TimeoutRacer): Promise<void>;
@@ -151,12 +146,10 @@ export interface OpenYoloWithTimeoutApi {
   dispose(): Promise<void>;
 }
 
-type OpenYoloApiMethods = keyof OpenYoloApi;
-
 /**
  * Defines the different timeouts for every request.
  */
-const DEFAULT_TIMEOUTS: {[key in OpenYoloApiMethods]: number} = {
+const DEFAULT_TIMEOUTS: {[key in keyof OpenYoloApi]: number} = {
   retrieve: 3000,
   save: 3000,
   disableAutoSignIn: 3000,
@@ -190,61 +183,19 @@ function verifyOrDetectRenderMode(renderMode: RenderMode|null): RenderMode {
 }
 
 /**
- * OpenYolo implementation using the browser navigator.credentials.
- * TODO: Implement.
- */
-class OpenYoloBrowserApiImpl implements OpenYoloWithTimeoutApi {
-  async retrieve(
-      options: OpenYoloCredentialRequestOptions,
-      timeoutRacer: TimeoutRacer): Promise<OpenYoloCredential|null> {
-    return Promise.reject('not implemented');
-  }
-
-  async hintsAvailable(
-      options: OpenYoloCredentialRequestOptions,
-      timeoutRacer: TimeoutRacer): Promise<boolean> {
-    return Promise.reject('not implemented');
-  }
-
-  async hint(
-      options: OpenYoloCredentialRequestOptions,
-      timeoutRacer: TimeoutRacer): Promise<OpenYoloCredential|null> {
-    return Promise.reject('not implemented');
-  }
-
-  async disableAutoSignIn(timeoutRacer: TimeoutRacer): Promise<void> {
-    return Promise.reject('not implemented');
-  }
-
-  async save(credential: OpenYoloCredential, timeoutRacer: TimeoutRacer):
-      Promise<void> {
-    return Promise.reject('not implemented');
-  }
-
-  async proxyLogin(credential: OpenYoloCredential, timeoutRacer: TimeoutRacer):
-      Promise<OpenYoloProxyLoginResponse> {
-    return Promise.reject('not implemented');
-  }
-
-  async cancelLastOperation(timeoutRacer: TimeoutRacer): Promise<void> {
-    return Promise.reject('not implemented');
-  }
-
-  async dispose(): Promise<void> {
-    return Promise.resolve();
-  }
-}
-
-/**
  * Provides access to the user's preferred credential provider, in order to
  * retrieve credentials.
  */
-class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
+export class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
   private disposed: boolean = false;
+  /** The fallback when navigator.credentials should be used. */
+  private navigatorCredentials: OpenYoloApi;
 
   constructor(
       private frameManager: ProviderFrameElement,
-      private channel: SecureChannel) {}
+      private channel: SecureChannel) {
+    this.navigatorCredentials = createNavigatorCredentialsApi();
+  }
 
   async hintsAvailable(
       options: OpenYoloCredentialHintOptions,
@@ -254,51 +205,93 @@ class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
     try {
       return await request.dispatch(options, timeoutRacer);
     } catch (e) {
-      console.log(`Hint available request failed: ${e.message}`);
-      return false;
+      if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
+        return this.navigatorCredentials.hintsAvailable(options);
+      }
+      throw e;
     }
   }
 
   async hint(
       options: OpenYoloCredentialHintOptions,
-      timeoutRacer: TimeoutRacer): Promise<OpenYoloCredential|null> {
+      timeoutRacer: TimeoutRacer): Promise<OpenYoloCredential> {
     this.checkNotDisposed();
     const request = new HintRequest(this.frameManager, this.channel);
-    return await request.dispatch(options, timeoutRacer);
+    try {
+      return await request.dispatch(options, timeoutRacer);
+    } catch (e) {
+      if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
+        return this.navigatorCredentials.hint(options);
+      }
+      throw e;
+    }
   }
 
   async retrieve(
       options: OpenYoloCredentialRequestOptions,
-      timeoutRacer: TimeoutRacer): Promise<OpenYoloCredential|null> {
+      timeoutRacer: TimeoutRacer): Promise<OpenYoloCredential> {
     this.checkNotDisposed();
     const request = new CredentialRequest(this.frameManager, this.channel);
-    return await request.dispatch(options, timeoutRacer);
+    try {
+      return await request.dispatch(options, timeoutRacer);
+    } catch (e) {
+      if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
+        return this.navigatorCredentials.retrieve(options);
+      }
+      throw e;
+    }
   }
 
   async save(credential: OpenYoloCredential, timeoutRacer: TimeoutRacer) {
     this.checkNotDisposed();
     const request = new CredentialSave(this.frameManager, this.channel);
-    return await request.dispatch(credential, timeoutRacer);
+    try {
+      return await request.dispatch(credential, timeoutRacer);
+    } catch (e) {
+      if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
+        return this.navigatorCredentials.save(credential);
+      }
+      throw e;
+    }
   }
 
   async proxyLogin(credential: OpenYoloCredential, timeoutRacer: TimeoutRacer):
       Promise<OpenYoloProxyLoginResponse> {
     this.checkNotDisposed();
     const request = new ProxyLogin(this.frameManager, this.channel);
-    return await request.dispatch(credential, timeoutRacer);
+    try {
+      return await request.dispatch(credential, timeoutRacer);
+    } catch (e) {
+      if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
+        return this.navigatorCredentials.proxyLogin(credential);
+      }
+      throw e;
+    }
   }
 
   async disableAutoSignIn(timeoutRacer: TimeoutRacer) {
     this.checkNotDisposed();
     const request = new DisableAutoSignIn(this.frameManager, this.channel);
-    return await request.dispatch(undefined, timeoutRacer);
+    // Disable both navigator.credentials and provider as it is not known
+    // whichever will be used in the next retrieve.
+    const providerDisableAutoSignIn = request.dispatch(undefined, timeoutRacer);
+    const browserDisableAutoSignIn =
+        this.navigatorCredentials.disableAutoSignIn();
+    await Promise.all([providerDisableAutoSignIn, browserDisableAutoSignIn]);
   }
 
   async cancelLastOperation(timeoutRacer: TimeoutRacer) {
     this.checkNotDisposed();
     const request =
         new CancelLastOperationRequest(this.frameManager, this.channel);
-    return await request.dispatch(undefined, timeoutRacer);
+    try {
+      return await request.dispatch(undefined, timeoutRacer);
+    } catch (e) {
+      if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
+        return this.navigatorCredentials.cancelLastOperation();
+      }
+      throw e;
+    }
   }
 
   dispose(): Promise<void> {
@@ -384,23 +377,6 @@ export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
 
       const channel = await timeoutRacer.race(SecureChannel.clientConnect(
           window, frameManager.getContentWindow(), instanceId, instanceIdHash));
-
-      // Check whether the client should wrap the browser's
-      // navigator.credentials.
-      const request = new WrapBrowserRequest(frameManager, channel);
-      let wrapBrowser = false;
-      try {
-        wrapBrowser = await request.dispatch(undefined, timeoutRacer);
-      } catch (e) {
-        // Default to false if request fails.
-        // It also ignores timeout errors, as the initialization is actually
-        // complete so even if this operation fails, the next could succeed
-        // without reloading the IFrame.
-      }
-
-      if (wrapBrowser) {
-        return new OpenYoloBrowserApiImpl();
-      }
       return new OpenYoloApiImpl(frameManager, channel);
     } catch (e) {
       timeoutRacer.rethrowUnlessTimeoutError(e);
@@ -486,7 +462,7 @@ export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
   }
 
   async hint(options: OpenYoloCredentialHintOptions):
-      Promise<OpenYoloCredential|null> {
+      Promise<OpenYoloCredential> {
     const preloadRequest = {type: PreloadRequestType.hint, options};
     const timeoutRacer = this.startCustomTimeoutRacer(DEFAULT_TIMEOUTS.hint);
     const impl = await this.init(timeoutRacer, preloadRequest);
@@ -494,7 +470,7 @@ export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
   }
 
   async retrieve(options: OpenYoloCredentialRequestOptions):
-      Promise<OpenYoloCredential|null> {
+      Promise<OpenYoloCredential> {
     const preloadRequest = {type: PreloadRequestType.retrieve, options};
     const timeoutRacer =
         this.startCustomTimeoutRacer(DEFAULT_TIMEOUTS.retrieve);
@@ -532,25 +508,3 @@ export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
 }
 
 export const openyolo: OnDemandOpenYoloApi = new InitializeOnDemandApi();
-
-// Export the public methods.
-const windowAsAny = window as any;
-windowAsAny['openyolo'] = openyolo;
-InitializeOnDemandApi.prototype['setProviderUrlBase'] =
-    InitializeOnDemandApi.prototype.setProviderUrlBase;
-InitializeOnDemandApi.prototype['setRenderMode'] =
-    InitializeOnDemandApi.prototype.setRenderMode;
-InitializeOnDemandApi.prototype['setTimeouts'] =
-    InitializeOnDemandApi.prototype.setTimeouts;
-InitializeOnDemandApi.prototype['hintsAvailable'] =
-    InitializeOnDemandApi.prototype.hintsAvailable;
-InitializeOnDemandApi.prototype['hint'] = InitializeOnDemandApi.prototype.hint;
-InitializeOnDemandApi.prototype['retrieve'] =
-    InitializeOnDemandApi.prototype.retrieve;
-InitializeOnDemandApi.prototype['save'] = InitializeOnDemandApi.prototype.save;
-InitializeOnDemandApi.prototype['disableAutoSignIn'] =
-    InitializeOnDemandApi.prototype.disableAutoSignIn;
-InitializeOnDemandApi.prototype['proxyLogin'] =
-    InitializeOnDemandApi.prototype.proxyLogin;
-InitializeOnDemandApi.prototype['cancelLastOperation'] =
-    InitializeOnDemandApi.prototype.cancelLastOperation;

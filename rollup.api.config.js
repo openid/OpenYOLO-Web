@@ -1,7 +1,7 @@
 import nodeResolve from 'rollup-plugin-node-resolve';
 
 export default {
-  entry: './es6/api/api.js',
+  entry: './es6/api/exports.js',
   plugins: [nodeResolve({module: true, jsnext: true, browser: true})],
   banner: `
 /**
