@@ -27,7 +27,6 @@ import {CredentialSave} from './credential_save';
 import {DisableAutoSignIn} from './disable_auto_sign_in';
 import {HintAvailableRequest} from './hint_available_request';
 import {HintRequest} from './hint_request';
-import {NavigatorCredentials} from './navigator_credentials';
 import {ProxyLogin} from './proxy_login';
 
 type OpenYoloWithTimeoutApiMethods = keyof OpenYoloWithTimeoutApi;
@@ -267,11 +266,22 @@ describe('OpenYolo API', () => {
 
     let openYoloApiImpl: OpenYoloApiImpl;
     let timeoutRacerSpy: jasmine.SpyObj<TimeoutRacer>;
+    let navCredentialsSpy: jasmine.SpyObj<OpenYoloApi>;
 
     beforeEach(() => {
+      navCredentialsSpy = jasmine.createSpyObj('NavigatorCredentials', [
+        'hintsAvailable',
+        'hint',
+        'retrieve',
+        'save',
+        'proxyLogin',
+        'disableAutoSignIn',
+        'cancelLastOperation'
+      ]);
       const frameManager =
           jasmine.createSpyObj('ProviderFrameElement', ['display']);
-      openYoloApiImpl = new OpenYoloApiImpl(frameManager, secureChannelSpy);
+      openYoloApiImpl = new OpenYoloApiImpl(
+          frameManager, secureChannelSpy, navCredentialsSpy);
       timeoutRacerSpy = jasmine.createSpyObj('TimeoutRacer', ['race']);
     });
 
@@ -291,11 +301,9 @@ describe('OpenYolo API', () => {
         options: Opt,
         expectedResult: Res) {
       let dispatchSpy: jasmine.Spy;
-      let navCredentialsSpy: jasmine.Spy;
 
       beforeEach(() => {
         dispatchSpy = spyOn(operationRequest, 'dispatch');
-        navCredentialsSpy = spyOn(NavigatorCredentials.prototype, methodName);
       });
 
       it('dispatches the request', (done) => {
@@ -326,12 +334,14 @@ describe('OpenYolo API', () => {
 
       it('delegates to credential', (done) => {
         dispatchSpy.and.returnValue(Promise.reject(wrapBrowserError));
-        navCredentialsSpy.and.returnValue(Promise.resolve(expectedResult));
+        navCredentialsSpy[methodName].and.returnValue(
+            Promise.resolve(expectedResult));
         (openYoloApiImpl[methodName] as methodSignatures[M])(
             options, timeoutRacerSpy)
             .then((result: Res) => {
               expect(result).toBe(expectedResult);
-              expect(navCredentialsSpy).toHaveBeenCalledWith(options);
+              expect(navCredentialsSpy[methodName])
+                  .toHaveBeenCalledWith(options);
               done();
             });
       });
@@ -403,11 +413,10 @@ describe('OpenYolo API', () => {
 
       it('delegates to credential', (done) => {
         dispatchSpy.and.returnValue(Promise.reject(wrapBrowserError));
-        spyOn(NavigatorCredentials.prototype, 'cancelLastOperation')
-            .and.returnValue(Promise.resolve());
+        navCredentialsSpy.cancelLastOperation.and.returnValue(
+            Promise.resolve());
         openYoloApiImpl.cancelLastOperation(timeoutRacerSpy).then(() => {
-          expect(NavigatorCredentials.prototype.cancelLastOperation)
-              .toHaveBeenCalled();
+          expect(navCredentialsSpy.cancelLastOperation).toHaveBeenCalled();
           done();
         });
       });
@@ -417,11 +426,11 @@ describe('OpenYolo API', () => {
       it('dispatches the request and calls navigator.credentials', (done) => {
         spyOn(DisableAutoSignIn.prototype, 'dispatch')
             .and.returnValue(Promise.resolve());
-        spyOn(NavigatorCredentials.prototype, 'disableAutoSignIn')
-            .and.returnValue(Promise.resolve());
+        navCredentialsSpy.disableAutoSignIn.and.returnValue(Promise.resolve());
         openYoloApiImpl.disableAutoSignIn(timeoutRacerSpy).then(() => {
           expect(DisableAutoSignIn.prototype.dispatch)
               .toHaveBeenCalledWith(undefined, timeoutRacerSpy);
+          expect(navCredentialsSpy.disableAutoSignIn).toHaveBeenCalled();
           done();
         });
       });
