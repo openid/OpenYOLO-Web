@@ -27,6 +27,13 @@ import {CancellablePromise} from '../protocol/utils';
 import {AncestorOriginVerifier} from './ancestor_origin_verifier';
 import {AffiliationProvider, CredentialDataProvider, DisplayCallbacks, InteractionProvider, LocalStateProvider, ProviderConfiguration, WindowLike} from './provider_config';
 
+/**
+ * Handles request from the client.
+ *
+ * TODO: break down this class. It is untestable. Each request handler should
+ * live in a separate class/function to abstract the messaging layer and to
+ * allow testing more thoroughly the different paths.
+ */
 export class ProviderFrame {
   private clientAuthDomain: string;
   private affiliationProvider: AffiliationProvider;
@@ -254,24 +261,24 @@ export class ProviderFrame {
       requestId: string,
       options: OpenYoloCredentialHintOptions) {
     console.info('Handling hint request');
-
-    let hints = await this.cancellablePromise(this.getHints(options));
-    if (hints.length < 1) {
-      console.info('no hints available');
-      this.clientChannel.send(msg.errorMessage(
-          requestId,
-          OpenYoloInternalError.noCredentialsAvailable().toExposedError()));
-      return;
-    }
-
-    // user interaction is required. instruct the interaction provider to show
-    // a picker for the available credentials.
-    let selectionPromise = this.interactionProvider.showHintPicker(
-        hints, options, this.createDisplayCallbacks(requestId));
-
-    // now, wait for selection to occur, and send the selection result to the
-    // client
     try {
+      let hints = await this.cancellablePromise(this.getHints(options));
+      if (hints.length < 1) {
+        console.info('no hints available');
+        this.clientChannel.send(msg.errorMessage(
+            requestId,
+            OpenYoloInternalError.noCredentialsAvailable().toExposedError()));
+        return;
+      }
+
+      // user interaction is required. instruct the interaction provider to show
+      // a picker for the available credentials.
+      let selectionPromise = this.interactionProvider.showHintPicker(
+          hints, options, this.createDisplayCallbacks(requestId));
+
+
+      // now, wait for selection to occur, and send the selection result to the
+      // client
       console.info('awaiting user selection of hint');
       let selectedHint = await this.cancellablePromise(selectionPromise);
 
@@ -297,7 +304,6 @@ export class ProviderFrame {
           msg.credentialResultMessage(requestId, selectedHint));
     } catch (err) {
       this.handleWellKnownErrors(err);
-      console.info(`Hint selection cancelled: ${err}`);
       if (err instanceof OpenYoloInternalError) {
         this.clientChannel.send(
             msg.errorMessage(requestId, err.toExposedError()));
@@ -314,68 +320,81 @@ export class ProviderFrame {
       id: string,
       options: OpenYoloCredentialHintOptions) {
     console.info('Handling hintAvailable request');
-
-    let hints = await this.cancellablePromise(this.getHints(options));
-    this.clientChannel.send(
-        msg.hintAvailableResponseMessage(id, hints.length > 0));
+    try {
+      const hints = await this.cancellablePromise(this.getHints(options));
+      this.clientChannel.send(
+          msg.hintAvailableResponseMessage(id, hints.length > 0));
+    } catch (err) {
+      this.handleWellKnownErrors(err);
+      if (err instanceof OpenYoloInternalError) {
+        this.clientChannel.send(msg.errorMessage(id, err.toExposedError()));
+      } else {
+        this.clientChannel.send(msg.errorMessage(
+            id,
+            OpenYoloInternalError.requestFailed('Implementation error.')
+                .toExposedError()));
+      }
+    }
   }
 
   private async handleGetCredentialRequest(
       requestId: string,
       options: OpenYoloCredentialRequestOptions) {
     console.info('Handling credential retrieve request');
+    try {
+      let credentials = await this.cancellablePromise(
+          this.credentialDataProvider.getAllCredentials(
+              this.equivalentAuthDomains, options));
 
-    let credentials = await this.cancellablePromise(
-        this.credentialDataProvider.getAllCredentials(
-            this.equivalentAuthDomains, options));
+      // filter out the credentials which don't match the request options
+      let pertinentCredentials =
+          credentials.filter((credential: OpenYoloCredential) => {
+            return options.supportedAuthMethods.find(
+                (value) => value === credential.authMethod);
+          });
 
-    // filter out the credentials which don't match the request options
-    let pertinentCredentials =
-        credentials.filter((credential: OpenYoloCredential) => {
-          return options.supportedAuthMethods.find(
-              (value) => value === credential.authMethod);
-        });
-
-    // if no credentials are available, directly respond to the client that
-    // this is the case and the request will complete
-    if (pertinentCredentials.length < 1) {
-      console.info('no credentials available');
-      this.clientChannel.send(msg.errorMessage(
-          requestId,
-          OpenYoloInternalError.noCredentialsAvailable().toExposedError()));
-      return;
-    }
-
-    console.info('credentials are available');
-
-    // if a single credential is available, check if auto sign-in is enabled
-    // for the client authentication domain. If it is, directly return the
-    // credential to the client, and the request will complete.
-    if (pertinentCredentials.length === 1) {
-      let autoSignInEnabled = await this.localStateProvider.isAutoSignInEnabled(
-          this.clientAuthDomain);
-      console.log(`single credential, auto sign in = ${autoSignInEnabled}`);
-      if (autoSignInEnabled) {
-        const credential = pertinentCredentials[0];
-        // Display the auto sign in screen and send the message.
-        await this.cancellablePromise(this.interactionProvider.showAutoSignIn(
-            credential, this.createDisplayCallbacks(requestId)));
-        this.clientChannel.send(msg.credentialResultMessage(
-            requestId, this.storeForProxyLogin(credential)));
+      // if no credentials are available, directly respond to the client that
+      // this is the case and the request will complete
+      if (pertinentCredentials.length < 1) {
+        console.info('no credentials available');
+        this.clientChannel.send(msg.errorMessage(
+            requestId,
+            OpenYoloInternalError.noCredentialsAvailable().toExposedError()));
         return;
       }
-    }
 
-    // user interaction is required. instruct the interaction provider to show
-    // a picker for the available credentials, and concurrently notify the
-    // client to show the provider frame.
-    console.info('User interaction required to release credential');
-    let selectionPromise = this.interactionProvider.showCredentialPicker(
-        pertinentCredentials, options, this.createDisplayCallbacks(requestId));
+      console.info('credentials are available');
 
-    // now, wait for selection to occur, and send the selection result to the
-    // client
-    try {
+      // if a single credential is available, check if auto sign-in is enabled
+      // for the client authentication domain. If it is, directly return the
+      // credential to the client, and the request will complete.
+      if (pertinentCredentials.length === 1) {
+        let autoSignInEnabled =
+            await this.localStateProvider.isAutoSignInEnabled(
+                this.clientAuthDomain);
+        console.log(`single credential, auto sign in = ${autoSignInEnabled}`);
+        if (autoSignInEnabled) {
+          const credential = pertinentCredentials[0];
+          // Display the auto sign in screen and send the message.
+          await this.cancellablePromise(this.interactionProvider.showAutoSignIn(
+              credential, this.createDisplayCallbacks(requestId)));
+          this.clientChannel.send(msg.credentialResultMessage(
+              requestId, this.storeForProxyLogin(credential)));
+          return;
+        }
+      }
+
+      // user interaction is required. instruct the interaction provider to show
+      // a picker for the available credentials, and concurrently notify the
+      // client to show the provider frame.
+      console.info('User interaction required to release credential');
+      let selectionPromise = this.interactionProvider.showCredentialPicker(
+          pertinentCredentials,
+          options,
+          this.createDisplayCallbacks(requestId));
+
+      // now, wait for selection to occur, and send the selection result to the
+      // client
       let selectedCredential = await this.cancellablePromise(selectionPromise);
 
       // once selected we want to set auto sign in enabled to true again

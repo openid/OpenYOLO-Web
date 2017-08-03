@@ -129,6 +129,13 @@ export function stringValidator(value: any): boolean {
 }
 
 /**
+ * Returns true if the current origin is https.
+ */
+export function isSecureOrigin(): boolean {
+  return window.location.protocol === 'https:';
+}
+
+/**
  * Utility to handle a promise result. It allows for more readable code
  * as this pattern is often used.
  */

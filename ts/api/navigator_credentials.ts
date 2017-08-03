@@ -16,6 +16,7 @@
 
 import {AUTHENTICATION_METHODS, OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions, OpenYoloProxyLoginResponse} from '../protocol/data';
 import {OpenYoloInternalError} from '../protocol/errors';
+import {isSecureOrigin} from '../protocol/utils';
 
 import {OpenYoloApi} from './api';
 
@@ -151,7 +152,6 @@ export class NoOpNavigatorCredentials implements OpenYoloApi {
 
   async hint(options?: OpenYoloCredentialHintOptions):
       Promise<OpenYoloCredential> {
-    // Reject with a canceled error as no hints can be retrieved.
     throw OpenYoloInternalError.noCredentialsAvailable().toExposedError();
   }
 
@@ -259,11 +259,11 @@ export class NavigatorCredentials implements OpenYoloApi {
 
 /**
  * Returns the navigator.credentials wrapper according to the environment. If
- * navigator.credentials is not defined, it will create a n-op version of the
- * API.
+ * navigator.credentials is not defined, or the current app not on https,
+ * it will create a no-op version of the API.
  */
 export function createNavigatorCredentialsApi(): OpenYoloApi {
-  if (navigator.credentials !== undefined) {
+  if (navigator.credentials !== undefined && isSecureOrigin()) {
     return new NavigatorCredentials(navigator.credentials);
   }
   return new NoOpNavigatorCredentials();

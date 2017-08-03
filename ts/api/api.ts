@@ -193,8 +193,9 @@ export class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
 
   constructor(
       private frameManager: ProviderFrameElement,
-      private channel: SecureChannel) {
-    this.navigatorCredentials = createNavigatorCredentialsApi();
+      private channel: SecureChannel,
+      fallbackApi?: OpenYoloApi) {
+    this.navigatorCredentials = fallbackApi || createNavigatorCredentialsApi();
   }
 
   async hintsAvailable(
