@@ -27,6 +27,13 @@ import {CancellablePromise} from '../protocol/utils';
 import {AncestorOriginVerifier} from './ancestor_origin_verifier';
 import {AffiliationProvider, CredentialDataProvider, DisplayCallbacks, InteractionProvider, LocalStateProvider, ProviderConfiguration, WindowLike} from './provider_config';
 
+/**
+ * Handles request from the client.
+ *
+ * TODO: break down this class. It is untestable. Each request handler should
+ * live in a separate class/function to abstract the messaging layer and to
+ * allow testing more thoroughly the different paths.
+ */
 export class ProviderFrame {
   private clientAuthDomain: string;
   private affiliationProvider: AffiliationProvider;
@@ -313,10 +320,21 @@ export class ProviderFrame {
       id: string,
       options: OpenYoloCredentialHintOptions) {
     console.info('Handling hintAvailable request');
-
-    let hints = await this.cancellablePromise(this.getHints(options));
-    this.clientChannel.send(
-        msg.hintAvailableResponseMessage(id, hints.length > 0));
+    try {
+      const hints = await this.cancellablePromise(this.getHints(options));
+      this.clientChannel.send(
+          msg.hintAvailableResponseMessage(id, hints.length > 0));
+    } catch (err) {
+      this.handleWellKnownErrors(err);
+      if (err instanceof OpenYoloInternalError) {
+        this.clientChannel.send(msg.errorMessage(id, err.toExposedError()));
+      } else {
+        this.clientChannel.send(msg.errorMessage(
+            id,
+            OpenYoloInternalError.requestFailed('Implementation error.')
+                .toExposedError()));
+      }
+    }
   }
 
   private async handleGetCredentialRequest(
