@@ -15,7 +15,7 @@
  */
 
 import {OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions, OpenYoloProxyLoginResponse} from '../protocol/data';
-import {RenderMode} from '../protocol/data';
+import {LogLevel, RenderMode} from '../protocol/data';
 import {OpenYoloErrorType, OpenYoloInternalError} from '../protocol/errors';
 import {PreloadRequest, PreloadRequestType} from '../protocol/preload_request';
 import {SecureChannel} from '../protocol/secure_channel';
@@ -30,6 +30,7 @@ import {HintRequest} from './hint_request';
 import {createNavigatorCredentialsApi} from './navigator_credentials';
 import {ProviderFrameElement} from './provider_frame_elem';
 import {ProxyLogin} from './proxy_login';
+import {SetLogLevelRequest} from './set_log_level_request';
 import {respondToHandshake} from './verify';
 
 const MOBILE_USER_AGENT_REGEX = /android|iphone|ipod|iemobile/i;
@@ -123,6 +124,11 @@ export interface OpenYoloApi {
    * Cancels the last pending OpenYOLO request.
    */
   cancelLastOperation(): Promise<void>;
+
+  /**
+   * Sets the desired log level for the OpenYOLO library.
+   */
+  setLogLevel(level: LogLevel): Promise<void>;
 }
 
 /**
@@ -143,6 +149,7 @@ export interface OpenYoloWithTimeoutApi {
   proxyLogin(credential: OpenYoloCredential, timeoutRacer: TimeoutRacer):
       Promise<OpenYoloProxyLoginResponse>;
   cancelLastOperation(timeoutRacer: TimeoutRacer): Promise<void>;
+  setLogLevel(level: LogLevel, timeoutRacer: TimeoutRacer): Promise<void>;
   dispose(): Promise<void>;
 }
 
@@ -156,7 +163,8 @@ const DEFAULT_TIMEOUTS: {[key in keyof OpenYoloApi]: number} = {
   hintsAvailable: 3000,
   hint: 3000,
   proxyLogin: 10000,
-  cancelLastOperation: 3000
+  cancelLastOperation: 3000,
+  setLogLevel: 3000
 };
 
 // This is a hack to be able to list the values of a "const enum"
@@ -293,6 +301,15 @@ export class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
       }
       throw e;
     }
+  }
+
+  async setLogLevel(level: LogLevel, timeoutRacer: TimeoutRacer) {
+    this.checkNotDisposed();
+    const request = new SetLogLevelRequest(this.frameManager, this.channel);
+    // there is only one logger
+    // so no need to dispatch the request to navigator.credentials
+    // implementation
+    return await request.dispatch(level, timeoutRacer);
   }
 
   dispose(): Promise<void> {
@@ -505,6 +522,13 @@ export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
         this.startCustomTimeoutRacer(DEFAULT_TIMEOUTS.cancelLastOperation);
     const impl = await this.init(timeoutRacer);
     return impl.cancelLastOperation(timeoutRacer);
+  }
+
+  async setLogLevel(level: LogLevel): Promise<void> {
+    const timeoutRacer =
+        this.startCustomTimeoutRacer(DEFAULT_TIMEOUTS.setLogLevel);
+    const impl = await this.init(timeoutRacer);
+    return impl.setLogLevel(level, timeoutRacer);
   }
 }
 

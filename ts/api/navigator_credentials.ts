@@ -15,6 +15,7 @@
  */
 
 import {AUTHENTICATION_METHODS, OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions, OpenYoloProxyLoginResponse} from '../protocol/data';
+import {LogLevel} from '../protocol/data';
 import {OpenYoloInternalError} from '../protocol/errors';
 import {isSecureOrigin} from '../protocol/utils';
 
@@ -161,6 +162,8 @@ export class NoOpNavigatorCredentials implements OpenYoloApi {
 
   async cancelLastOperation(): Promise<void> {}
 
+  async setLogLevel(level: LogLevel): Promise<void> {}
+
   async proxyLogin(credential: OpenYoloCredential):
       Promise<OpenYoloProxyLoginResponse> {
     throw OpenYoloInternalError
@@ -187,6 +190,8 @@ export class NavigatorCredentials implements OpenYoloApi {
       return;
     }
   }
+
+  async setLogLevel(level: LogLevel): Promise<void> {}
 
   async retrieve(options?: OpenYoloCredentialRequestOptions):
       Promise<OpenYoloCredential> {

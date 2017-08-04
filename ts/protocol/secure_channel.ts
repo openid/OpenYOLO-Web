@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import {LogLevel} from '../protocol/data';
+import {log} from '../protocol/logger';
+
 import {createMessageListener, FilteringEventListener, isPermittedOrigin, RpcMessageListener, WindowLike} from './comms';
 import {OpenYoloError, OpenYoloInternalError} from './errors';
 import {ackMessage, channelConnectMessage, channelReadyMessage, PostMessageType, readyForConnectMessage} from './post_messages';
@@ -199,7 +202,7 @@ export class SecureChannel {
   }
 
   private static debugLog(role: string, message: string) {
-    console.debug(`(${role}) ${message}`);
+    log(LogLevel.DEBUG, `(${role}) ${message}`);
   }
 
   constructor(private port: MessagePort, private providerEnd: boolean) {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions, OpenYoloProxyLoginResponse} from '../protocol/data';
+import {LogLevel, OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions, OpenYoloProxyLoginResponse} from '../protocol/data';
 import {OpenYoloInternalError} from '../protocol/errors';
 import {SecureChannel} from '../protocol/secure_channel';
 import {PromiseResolver, TimeoutRacer} from '../protocol/utils';
@@ -28,6 +28,7 @@ import {DisableAutoSignIn} from './disable_auto_sign_in';
 import {HintAvailableRequest} from './hint_available_request';
 import {HintRequest} from './hint_request';
 import {ProxyLogin} from './proxy_login';
+import {SetLogLevelRequest} from './set_log_level_request';
 
 type OpenYoloWithTimeoutApiMethods = keyof OpenYoloWithTimeoutApi;
 
@@ -73,6 +74,7 @@ describe('OpenYolo API', () => {
         'proxyLogin',
         'disableAutoSignIn',
         'cancelLastOperation',
+        'setLogLevel',
         'dispose'
       ]);
     });
@@ -255,6 +257,16 @@ describe('OpenYolo API', () => {
           done();
         });
       });
+
+      it('setLogLevel', (done) => {
+        openYoloApiImplSpy.setLogLevel.and.returnValue(Promise.resolve());
+        openyolo.setLogLevel(LogLevel.INFO).then(() => {
+          expect(openYoloApiImplSpy.setLogLevel)
+              .toHaveBeenCalledWith(LogLevel.INFO, jasmine.any(Object));
+          done();
+        });
+      });
+
     });
   });
 
@@ -276,7 +288,8 @@ describe('OpenYolo API', () => {
         'save',
         'proxyLogin',
         'disableAutoSignIn',
-        'cancelLastOperation'
+        'cancelLastOperation',
+        'setLogLevel'
       ]);
       const frameManager =
           jasmine.createSpyObj('ProviderFrameElement', ['display']);
@@ -435,5 +448,19 @@ describe('OpenYolo API', () => {
         });
       });
     });
+
+    describe('setLogLevel', () => {
+      it('dispatches the request and calls navigator.credentials', (done) => {
+        spyOn(SetLogLevelRequest.prototype, 'dispatch')
+            .and.returnValue(Promise.resolve());
+
+        openYoloApiImpl.setLogLevel(LogLevel.INFO, timeoutRacerSpy).then(() => {
+          expect(SetLogLevelRequest.prototype.dispatch)
+              .toHaveBeenCalledWith(LogLevel.INFO, timeoutRacerSpy);
+          done();
+        });
+      });
+    });
+
   });
 });

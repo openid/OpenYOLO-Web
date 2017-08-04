@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-import {createMessageListener, FilteringEventListener, sendMessage, WindowLike} from '../protocol/comms';
 import {LogLevel} from '../protocol/data';
-import {log} from '../protocol/logger';
-import {PostMessageType, verifyAckMessage} from '../protocol/post_messages';
+import {RpcMessageType, setLogLevelMessage} from '../protocol/rpc_messages';
 
-let listener: FilteringEventListener;
+import {BaseRequest} from './base_request';
 
-export function respondToHandshake(window: WindowLike): void {
-  if (listener) {
-    window.removeEventListener('message', listener);
+export class SetLogLevelRequest extends BaseRequest<void, LogLevel> {
+  dispatchInternal(level: LogLevel) {
+    this.registerHandler(
+        RpcMessageType.setLogLevelResult, () => this.handleResult());
+    // send the request
+    this.channel.send(setLogLevelMessage(this.id, level));
   }
-  listener =
-      createMessageListener(PostMessageType.verifyPing, (data, type, ev) => {
-        log(LogLevel.DEBUG, `responding to ping from ${ev.origin}`);
-        sendMessage(ev.source, verifyAckMessage(data), ev.origin);
-      });
-  window.addEventListener('message', listener);
+
+  private handleResult(): void {
+    this.resolve();
+    this.dispose();
+  }
 }

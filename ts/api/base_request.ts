@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+import {LogLevel} from '../protocol/data';
 import {OpenYoloError, OpenYoloErrorType, OpenYoloExposedErrorData, OpenYoloInternalError} from '../protocol/errors';
+import {log} from '../protocol/logger';
 import {RpcMessageArgumentTypes, RpcMessageData, RpcMessageType} from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {generateId, PromiseResolver, startTimeoutRacer, TimeoutRacer} from '../protocol/utils';
@@ -115,7 +117,7 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
   }
 
   protected debugLog(message: string) {
-    console.debug(`(rq-${this.id}): ` + message);
+    log(LogLevel.DEBUG, `(rq-${this.id}): ` + message);
   }
 
   protected getPromise(): Promise<ResultT> {
