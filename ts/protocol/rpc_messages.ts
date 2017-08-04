@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import {OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions, OpenYoloProxyLoginResponse} from './data';
+import {LogLevel, OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions, OpenYoloProxyLoginResponse} from './data';
 import {OpenYoloError, OpenYoloExposedErrorData} from './errors';
-import {DataValidator, isBoolean, isUndefined, isValidCredential, isValidDisplayOptions, isValidError, isValidHintOptions, isValidProxyLoginResponse, isValidRequestOptions} from './validators';
+import {DataValidator, isBoolean, isNumber, isUndefined, isValidCredential, isValidDisplayOptions, isValidError, isValidHintOptions, isValidProxyLoginResponse, isValidRequestOptions} from './validators';
 
 export const enum RpcMessageType {
   disableAutoSignIn = 'disableAutoSignIn',
@@ -33,7 +33,9 @@ export const enum RpcMessageType {
   credential = 'credential',
   error = 'error',
   cancelLastOperation = 'cancelLastOperation',
-  cancelLastOperationResult = 'cancelLastOperationResult'
+  cancelLastOperationResult = 'cancelLastOperationResult',
+  setLogLevel = 'setLogLevel',
+  setLogLevelResult = 'setLogLevelResult'
 }
 
 // Hack to be able to use the list of values of the const enum above.
@@ -70,7 +72,9 @@ export type RpcMessageArgumentTypes = {
   'credential': OpenYoloCredential,
   'error': OpenYoloExposedErrorData,
   'cancelLastOperation': undefined,
-  'cancelLastOperationResult': undefined
+  'cancelLastOperationResult': undefined,
+  'setLogLevel': LogLevel,
+  'setLogLevelResult': undefined
 };
 
 export interface RpcMessageData<T extends RpcMessageType> {
@@ -112,7 +116,9 @@ export const RPC_MESSAGE_DATA_VALIDATORS: RpcMessageDataValidators = {
   'credential': rpcDataValidator(isValidCredential),
   'error': rpcDataValidator(isValidError),
   'cancelLastOperation': rpcDataValidator(isUndefined),
-  'cancelLastOperationResult': rpcDataValidator(isUndefined)
+  'cancelLastOperationResult': rpcDataValidator(isUndefined),
+  'setLogLevel': rpcDataValidator(isNumber),
+  'setLogLevelResult': rpcDataValidator(isUndefined)
 };
 
 export interface DisplayOptions {
@@ -192,4 +198,12 @@ export function cancelLastOperationMessage(id: string) {
 
 export function cancelLastOperationResultMessage(id: string) {
   return rpcMessage(RpcMessageType.cancelLastOperationResult, id, undefined);
+}
+
+export function setLogLevelMessage(id: string, level: LogLevel) {
+  return rpcMessage(RpcMessageType.setLogLevel, id, level);
+}
+
+export function setLogLevelResultMessage(id: string) {
+  return rpcMessage(RpcMessageType.setLogLevelResult, id, undefined);
 }

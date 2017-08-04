@@ -15,7 +15,9 @@
  */
 
 import {createMessageListener, isPermittedOrigin, sendMessage, WindowLike} from '../protocol/comms';
+import {LogLevel} from '../protocol/data';
 import {OpenYoloInternalError} from '../protocol/errors';
+import {log} from '../protocol/logger';
 import {PostMessageType, verifyPingMessage} from '../protocol/post_messages';
 import {generateId, TimeoutPromiseResolver} from '../protocol/utils';
 
@@ -135,17 +137,19 @@ export class AncestorOriginVerifier {
 
           // We either resolve or reject according to the origin.
           if (isPermittedOrigin(ev.origin, this.permittedOrigins)) {
-            console.debug(`verification of ancestor ${parentDepth} succeeded`);
+            log(LogLevel.DEBUG,
+                `verification of ancestor ${parentDepth} succeeded`);
             promiseResolver.resolve(ev.origin);
           } else {
-            console.warn(`untrusted domain in ancestor chain: ${ev.origin}`);
+            log(LogLevel.WARNING,
+                `untrusted domain in ancestor chain: ${ev.origin}`);
             promiseResolver.reject(
                 OpenYoloInternalError.untrustedOrigin(ev.origin));
           }
         });
 
     this.providerFrame.addEventListener('message', listener);
-    console.debug(`sending verification ping to ancestor ${parentDepth}`);
+    log(LogLevel.DEBUG, `sending verification ping to ancestor ${parentDepth}`);
     sendMessage(ancestorFrame, verifyPingMessage(verifyId));
     try {
       return await promiseResolver.promise;

@@ -236,3 +236,9 @@ export const TOKEN_PROVIDERS = indexedStrEnum({
   GOOGLE: boxEnum('https://accounts.google.com'),
   MICROSOFT: boxEnum('https://login.live.com'),
 });
+
+/**
+ * The set of log levels that can be used with the OpenYOLO library.
+ */
+export const enum LogLevel {ERROR = 0, WARNING = 1, INFO = 2, DEBUG = 3}
+;

@@ -15,8 +15,9 @@
  */
 
 import {PrimaryClientConfiguration} from '../protocol/client_config';
-import {AUTHENTICATION_METHODS, OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions} from '../protocol/data';
+import {AUTHENTICATION_METHODS, LogLevel, OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions} from '../protocol/data';
 import {OpenYoloErrorType, OpenYoloInternalError} from '../protocol/errors';
+import * as logger from '../protocol/logger';  // using the * syntax for jasmine tests
 import * as msg from '../protocol/rpc_messages';
 import {SecureChannel} from '../protocol/secure_channel';
 import {PromiseResolver} from '../protocol/utils';
@@ -284,6 +285,20 @@ describe('ProviderFrame', () => {
             });
 
         clientChannel.send(msg.disableAutoSignInMessage(requestId));
+      });
+    });
+
+    describe('handling setLogLevelRequest', () => {
+      it('should call setLogLevel', async function(done) {
+        let logLevel = LogLevel.INFO;
+        let setLogLevelSpy = spyOn(logger, 'setLogLevel').and.callThrough();
+        clientChannel.listen(
+            msg.RpcMessageType.setLogLevelResult, async function(res) {
+              expect(setLogLevelSpy).toHaveBeenCalledWith(logLevel);
+              done();
+            });
+
+        clientChannel.send(msg.setLogLevelMessage(requestId, logLevel));
       });
     });
 

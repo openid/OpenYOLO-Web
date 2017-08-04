@@ -34,6 +34,10 @@ export function isBoolean(value?: any): boolean {
   return typeof value === 'boolean';
 }
 
+export function isNumber(value?: any): boolean {
+  return typeof value === 'number';
+}
+
 export function isWebUrl(value?: any): boolean {
   if (!isNonEmptyString(value)) {
     return false;

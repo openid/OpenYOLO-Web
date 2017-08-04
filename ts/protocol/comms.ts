@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import {LogLevel} from '../protocol/data';
+import {log} from '../protocol/logger';
+
 import {isOpenYoloMessageFormat, Message, MESSAGE_DATA_VALIDATORS, MessageData, MessageType} from './messages';
 import {PostMessageData, PostMessageType} from './post_messages';
 import {RpcMessageData, RpcMessageType} from './rpc_messages';
@@ -68,14 +71,14 @@ export function createMessageListener<T extends MessageType>(
     type: T, listener: MessageListener<T>): FilteringEventListener {
   let messageListener = (ev: MessageEvent) => {
     if (!isOpenYoloMessageFormat(ev.data)) {
-      console.debug('non openyolo message received');
+      log(LogLevel.DEBUG, 'non openyolo message received');
       return false;
     }
     if (ev.data['type'] !== type) return false;
 
     let validator = MESSAGE_DATA_VALIDATORS[(type as MessageType)];
     if (!validator(ev.data['data'])) {
-      console.debug(`message of type ${type} received with invalid data`);
+      log(LogLevel.DEBUG, `message of type ${type} received with invalid data`);
       return false;
     }
     listener(ev.data['data'], ev.data['type'], ev);
