@@ -221,12 +221,10 @@ describe('ProviderFrame', () => {
       requestId = '' + Math.floor(Math.random() * 1000000);
 
       clientChannel.addFallbackListener((ev) => {
-        console.log(`unexpected message on client: ${JSON.stringify(ev)}`);
         unexpectedClientMessages.push(ev);
       });
 
       providerChannel.addFallbackListener((ev) => {
-        console.log(`unexpected message on provider: ${JSON.stringify(ev)}`);
         unexpectedProviderMessages.push(ev);
       });
     });
@@ -951,7 +949,6 @@ class TestLocalStateProvider implements LocalStateProvider {
     } else {
       result = true;
     }
-    console.debug(`auto sign in ${result} for domain ${authDomain}`);
     return result;
   }
 
