@@ -89,7 +89,6 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
    * proper initialization.
    */
   private registerBaseHandlers() {
-    this.debugLog('request instantiated');
     // Register a standard error handler.
     this.registerHandler(
         RpcMessageType.error, (data: OpenYoloExposedErrorData) => {
@@ -100,7 +99,6 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
             error = OpenYoloInternalError.unknownError().toExposedError();
           }
 
-          this.debugLog(`request failed: ${error}`);
           this.reject(error);
           this.dispose();
         });
@@ -112,10 +110,6 @@ export abstract class BaseRequest<ResultT, OptionsT> implements
       this.clearTimeout();
       this.frame.display(options);
     });
-  }
-
-  protected debugLog(message: string) {
-    console.debug(`(rq-${this.id}): ` + message);
   }
 
   protected getPromise(): Promise<ResultT> {

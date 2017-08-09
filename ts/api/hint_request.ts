@@ -39,7 +39,6 @@ export class HintRequest extends
    * Handles the initial response from a hint request.
    */
   private handleResult(credential: OpenYoloCredential): void {
-    this.debugLog(`Hint request complete`);
     this.resolve(credential);
     this.dispose();
   }

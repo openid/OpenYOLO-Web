@@ -85,7 +85,7 @@ describe('SecureChannel', () => {
       spyOn(port, 'removeEventListener').and.callThrough();
       spyOn(port, 'postMessage').and.callThrough();
       spyOn(port, 'close').and.callThrough();
-      channel = new SecureChannel(port, false);
+      channel = new SecureChannel(port);
     });
 
     it('sends messages', () => {

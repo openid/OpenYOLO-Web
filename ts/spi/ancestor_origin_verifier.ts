@@ -135,7 +135,6 @@ export class AncestorOriginVerifier {
 
           // We either resolve or reject according to the origin.
           if (isPermittedOrigin(ev.origin, this.permittedOrigins)) {
-            console.debug(`verification of ancestor ${parentDepth} succeeded`);
             promiseResolver.resolve(ev.origin);
           } else {
             console.warn(`untrusted domain in ancestor chain: ${ev.origin}`);
@@ -145,7 +144,6 @@ export class AncestorOriginVerifier {
         });
 
     this.providerFrame.addEventListener('message', listener);
-    console.debug(`sending verification ping to ancestor ${parentDepth}`);
     sendMessage(ancestorFrame, verifyPingMessage(verifyId));
     try {
       return await promiseResolver.promise;

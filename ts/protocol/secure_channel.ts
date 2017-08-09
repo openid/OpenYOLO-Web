@@ -42,8 +42,6 @@ export class SecureChannel {
       providerWindow: WindowLike,
       connectionNonce: string,
       connectionNonceHash: string): Promise<SecureChannel> {
-    SecureChannel.debugLog(
-        'client', 'waiting for ready message from credential provider');
     // await the provider notifying us that it is ready to connect
     await SecureChannel.providerReadyToConnect(
         clientWindow, connectionNonceHash);
@@ -69,8 +67,6 @@ export class SecureChannel {
 
     // send the connection initialization message, carrying the port for
     // subsequent communication.
-    SecureChannel.debugLog(
-        'client', 'sending connection challenge to provider');
     providerWindow.postMessage(
         channelConnectMessage(connectionNonce), '*', [channel.port2]);
 
@@ -78,13 +74,9 @@ export class SecureChannel {
       // await ready, and if successful, remove our temporary ready listener
       // and return the established channel.
       await readyPromiseResolver.promise;
-      SecureChannel.debugLog(
-          'client', 'credential provider accepted connection');
-      return new SecureChannel(channel.port1, false);
+      return new SecureChannel(channel.port1);
     } catch (err) {
       // failed to establish the connection. Close the now defunct port
-      SecureChannel.debugLog(
-          'client', `credential provider rejected connection: ${err['code']}`);
       channel.port1.close();
       throw err;
     } finally {
@@ -131,12 +123,8 @@ export class SecureChannel {
     let listener = createMessageListener(
         PostMessageType.channelConnect,
         async function(nonce: string, type, ev) {
-          SecureChannel.debugLog(
-              'provider', `connection challenge received from ${ev.origin}`);
           // Runtime check as nonce could be anything.
           if (typeof nonce !== 'string') {
-            SecureChannel.debugLog(
-                'provider', 'challenge nonce is not a string - ignoring');
             return;
           }
           // The connection nonce (ID) in the URL is the hash of a nonce
@@ -146,36 +134,26 @@ export class SecureChannel {
           // Ignored otherwise, may be anything.
           const nonceHash = await sha256(nonce);
           if (nonceHash !== connectionNonce) {
-            SecureChannel.debugLog(
-                'provider', 'challenge nonce did not match - ignoring');
             return;
           }
 
           if (!isPermittedOrigin(ev.origin, permittedOrigins)) {
             // Invalid origin indicates a potential attack.
-            SecureChannel.debugLog(
-                'provider',
-                'connection challenge from untrusted origin - rejecting');
             promiseResolver.reject(
                 OpenYoloInternalError.untrustedOrigin(ev.origin));
             return;
           }
 
           if (!ev.ports) {
-            SecureChannel.debugLog(
-                'provider',
-                'connection challenge did not carry a port - rejecting');
             promiseResolver.reject(OpenYoloInternalError.illegalStateError(
                 'channel initialization message does not contain ports'));
             return;
           }
 
-          SecureChannel.debugLog(
-              'provider', `accepted connection from ${ev.origin}`);
           port = ev.ports[0] as MessagePort;
           providerWindow.parent.postMessage(
               channelReadyMessage(connectionNonce), ev.origin);
-          promiseResolver.resolve(new SecureChannel(port, true));
+          promiseResolver.resolve(new SecureChannel(port));
         });
 
     // listen for the initialization message, and unlisten once the connection
@@ -190,19 +168,13 @@ export class SecureChannel {
         });
 
     // send the 'ready to connect' message to the client.
-    SecureChannel.debugLog(
-        'provider', 'sending ready to connect message to client');
     providerWindow.parent.postMessage(
         readyForConnectMessage(connectionNonce), '*');
 
     return promiseResolver.promise;
   }
 
-  private static debugLog(role: string, message: string) {
-    console.debug(`(${role}) ${message}`);
-  }
-
-  constructor(private port: MessagePort, private providerEnd: boolean) {
+  constructor(private port: MessagePort) {
     this.mainListener = (ev) => {
       let anyMatched = false;
       for (let i = 0; i < this.listeners.length; i++) {
@@ -215,9 +187,6 @@ export class SecureChannel {
         return;
       }
 
-      this.debugLog(
-          `no registered listeners to handle received message:` +
-          `${JSON.stringify(ev.data)}`);
       for (let i = 0; i < this.fallbackListeners.length; i++) {
         this.fallbackListeners[i](ev);
       }
@@ -294,12 +263,7 @@ export class SecureChannel {
     return listenerPair.wrappedListener;
   }
 
-  debugLog(message: string) {
-    SecureChannel.debugLog(this.providerEnd ? 'provider' : 'client', message);
-  }
-
   dispose(): void {
-    this.debugLog('disposing channel');
     this.port.removeEventListener('message', this.mainListener);
     this.listeners = [];
     this.fallbackListeners = [];

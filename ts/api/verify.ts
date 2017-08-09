@@ -25,7 +25,6 @@ export function respondToHandshake(window: WindowLike): void {
   }
   listener =
       createMessageListener(PostMessageType.verifyPing, (data, type, ev) => {
-        console.debug(`responding to ping from ${ev.origin}`);
         sendMessage(ev.source, verifyAckMessage(data), ev.origin);
       });
   window.addEventListener('message', listener);

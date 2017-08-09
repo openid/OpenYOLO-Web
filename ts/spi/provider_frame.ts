@@ -231,11 +231,9 @@ export class ProviderFrame {
 
     if (requestType === 'cancelLastOperation') {
       // allow cancelLastOperation even if its a concurrent request
-      console.info('Allowing a cancelLastOperation request');
       return true;
     }
 
-    console.error(`Concurrent request ${requestId} received, rejecting`);
     this.clientChannel.send(msg.errorMessage(
         requestId,
         OpenYoloInternalError.illegalConcurrentRequestError()
@@ -260,11 +258,9 @@ export class ProviderFrame {
   private async handleHintRequest(
       requestId: string,
       options: OpenYoloCredentialHintOptions) {
-    console.info('Handling hint request');
     try {
       let hints = await this.cancellablePromise(this.getHints(options));
       if (hints.length < 1) {
-        console.info('no hints available');
         this.clientChannel.send(msg.errorMessage(
             requestId,
             OpenYoloInternalError.noCredentialsAvailable().toExposedError()));
@@ -279,7 +275,6 @@ export class ProviderFrame {
 
       // now, wait for selection to occur, and send the selection result to the
       // client
-      console.info('awaiting user selection of hint');
       let selectedHint = await this.cancellablePromise(selectionPromise);
 
       // once selected we want to set auto sign in enabled to true again
@@ -299,7 +294,6 @@ export class ProviderFrame {
 
       // TODO: retain the credential hint for a potential automatic save later.
 
-      console.info('Returning selected hint');
       this.clientChannel.send(
           msg.credentialResultMessage(requestId, selectedHint));
     } catch (err) {
@@ -319,7 +313,6 @@ export class ProviderFrame {
   private async handleHintAvailableRequest(
       id: string,
       options: OpenYoloCredentialHintOptions) {
-    console.info('Handling hintAvailable request');
     try {
       const hints = await this.cancellablePromise(this.getHints(options));
       this.clientChannel.send(
@@ -340,7 +333,6 @@ export class ProviderFrame {
   private async handleGetCredentialRequest(
       requestId: string,
       options: OpenYoloCredentialRequestOptions) {
-    console.info('Handling credential retrieve request');
     try {
       let credentials = await this.cancellablePromise(
           this.credentialDataProvider.getAllCredentials(
@@ -356,14 +348,12 @@ export class ProviderFrame {
       // if no credentials are available, directly respond to the client that
       // this is the case and the request will complete
       if (pertinentCredentials.length < 1) {
-        console.info('no credentials available');
         this.clientChannel.send(msg.errorMessage(
             requestId,
             OpenYoloInternalError.noCredentialsAvailable().toExposedError()));
         return;
       }
 
-      console.info('credentials are available');
 
       // if a single credential is available, check if auto sign-in is enabled
       // for the client authentication domain. If it is, directly return the
@@ -372,7 +362,6 @@ export class ProviderFrame {
         let autoSignInEnabled =
             await this.localStateProvider.isAutoSignInEnabled(
                 this.clientAuthDomain);
-        console.log(`single credential, auto sign in = ${autoSignInEnabled}`);
         if (autoSignInEnabled) {
           const credential = pertinentCredentials[0];
           // Display the auto sign in screen and send the message.
@@ -387,7 +376,6 @@ export class ProviderFrame {
       // user interaction is required. instruct the interaction provider to show
       // a picker for the available credentials, and concurrently notify the
       // client to show the provider frame.
-      console.info('User interaction required to release credential');
       let selectionPromise = this.interactionProvider.showCredentialPicker(
           pertinentCredentials,
           options,
@@ -402,12 +390,10 @@ export class ProviderFrame {
           this.localStateProvider.setAutoSignInEnabled(
               this.providerConfig.clientAuthDomain, true));
 
-      console.info('Returning selected credential');
       this.clientChannel.send(msg.credentialResultMessage(
           requestId, this.storeForProxyLogin(selectedCredential)));
     } catch (err) {
       this.handleWellKnownErrors(err);
-      console.info(`Credential selection cancelled: ${err}`);
       if (err instanceof OpenYoloInternalError) {
         this.clientChannel.send(
             msg.errorMessage(requestId, err.toExposedError()));
@@ -454,30 +440,21 @@ export class ProviderFrame {
    * Responds to unknown request types with an error message.
    */
   private async handleUnimplementedRequest(id: string, type: string) {
-    console.error(`No implementation for request of type ${type}`);
     this.clientChannel.send(msg.errorMessage(
         id, OpenYoloInternalError.unknownRequest(type).toExposedError()));
   }
 
   private handleUnknownMessage(ev: MessageEvent) {
     if (!isOpenYoloMessageFormat(ev.data)) {
-      console.warn(
-          'Message with invalid format received on secure channel, ' +
-              'ignoring',
-          ev);
       return;
     }
     if (msg.RPC_MESSAGE_TYPES.indexOf(ev.data.type) === -1) {
-      console.warn('Non-RPC message received on secure channel, ignoring');
       return;
     }
 
     const type = (ev.data.type as msg.RpcMessageType);
 
     if (!msg.RPC_MESSAGE_DATA_VALIDATORS[type](ev.data.data)) {
-      console.warn(
-          `RPC message of type ${type} contains invalid data, ` +
-          'ignoring');
       return;
     }
 
