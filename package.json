@@ -83,7 +83,7 @@
     "@angular/router": ">=4.0.0-beta <5.0.0",
     "@types/jasmine": "^2.5.43",
     "@types/text-encoding": "0.0.30",
-    "@types/webappsec-credential-management": "^0.2.0",
+    "@types/webappsec-credential-management": "^0.3.1",
     "clang-format": "^1.0.46",
     "codecov": "^2.1.0",
     "codelyzer": "~2.0.0",
