@@ -268,7 +268,7 @@ export function createNavigatorCredentialsApi(): OpenYoloApi {
   // As per
   // https://developers.google.com/web/updates/2017/06/credential-management-updates#feature_detection_needs_attention,
   // we check for the presence of preventSilentAccess in navigator.credentials
-  // that is a fewture of M60+. Previous versions would not release plain-text
+  // that is a feature of M60+. Previous versions would not release plain-text
   // passwords.
   if (typeof navigator.credentials !== 'undefined' &&
       typeof navigator.credentials.preventSilentAccess === 'function' &&

@@ -53,7 +53,7 @@ describe('NavigatorCredentials', () => {
       };
       const federatedCredential = new FederatedCredential({
         provider: AUTHENTICATION_METHODS.GOOGLE,
-        protocol: 'protocol',
+        protocol: 'openidconnect',
         name: 'Name',
         iconURL: 'https://www.example.com/icon.jpg',
         id: 'user@example.com'
