@@ -175,9 +175,9 @@
   version "0.0.30"
   resolved "https://registry.yarnpkg.com/@types/text-encoding/-/text-encoding-0.0.30.tgz#2ad7bc19287094c9d2754d238e0994dd2995781f"
 
-"@types/webappsec-credential-management@^0.2.0":
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/@types/webappsec-credential-management/-/webappsec-credential-management-0.2.0.tgz#c84fe1ee14aefcae1d80e1fe77cff91e0b06e9c3"
+"@types/webappsec-credential-management@^0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@types/webappsec-credential-management/-/webappsec-credential-management-0.3.1.tgz#768324830f28bbe6dbc2eac0a65822da6b2a93e1"
 
 abbrev@1:
   version "1.1.0"

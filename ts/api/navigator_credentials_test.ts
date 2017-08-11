@@ -51,14 +51,13 @@ describe('NavigatorCredentials', () => {
       const options: OpenYoloCredentialRequestOptions = {
         supportedAuthMethods: [AUTHENTICATION_METHODS.GOOGLE]
       };
-      const federatedCredential: FederatedCredential = {
+      const federatedCredential = new FederatedCredential({
         provider: AUTHENTICATION_METHODS.GOOGLE,
-        protocol: null,
+        protocol: 'openidconnect',
         name: 'Name',
-        iconURL: 'icon.jpg',
-        type: 'federated',
+        iconURL: 'https://www.example.com/icon.jpg',
         id: 'user@example.com'
-      };
+      });
       spyOn(cmApi, 'get').and.returnValue(Promise.resolve(federatedCredential));
       navigatorCredentials.retrieve(options).then(credential => {
         expect(cmApi.get).toHaveBeenCalledWith(jasmine.objectContaining({
@@ -71,7 +70,7 @@ describe('NavigatorCredentials', () => {
           id: 'user@example.com',
           authMethod: AUTHENTICATION_METHODS.GOOGLE,
           displayName: 'Name',
-          profilePicture: 'icon.jpg',
+          profilePicture: 'https://www.example.com/icon.jpg',
           proxiedAuthRequired: false
         });
         done();
@@ -82,15 +81,16 @@ describe('NavigatorCredentials', () => {
       const options: OpenYoloCredentialRequestOptions = {
         supportedAuthMethods: [AUTHENTICATION_METHODS.ID_AND_PASSWORD]
       };
-      const passwordCredential: PasswordCredential = {
+      const passwordCredential = new PasswordCredential({
         name: 'Name',
-        iconURL: 'icon.jpg',
+        iconURL: 'https://www.example.com/icon.jpg',
         type: 'password',
         id: 'user@example.com',
         idName: 'username',
         passwordName: 'password',
+        password: 'password',
         additionalData: null
-      };
+      });
       spyOn(cmApi, 'get').and.returnValue(Promise.resolve(passwordCredential));
       navigatorCredentials.retrieve(options).then(credential => {
         expect(cmApi.get).toHaveBeenCalledWith(jasmine.objectContaining({
@@ -102,8 +102,9 @@ describe('NavigatorCredentials', () => {
           id: 'user@example.com',
           authMethod: AUTHENTICATION_METHODS.ID_AND_PASSWORD,
           displayName: 'Name',
-          profilePicture: 'icon.jpg',
-          proxiedAuthRequired: true
+          profilePicture: 'https://www.example.com/icon.jpg',
+          proxiedAuthRequired: false,
+          password: 'password'
         }));
         done();
       });

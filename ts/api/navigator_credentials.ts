@@ -53,19 +53,21 @@ function convertRequestOptions(options?: OpenYoloCredentialRequestOptions):
  */
 function convertCredentialToOpenYolo(credential: PasswordCredential|
                                      FederatedCredential): OpenYoloCredential {
-  let authMethod = credential.type === 'federated' ?
+  const authMethod = credential.type === 'federated' ?
       (credential as FederatedCredential).provider :
       AUTHENTICATION_METHODS.ID_AND_PASSWORD;
 
-  let convertedCredential: OpenYoloCredential = {
+  const convertedCredential: OpenYoloCredential = {
     id: credential.id,
     authMethod: authMethod,
     displayName: credential.name || undefined,
     profilePicture: credential.iconURL || undefined,
-    // navigator.credentials do not pass the password directly, so proxyLogin
-    // has to be used.
-    proxiedAuthRequired: credential.type === 'password'
+    proxiedAuthRequired: false
   };
+  // Chrome M60+ returns the password.
+  if (credential instanceof PasswordCredential) {
+    convertedCredential.password = credential.password;
+  }
 
   return convertedCredential;
 }
@@ -76,7 +78,7 @@ function convertCredentialToOpenYolo(credential: PasswordCredential|
 function convertCredentialFromOpenYolo(credential: OpenYoloCredential):
     Credential {
   if (credential.authMethod === AUTHENTICATION_METHODS.ID_AND_PASSWORD) {
-    let convertedCredential = new PasswordCredential({
+    const convertedCredential = new PasswordCredential({
       id: credential.id,
       type: 'password',
       name: credential.displayName,
@@ -85,7 +87,7 @@ function convertCredentialFromOpenYolo(credential: OpenYoloCredential):
     } as PasswordCredentialData);
     return convertedCredential;
   } else {
-    let convertedCredential = new FederatedCredential({
+    const convertedCredential = new FederatedCredential({
       id: credential.id,
       name: credential.displayName,
       iconURL: credential.profilePicture,
@@ -263,7 +265,14 @@ export class NavigatorCredentials implements OpenYoloApi {
  * it will create a no-op version of the API.
  */
 export function createNavigatorCredentialsApi(): OpenYoloApi {
-  if (navigator.credentials !== undefined && isSecureOrigin()) {
+  // As per
+  // https://developers.google.com/web/updates/2017/06/credential-management-updates#feature_detection_needs_attention,
+  // we check for the presence of preventSilentAccess in navigator.credentials
+  // that is a feature of M60+. Previous versions would not release plain-text
+  // passwords.
+  if (typeof navigator.credentials !== 'undefined' &&
+      typeof navigator.credentials.preventSilentAccess === 'function' &&
+      isSecureOrigin()) {
     return new NavigatorCredentials(navigator.credentials);
   }
   return new NoOpNavigatorCredentials();
