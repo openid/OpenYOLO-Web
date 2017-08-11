@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions, OpenYoloProxyLoginResponse} from '../protocol/data';
+import {OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions, OpenYoloProxyLoginResponse, RequestContext} from '../protocol/data';
 import {OpenYoloInternalError} from '../protocol/errors';
 import {SecureChannel} from '../protocol/secure_channel';
 import {PromiseResolver, TimeoutRacer} from '../protocol/utils';
@@ -198,8 +198,10 @@ describe('OpenYolo API', () => {
       });
 
       it('hint', (done) => {
-        const options:
-            OpenYoloCredentialHintOptions = {supportedAuthMethods: []};
+        const options: OpenYoloCredentialHintOptions = {
+          supportedAuthMethods: [],
+          context: RequestContext.signIn
+        };
         openYoloApiImplSpy.hint.and.returnValue(Promise.resolve(credential));
         openyolo.hint(options).then((cred) => {
           expect(cred).toBe(credential);
