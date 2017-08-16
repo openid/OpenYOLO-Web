@@ -202,7 +202,7 @@ export class NavigatorCredentials implements OpenYoloApi {
     }
     if (!credential) {
       // navigator.credentials.get returns null whether the user has canceled or
-      // there is not credentials. The user may have canceled, but this error is
+      // there is no credentials. The user may have canceled, but this error is
       // more developer friendly.
       throw OpenYoloInternalError.noCredentialsAvailable().toExposedError();
     }
