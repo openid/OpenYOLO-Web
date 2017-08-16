@@ -201,11 +201,10 @@ export class NavigatorCredentials implements OpenYoloApi {
           .toExposedError();
     }
     if (!credential) {
-      // This is not necessarily that the user canceled, but we can't know
-      // whether there was credential or not, so this error has been chose over
-      // noCredentialsAvailable. Both should be handled similarly in third-party
-      // apps anyway.
-      throw OpenYoloInternalError.userCanceled().toExposedError();
+      // navigator.credentials.get returns null whether the user has canceled or
+      // there is no credentials. The user may have canceled, but this error is
+      // more developer friendly.
+      throw OpenYoloInternalError.noCredentialsAvailable().toExposedError();
     }
     this.credentialsMap.insert(credential);
     return convertCredentialToOpenYolo(

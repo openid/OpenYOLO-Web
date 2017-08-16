@@ -121,7 +121,7 @@ describe('NavigatorCredentials', () => {
           },
           (error) => {
             expect(OpenYoloInternalError.errorIs(
-                error, InternalErrorCode.userCanceled));
+                error, InternalErrorCode.noCredentialsAvailable));
             done();
           });
     });
