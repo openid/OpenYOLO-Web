@@ -49,7 +49,8 @@ let TokenProvider;
 /**
  * @typedef {{
  *   supportedAuthMethods: !Array<string>,
- *   supportedIdTokenProviders: (!Array<!TokenProvider>|undefined)
+ *   supportedIdTokenProviders: (!Array<!TokenProvider>|undefined),
+ *   context: (string|undefined)
  * }}
  */
 let CredentialRequestOptions;
@@ -59,7 +60,8 @@ let CredentialRequestOptions;
  *   supportedAuthMethods: !Array<string>,
  *   supportedIdTokenProviders: (!Array<!TokenProvider>|undefined),
  *   showAddAccount: (boolean|undefined),
- *   passwordSpec: (!PasswordSpecification|undefined)
+ *   passwordSpec: (!PasswordSpecification|undefined),
+ *   context: (string|undefined)
  * }}
  */
 let CredentialHintOptions;

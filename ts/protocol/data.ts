@@ -124,6 +124,11 @@ export interface OpenYoloCredentialRequestOptions {
    * optional client/provider specific configuration parameters.
    */
   supportedIdTokenProviders?: TokenProvider[];
+
+  /**
+   * Specifies the context of the request (account creating, login, etc.).
+   */
+  context?: RequestContext;
 }
 
 /**
@@ -178,6 +183,11 @@ export interface OpenYoloCredentialHintOptions {
    * explicitly provided, `DEFAULT_PASSWORD_GENERATION_SPEC` will be used.
    */
   passwordSpec?: PasswordSpecification;
+
+  /**
+   * Specifies the context of the request (account creating, login, etc.).
+   */
+  context?: RequestContext;
 }
 
 /**
@@ -236,3 +246,14 @@ export const TOKEN_PROVIDERS = indexedStrEnum({
   GOOGLE: boxEnum('https://accounts.google.com'),
   MICROSOFT: boxEnum('https://login.live.com'),
 });
+
+/**
+ * The set of request contexts that can be used when requesting a credential or
+ * a hint. It is meant for providers to optionally change the UI according to
+ * the context.
+ */
+export enum RequestContext {
+  signIn = 'signIn',
+  signUp = 'signUp',
+  continue = 'continue'
+}

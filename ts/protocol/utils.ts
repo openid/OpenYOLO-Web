@@ -132,7 +132,9 @@ export function stringValidator(value: any): boolean {
  * Returns true if the current origin is https.
  */
 export function isSecureOrigin(): boolean {
-  return window.location.protocol === 'https:';
+  return window.location.protocol === 'https:' ||
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1';
 }
 
 /**
