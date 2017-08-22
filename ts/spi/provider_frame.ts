@@ -62,7 +62,6 @@ export class ProviderFrame {
           await providerConfig.clientConfigurationProvider.getConfiguration(
               providerConfig.clientAuthDomain);
       if (!clientConfiguration || !clientConfiguration.apiEnabled) {
-        console.info('OpenYOLO API is not enabled for the client origin');
         throw OpenYoloInternalError.apiDisabled();
       }
 
@@ -208,7 +207,6 @@ export class ProviderFrame {
       await messageHandler(m);
     } catch (error) {
       if (error && error === CancellablePromise.CANCELLED_ERROR) {
-        console.info('Caught a cancel signal', error);
         // reset cancellable promise, for the next set of requests
         this.cancellable = null;
         this.clientChannel.send(msg.errorMessage(
@@ -426,7 +424,6 @@ export class ProviderFrame {
       console.warn('No pending request to cancel.');
     } else {
       try {
-        console.info('Cancelling a pending operation');
         this.cancellable.cancel();
       } finally {
         // cancel any pending UI
