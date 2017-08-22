@@ -224,13 +224,14 @@ export class ProviderFrame {
   private recordRequestStart<T extends msg.RpcMessageType>(
       requestType: T,
       requestId: string) {
-    if (!this.requestInProgress) {
-      this.requestInProgress = true;
+    // Cancel last operation requests should not be recorded.
+    if (requestType === 'cancelLastOperation') {
+      // allow cancelLastOperation even if its a concurrent request
       return true;
     }
 
-    if (requestType === 'cancelLastOperation') {
-      // allow cancelLastOperation even if its a concurrent request
+    if (!this.requestInProgress) {
+      this.requestInProgress = true;
       return true;
     }
 
