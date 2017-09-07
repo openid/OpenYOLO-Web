@@ -16,7 +16,7 @@
 
 import {Injectable} from '@angular/core';
 
-import {RENDER_MODES, RenderMode} from '../../../../ts/protocol/data';
+import {RenderMode} from '../../../../ts/protocol/data';
 import {environment} from '../environments/environment';
 
 const PROVIDER_BASE_URL_KEY = 'providerBaseUrl';
@@ -45,10 +45,6 @@ export class SettingsService {
   getRenderMode(): RenderMode {
     let renderMode = localStorage.getItem(RENDER_MODE_KEY);
     if (!renderMode || renderMode.length < 1) {
-      return null;
-    }
-
-    if (!(renderMode in RENDER_MODES)) {
       return null;
     }
 
