@@ -17,7 +17,10 @@
 import {Component} from '@angular/core';
 import {OnInit} from '@angular/core';
 import {MdSnackBar} from '@angular/material';
-import {AUTHENTICATION_METHODS, Credential, CredentialHintOptions, openyolo, OpenYoloError, TokenProvider} from '../../../../ts/api/api';
+
+import {openyolo} from '../../../../ts/api/api';
+import {AUTHENTICATION_METHODS, OpenYoloCredential as Credential, OpenYoloCredentialHintOptions as CredentialHintOptions, TokenProvider} from '../../../../ts/protocol/data';
+import {OpenYoloError} from '../../../../ts/protocol/errors';
 import {SettingsService} from '../app/settings.service';
 
 @Component({
