@@ -27,6 +27,7 @@ import {CredentialSave} from './credential_save';
 import {DisableAutoSignIn} from './disable_auto_sign_in';
 import {HintAvailableRequest} from './hint_available_request';
 import {HintRequest} from './hint_request';
+import {ProviderFrameElement} from './provider_frame_elem';
 import {ProxyLogin} from './proxy_login';
 
 type OpenYoloWithTimeoutApiMethods = keyof OpenYoloWithTimeoutApi;
@@ -102,6 +103,7 @@ describe('OpenYolo API', () => {
     it('secure channel connection fails', (done) => {
       spyOn(SecureChannel, 'clientConnect')
           .and.returnValue(Promise.reject(expectedError));
+      spyOn(ProviderFrameElement.prototype, 'dispose');
       // The operation does not matter here.
       openyolo.cancelLastOperation().then(
           () => {
@@ -109,6 +111,7 @@ describe('OpenYolo API', () => {
           },
           (error) => {
             expect(error).toBe(expectedError);
+            expect(ProviderFrameElement.prototype.dispose).toHaveBeenCalled();
             openyolo.reset();
             done();
           });
