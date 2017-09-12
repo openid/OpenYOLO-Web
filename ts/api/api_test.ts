@@ -284,7 +284,8 @@ describe('OpenYolo API', () => {
           jasmine.createSpyObj('ProviderFrameElement', ['display']);
       openYoloApiImpl = new OpenYoloApiImpl(
           frameManager, secureChannelSpy, navCredentialsSpy);
-      timeoutRacerSpy = jasmine.createSpyObj('TimeoutRacer', ['race']);
+      timeoutRacerSpy =
+          jasmine.createSpyObj('TimeoutRacer', ['race', 'hasTimedOut']);
     });
 
     type methodSignatures =
@@ -321,6 +322,7 @@ describe('OpenYolo API', () => {
       });
 
       it('propagates error', (done) => {
+        timeoutRacerSpy.hasTimedOut.and.returnValue(false);
         dispatchSpy.and.returnValue(Promise.reject(otherError));
         (openYoloApiImpl[methodName] as methodSignatures[M])(
             options, timeoutRacerSpy)
@@ -334,7 +336,27 @@ describe('OpenYolo API', () => {
                 });
       });
 
+      it('captures timeout and cancel operation', (done) => {
+        // Simulate timeout error.
+        timeoutRacerSpy.hasTimedOut.and.returnValue(true);
+        dispatchSpy.and.returnValue(Promise.reject(otherError));
+        spyOn(CancelLastOperationRequest.prototype, 'dispatch');
+        (openYoloApiImpl[methodName] as methodSignatures[M])(
+            options, timeoutRacerSpy)
+            .then(
+                () => {
+                  done.fail('Should not resolve!');
+                },
+                (error: Error) => {
+                  expect(error).toBe(otherError);
+                  expect(CancelLastOperationRequest.prototype.dispatch)
+                      .toHaveBeenCalledWith(undefined, undefined);
+                  done();
+                });
+      });
+
       it('delegates to credential', (done) => {
+        timeoutRacerSpy.hasTimedOut.and.returnValue(false);
         dispatchSpy.and.returnValue(Promise.reject(wrapBrowserError));
         navCredentialsSpy[methodName].and.returnValue(
             Promise.resolve(expectedResult));
@@ -435,6 +457,25 @@ describe('OpenYolo API', () => {
           expect(navCredentialsSpy.disableAutoSignIn).toHaveBeenCalled();
           done();
         });
+      });
+
+      it('captures timeout and cancel operation', (done) => {
+        // Simulate timeout error.
+        timeoutRacerSpy.hasTimedOut.and.returnValue(true);
+        spyOn(DisableAutoSignIn.prototype, 'dispatch')
+            .and.returnValue(Promise.reject(otherError));
+        spyOn(CancelLastOperationRequest.prototype, 'dispatch');
+        openYoloApiImpl.disableAutoSignIn(timeoutRacerSpy)
+            .then(
+                () => {
+                  done.fail('Should not resolve!');
+                },
+                (error: Error) => {
+                  expect(error).toBe(otherError);
+                  expect(CancelLastOperationRequest.prototype.dispatch)
+                      .toHaveBeenCalledWith(undefined, undefined);
+                  done();
+                });
       });
     });
   });

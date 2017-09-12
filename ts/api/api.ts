@@ -206,7 +206,10 @@ export class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
     try {
       return await request.dispatch(options, timeoutRacer);
     } catch (e) {
-      if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
+      if (timeoutRacer.hasTimedOut()) {
+        // Cancel last operation so it doesn't remain pending.
+        this.cancelLastOperationWithoutTimeout();
+      } else if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
         return this.navigatorCredentials.hintsAvailable(options);
       }
       throw e;
@@ -221,7 +224,10 @@ export class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
     try {
       return await request.dispatch(options, timeoutRacer);
     } catch (e) {
-      if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
+      if (timeoutRacer.hasTimedOut()) {
+        // Cancel last operation so it doesn't remain pending.
+        this.cancelLastOperationWithoutTimeout();
+      } else if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
         return this.navigatorCredentials.hint(options);
       }
       throw e;
@@ -236,7 +242,10 @@ export class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
     try {
       return await request.dispatch(options, timeoutRacer);
     } catch (e) {
-      if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
+      if (timeoutRacer.hasTimedOut()) {
+        // Cancel last operation so it doesn't remain pending.
+        this.cancelLastOperationWithoutTimeout();
+      } else if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
         return this.navigatorCredentials.retrieve(options);
       }
       throw e;
@@ -249,7 +258,10 @@ export class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
     try {
       return await request.dispatch(credential, timeoutRacer);
     } catch (e) {
-      if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
+      if (timeoutRacer.hasTimedOut()) {
+        // Cancel last operation so it doesn't remain pending.
+        this.cancelLastOperationWithoutTimeout();
+      } else if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
         return this.navigatorCredentials.save(credential);
       }
       throw e;
@@ -263,7 +275,10 @@ export class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
     try {
       return await request.dispatch(credential, timeoutRacer);
     } catch (e) {
-      if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
+      if (timeoutRacer.hasTimedOut()) {
+        // Cancel last operation so it doesn't remain pending.
+        this.cancelLastOperationWithoutTimeout();
+      } else if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
         return this.navigatorCredentials.proxyLogin(credential);
       }
       throw e;
@@ -275,10 +290,19 @@ export class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
     const request = new DisableAutoSignIn(this.frameManager, this.channel);
     // Disable both navigator.credentials and provider as it is not known
     // whichever will be used in the next retrieve.
-    const providerDisableAutoSignIn = request.dispatch(undefined, timeoutRacer);
-    const browserDisableAutoSignIn =
-        this.navigatorCredentials.disableAutoSignIn();
-    await Promise.all([providerDisableAutoSignIn, browserDisableAutoSignIn]);
+    try {
+      const providerDisableAutoSignIn =
+          request.dispatch(undefined, timeoutRacer);
+      const browserDisableAutoSignIn =
+          this.navigatorCredentials.disableAutoSignIn();
+      await Promise.all([providerDisableAutoSignIn, browserDisableAutoSignIn]);
+    } catch (e) {
+      if (timeoutRacer.hasTimedOut()) {
+        // Cancel last operation so it doesn't remain pending.
+        this.cancelLastOperationWithoutTimeout();
+      }
+      throw e;
+    }
   }
 
   async cancelLastOperation(timeoutRacer: TimeoutRacer) {
@@ -287,6 +311,20 @@ export class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
         new CancelLastOperationRequest(this.frameManager, this.channel);
     try {
       return await request.dispatch(undefined, timeoutRacer);
+    } catch (e) {
+      if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
+        return this.navigatorCredentials.cancelLastOperation();
+      }
+      throw e;
+    }
+  }
+
+  private async cancelLastOperationWithoutTimeout() {
+    this.checkNotDisposed();
+    const request =
+        new CancelLastOperationRequest(this.frameManager, this.channel);
+    try {
+      return await request.dispatch(undefined, undefined);
     } catch (e) {
       if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
         return this.navigatorCredentials.cancelLastOperation();
