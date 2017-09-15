@@ -206,7 +206,10 @@ export class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
     try {
       return await request.dispatch(options, timeoutRacer);
     } catch (e) {
-      if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
+      if (timeoutRacer.hasTimedOut()) {
+        // Cancel last operation so it doesn't remain pending.
+        this.cancelLastOperationWithoutTimeout();
+      } else if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
         return this.navigatorCredentials.hintsAvailable(options);
       }
       throw e;
@@ -221,7 +224,10 @@ export class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
     try {
       return await request.dispatch(options, timeoutRacer);
     } catch (e) {
-      if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
+      if (timeoutRacer.hasTimedOut()) {
+        // Cancel last operation so it doesn't remain pending.
+        this.cancelLastOperationWithoutTimeout();
+      } else if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
         return this.navigatorCredentials.hint(options);
       }
       throw e;
@@ -236,7 +242,10 @@ export class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
     try {
       return await request.dispatch(options, timeoutRacer);
     } catch (e) {
-      if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
+      if (timeoutRacer.hasTimedOut()) {
+        // Cancel last operation so it doesn't remain pending.
+        this.cancelLastOperationWithoutTimeout();
+      } else if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
         return this.navigatorCredentials.retrieve(options);
       }
       throw e;
@@ -249,7 +258,10 @@ export class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
     try {
       return await request.dispatch(credential, timeoutRacer);
     } catch (e) {
-      if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
+      if (timeoutRacer.hasTimedOut()) {
+        // Cancel last operation so it doesn't remain pending.
+        this.cancelLastOperationWithoutTimeout();
+      } else if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
         return this.navigatorCredentials.save(credential);
       }
       throw e;
@@ -263,7 +275,10 @@ export class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
     try {
       return await request.dispatch(credential, timeoutRacer);
     } catch (e) {
-      if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
+      if (timeoutRacer.hasTimedOut()) {
+        // Cancel last operation so it doesn't remain pending.
+        this.cancelLastOperationWithoutTimeout();
+      } else if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
         return this.navigatorCredentials.proxyLogin(credential);
       }
       throw e;
@@ -275,10 +290,19 @@ export class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
     const request = new DisableAutoSignIn(this.frameManager, this.channel);
     // Disable both navigator.credentials and provider as it is not known
     // whichever will be used in the next retrieve.
-    const providerDisableAutoSignIn = request.dispatch(undefined, timeoutRacer);
-    const browserDisableAutoSignIn =
-        this.navigatorCredentials.disableAutoSignIn();
-    await Promise.all([providerDisableAutoSignIn, browserDisableAutoSignIn]);
+    try {
+      const providerDisableAutoSignIn =
+          request.dispatch(undefined, timeoutRacer);
+      const browserDisableAutoSignIn =
+          this.navigatorCredentials.disableAutoSignIn();
+      await Promise.all([providerDisableAutoSignIn, browserDisableAutoSignIn]);
+    } catch (e) {
+      if (timeoutRacer.hasTimedOut()) {
+        // Cancel last operation so it doesn't remain pending.
+        this.cancelLastOperationWithoutTimeout();
+      }
+      throw e;
+    }
   }
 
   async cancelLastOperation(timeoutRacer: TimeoutRacer) {
@@ -287,6 +311,20 @@ export class OpenYoloApiImpl implements OpenYoloWithTimeoutApi {
         new CancelLastOperationRequest(this.frameManager, this.channel);
     try {
       return await request.dispatch(undefined, timeoutRacer);
+    } catch (e) {
+      if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
+        return this.navigatorCredentials.cancelLastOperation();
+      }
+      throw e;
+    }
+  }
+
+  private async cancelLastOperationWithoutTimeout() {
+    this.checkNotDisposed();
+    const request =
+        new CancelLastOperationRequest(this.frameManager, this.channel);
+    try {
+      return await request.dispatch(undefined, undefined);
     } catch (e) {
       if (e['type'] === OpenYoloErrorType.browserWrappingRequired) {
         return this.navigatorCredentials.cancelLastOperation();
@@ -357,33 +395,51 @@ export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
    * the provider page to check the user's configuration, and initialize the
    * correct implementation of OpenYolo based on the result.
    */
-  static async createOpenYoloApi(
+  static createOpenYoloApi(
       timeoutRacer: TimeoutRacer,
       providerUrlBase: string,
       renderMode: RenderMode|null,
       preloadRequest?: PreloadRequest): Promise<OpenYoloWithTimeoutApi> {
-    try {
-      // Sanitize input.
-      renderMode = verifyOrDetectRenderMode(renderMode);
+    let frameManager: ProviderFrameElement|null = null;
+    // Sanitize input.
+    const renderModeSanitized = verifyOrDetectRenderMode(renderMode);
+    const instanceId = generateId();
+    // It is not great to use promise here. But using try/catch and await, it is
+    // not possible to properly dispose of a potentially initialized
+    // frameManager if an error happens in the way. I have no idea why, but the
+    // typechecking engine of TypeScript considers that the framemanager can
+    // never be initialized within the try block.
+    return Promise.resolve()
+        .then(() => {
+          return timeoutRacer.race(sha256(instanceId));
+        })
+        .then((instanceIdHash) => {
+          frameManager = new ProviderFrameElement(
+              document,
+              instanceIdHash,
+              window.location.origin,
+              renderModeSanitized,
+              providerUrlBase,
+              preloadRequest);
 
-      const instanceId = generateId();
-      const instanceIdHash = await timeoutRacer.race(sha256(instanceId));
-      const frameManager = new ProviderFrameElement(
-          document,
-          instanceIdHash,
-          window.location.origin,
-          renderMode,
-          providerUrlBase,
-          preloadRequest);
-
-      const channel = await timeoutRacer.race(SecureChannel.clientConnect(
-          window, frameManager.getContentWindow(), instanceId, instanceIdHash));
-      return new OpenYoloApiImpl(frameManager, channel);
-    } catch (e) {
-      timeoutRacer.rethrowUnlessTimeoutError(e);
-      // Convert the timeout error.
-      throw OpenYoloInternalError.requestTimeout().toExposedError();
-    }
+          return timeoutRacer.race(SecureChannel.clientConnect(
+              window,
+              frameManager.getContentWindow(),
+              instanceId,
+              instanceIdHash));
+        })
+        .then((channel) => {
+          return new OpenYoloApiImpl(frameManager!, channel);
+        })
+        .catch((e) => {
+          // Dispose of the frame managerif it was created.
+          if (frameManager !== null) {
+            frameManager.dispose();
+          }
+          timeoutRacer.rethrowUnlessTimeoutError(e);
+          // Convert the timeout error.
+          throw OpenYoloInternalError.requestTimeout().toExposedError();
+        });
   }
 
   setProviderUrlBase(providerUrlBase: string) {

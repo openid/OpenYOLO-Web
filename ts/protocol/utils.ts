@@ -176,8 +176,11 @@ export class PromiseResolver<T> {
  */
 export class TimeoutPromiseResolver<T> extends PromiseResolver<T> {
   private timeoutId: number;
+  private running: boolean;
+
   constructor(private timeoutError: CustomError, timeoutMs: number) {
     super();
+    this.running = true;
     this.timeoutId = setTimeout(this.timeoutReject.bind(this), timeoutMs);
   }
 
@@ -195,10 +198,15 @@ export class TimeoutPromiseResolver<T> extends PromiseResolver<T> {
     clearTimeout(this.timeoutId);
   }
 
+  hasTimedOut(): boolean {
+    return !this.running;
+  }
+
   private timeoutReject() {
     if (!this.rejectFn) {
       return;
     }
+    this.running = false;
     this.reject(this.timeoutError);
   }
 }
@@ -250,6 +258,7 @@ export interface TimeoutRacer {
   stop(): void;
   rethrowIfTimeoutError(error: CustomError): void;
   rethrowUnlessTimeoutError(error: CustomError): void;
+  hasTimedOut(): boolean;
   dispose(): void;
 }
 
@@ -281,6 +290,13 @@ class EnabledTimeoutRacer implements TimeoutRacer {
    */
   stop(): void {
     this.timeoutPromiseResolver.clear();
+  }
+
+  /**
+   * Returns true if the timeout has ended.
+   */
+  hasTimedOut(): boolean {
+    return this.timeoutPromiseResolver.hasTimedOut();
   }
 
   /**
@@ -324,6 +340,13 @@ class DisabledTimeoutRacer implements TimeoutRacer {
    * Stops the timeout. It will neither resolve nor reject.
    */
   stop(): void {}
+
+  /**
+   * Returns true if the timeout has ended.
+   */
+  hasTimedOut(): boolean {
+    return false;
+  }
 
   /**
    * Rethrows the error given if it is the timeout racer's error.

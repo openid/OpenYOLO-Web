@@ -72,7 +72,11 @@ describe('utils', () => {
     it('does nothing if promise resolves before timeout', (done) => {
       const timeoutRacer = utils.startTimeoutRacer(100);
       const promiseResolver = new utils.PromiseResolver<void>();
-      timeoutRacer.race(promiseResolver.promise).then(done);
+      expect(timeoutRacer.hasTimedOut()).toBe(false);
+      timeoutRacer.race(promiseResolver.promise).then(() => {
+        expect(timeoutRacer.hasTimedOut()).toBe(false);
+        done();
+      });
       jasmine.clock().tick(99);
       promiseResolver.resolve();
     });
@@ -80,6 +84,7 @@ describe('utils', () => {
     it('does reject if timeout', (done) => {
       const timeoutRacer = utils.startTimeoutRacer(100);
       const promiseResolver = new utils.PromiseResolver<void>();
+      expect(timeoutRacer.hasTimedOut()).toBe(false);
       timeoutRacer.race(promiseResolver.promise)
           .then(
               () => {
@@ -87,6 +92,7 @@ describe('utils', () => {
               },
               (error) => {
                 expect(error.message).toEqual('The timeout has expired.');
+                expect(timeoutRacer.hasTimedOut()).toBe(true);
                 done();
               });
       jasmine.clock().tick(100);
