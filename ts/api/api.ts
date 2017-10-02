@@ -514,7 +514,8 @@ export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
       Promise<boolean> {
     const timeoutRacer =
         this.startCustomTimeoutRacer(DEFAULT_TIMEOUTS.hintsAvailable);
-    const impl = await this.init(timeoutRacer);
+    const preloadRequest = {type: PreloadRequestType.hint, options};
+    const impl = await this.init(timeoutRacer, preloadRequest);
     return await impl.hintsAvailable(options, timeoutRacer);
   }
 
