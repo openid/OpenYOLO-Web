@@ -216,7 +216,7 @@ export interface OpenYoloCredentialHintOptions {
 export const enum RenderMode {
   bottomSheet = 'bottomSheet',
   navPopout = 'navPopout',
-  fullScreen = 'fullScreen'
+  fullScreen = 'fullScreen',
 }
 
 /**
@@ -233,7 +233,7 @@ export const AUTHENTICATION_METHODS = indexedStrEnum({
   MICROSOFT: boxEnum('https://login.live.com'),
   PAYPAL: boxEnum('https://www.paypal.com'),
   TWITTER: boxEnum('https://twitter.com'),
-  YAHOO: boxEnum('https://login.yahoo.com')
+  YAHOO: boxEnum('https://login.yahoo.com'),
 });
 
 /**
@@ -255,5 +255,6 @@ export const TOKEN_PROVIDERS = indexedStrEnum({
 export enum RequestContext {
   signIn = 'signIn',
   signUp = 'signUp',
-  continue = 'continue'
+  continue = 'continue',
+  use = 'use',
 }
