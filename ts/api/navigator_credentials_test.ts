@@ -35,12 +35,12 @@ describe('NavigatorCredentials', () => {
 
   describe('disableAutoSignIn', () => {
     it('resolves when success', (done) => {
-      spyOn(cmApi, 'requireUserMediation').and.returnValue(Promise.resolve());
+      spyOn(cmApi, 'preventSilentAccess').and.returnValue(Promise.resolve());
       navigatorCredentials.disableAutoSignIn().then(done);
     });
 
     it('resolves when insecure origin error', (done) => {
-      spyOn(cmApi, 'requireUserMediation')
+      spyOn(cmApi, 'preventSilentAccess')
           .and.returnValue(Promise.reject(new Error('Insecure origin!')));
       navigatorCredentials.disableAutoSignIn().then(done);
     });
