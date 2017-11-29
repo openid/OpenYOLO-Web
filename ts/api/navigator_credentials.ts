@@ -183,7 +183,7 @@ export class NavigatorCredentials implements OpenYoloApi {
 
   async disableAutoSignIn(): Promise<void> {
     try {
-      return await this.cmApi.requireUserMediation();
+      return await this.cmApi.preventSilentAccess();
     } catch (e) {
       // Ignore error (i.e. non secure origins for instance).
       return;
