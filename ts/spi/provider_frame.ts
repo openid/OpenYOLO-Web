@@ -422,7 +422,6 @@ export class ProviderFrame {
   private async handleCancelLastOperation(id: string) {
     if (!this.requestInProgress || this.cancellable === null) {
       // no request in progress
-      console.warn('No pending request to cancel.');
     } else {
       try {
         this.cancellable.cancel();

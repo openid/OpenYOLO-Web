@@ -197,8 +197,8 @@ export class NavigatorCredentials implements OpenYoloApi {
     try {
       credential = await this.cmApi.get(convertedOptions);
     } catch (e) {
-      throw OpenYoloInternalError.requestFailed('navigator.credentials error')
-          .toExposedError();
+      const message = `navigator.credentials error: (${e.message})`;
+      throw OpenYoloInternalError.requestFailed(message).toExposedError();
     }
     if (!credential) {
       // navigator.credentials.get returns null whether the user has canceled or
@@ -216,8 +216,8 @@ export class NavigatorCredentials implements OpenYoloApi {
     try {
       await this.cmApi.store(convertedCredential);
     } catch (e) {
-      throw OpenYoloInternalError.requestFailed('navigator.credentials error')
-          .toExposedError();
+      const message = `navigator.credentials error: (${e.message})`;
+      throw OpenYoloInternalError.requestFailed(message).toExposedError();
     }
   }
 
