@@ -574,7 +574,7 @@ class FakeOpenYoloApi implements OnDemandOpenYoloApi {
 
   setProviderUrlBase(providerUrlBase: string) {}
   setRenderMode(renderMode: RenderMode|null) {}
-  setTimeoutsEnabled(enable: boolean) {}
+  setTimeouts(timeout: number): void {}
   reset() {}
 
   hintsAvailable(options: OpenYoloCredentialHintOptions): Promise<boolean> {
@@ -605,10 +605,6 @@ class FakeOpenYoloApi implements OnDemandOpenYoloApi {
   proxyLogin(credential: OpenYoloCredential):
       Promise<OpenYoloProxyLoginResponse> {
     return this.unsupportedBrowserPromise;
-  }
-
-  setTimeouts(timeout: number): void {
-    // Do nothing.
   }
 }
 

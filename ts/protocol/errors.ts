@@ -282,6 +282,14 @@ export class OpenYoloInternalError implements CustomError {
     });
   }
 
+  static unknownError() {
+    return new OpenYoloInternalError({
+      code: InternalErrorCode.unknownError,
+      exposedErrorType: OpenYoloErrorType.unknownError,
+      message: `Unknown error.`
+    });
+  }
+
   static errorIs(err: any, code: InternalErrorCode) {
     // Force comparability for the purposes of this dynamic check.
     if ('data' in err) {
