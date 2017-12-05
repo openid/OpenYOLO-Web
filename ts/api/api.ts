@@ -568,7 +568,7 @@ export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
 /**
  * API implementation that immediately rejects all requests.
  */
-class FakeOpenYoloApi implements OnDemandOpenYoloApi {
+export class FakeOpenYoloApi implements OnDemandOpenYoloApi {
   private readonly unsupportedBrowserPromise = Promise.reject(
       OpenYoloInternalError.unsupportedBrowser().toExposedError());
 
@@ -612,7 +612,7 @@ class FakeOpenYoloApi implements OnDemandOpenYoloApi {
  * Checks whether the core browser functionality required for OpenYOLO is
  * supported in the current context.
  */
-function isCompatibleBrowser(): boolean {
+export function isCompatibleBrowser(window: Window): boolean {
   const hasCryptoRandomImplementation =
       window.hasOwnProperty('crypto') && 'getRandomValues' in window.crypto;
   const hasCryptoSubtleImplementation = window.hasOwnProperty('crypto') &&
@@ -620,5 +620,6 @@ function isCompatibleBrowser(): boolean {
   return hasCryptoRandomImplementation && hasCryptoSubtleImplementation;
 }
 
-export const openyolo: OnDemandOpenYoloApi =
-    isCompatibleBrowser() ? new InitializeOnDemandApi() : new FakeOpenYoloApi();
+export const openyolo: OnDemandOpenYoloApi = isCompatibleBrowser(window) ?
+    new InitializeOnDemandApi() :
+    new FakeOpenYoloApi();

@@ -19,7 +19,7 @@ import {OpenYoloInternalError} from '../protocol/errors';
 import {SecureChannel} from '../protocol/secure_channel';
 import {PromiseResolver, TimeoutRacer} from '../protocol/utils';
 
-import {InitializeOnDemandApi, openyolo, OpenYoloApi, OpenYoloApiImpl, OpenYoloWithTimeoutApi} from './api';
+import {FakeOpenYoloApi, InitializeOnDemandApi, isCompatibleBrowser, OnDemandOpenYoloApi, openyolo, OpenYoloApi, OpenYoloApiImpl, OpenYoloWithTimeoutApi} from './api';
 import {RelayRequest} from './base_request';
 import {CancelLastOperationRequest} from './cancel_last_operation_request';
 import {CredentialRequest} from './credential_request';
@@ -480,6 +480,124 @@ describe('OpenYolo API', () => {
                   done();
                 });
       });
+    });
+  });
+
+  describe('FakeOpenYoloApi', () => {
+    const expectedError =
+        OpenYoloInternalError.unsupportedBrowser().toExposedError();
+    let openYoloApiImpl: OnDemandOpenYoloApi;
+
+    beforeEach(() => {
+      openYoloApiImpl = new FakeOpenYoloApi();
+    });
+
+    it('rejects hintsAvailable', (done) => {
+      openYoloApiImpl.hintsAvailable({supportedAuthMethods: []})
+          .then(
+              () => {
+                done.fail();
+              },
+              (error) => {
+                expect(error).toEqual(expectedError);
+                done();
+              });
+    });
+
+    it('rejects hint', (done) => {
+      openYoloApiImpl.hint({supportedAuthMethods: []})
+          .then(
+              () => {
+                done.fail();
+              },
+              (error) => {
+                expect(error).toEqual(expectedError);
+                done();
+              });
+    });
+
+    it('rejects retrieve', (done) => {
+      openYoloApiImpl.retrieve({supportedAuthMethods: []})
+          .then(
+              () => {
+                done.fail();
+              },
+              (error) => {
+                expect(error).toEqual(expectedError);
+                done();
+              });
+    });
+
+    it('rejects save', (done) => {
+      openYoloApiImpl.save(credential)
+          .then(
+              () => {
+                done.fail();
+              },
+              (error) => {
+                expect(error).toEqual(expectedError);
+                done();
+              });
+    });
+
+    it('rejects disableAutoSignIn', (done) => {
+      openYoloApiImpl.disableAutoSignIn().then(
+          () => {
+            done.fail();
+          },
+          (error) => {
+            expect(error).toEqual(expectedError);
+            done();
+          });
+    });
+
+    it('rejects cancelLastOperation', (done) => {
+      openYoloApiImpl.cancelLastOperation().then(
+          () => {
+            done.fail();
+          },
+          (error) => {
+            expect(error).toEqual(expectedError);
+            done();
+          });
+    });
+
+    it('rejects proxyLogin', (done) => {
+      openYoloApiImpl.proxyLogin(credential)
+          .then(
+              () => {
+                done.fail();
+              },
+              (error) => {
+                expect(error).toEqual(expectedError);
+                done();
+              });
+    });
+  });
+
+  describe('isCompatibleBrowser', () => {
+    it('crypto available', () => {
+      const windowWithCrypto = {
+        crypto: {getRandomValues: () => {}, subtle: {}}
+      };
+      expect(isCompatibleBrowser(windowWithCrypto as any)).toBe(true);
+    });
+
+    it('getRandomValues not available', () => {
+      const windowWithCrypto = {crypto: {subtle: {}}};
+      expect(isCompatibleBrowser(windowWithCrypto as any)).toBe(false);
+    });
+
+    it('subtle not available', () => {
+      const windowWithCrypto = {crypto: {getRandomValues: () => {}}};
+      expect(isCompatibleBrowser(windowWithCrypto as any)).toBe(false);
+    });
+
+    it('subtle not available, webkitSubtle available', () => {
+      const windowWithCrypto = {
+        crypto: {getRandomValues: () => {}, webkitSubtle: {}}
+      };
+      expect(isCompatibleBrowser(windowWithCrypto as any)).toBe(true);
     });
   });
 });
