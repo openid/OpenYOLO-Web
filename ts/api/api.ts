@@ -612,11 +612,11 @@ export class FakeOpenYoloApi implements OnDemandOpenYoloApi {
  * Checks whether the core browser functionality required for OpenYOLO is
  * supported in the current context.
  */
-export function isCompatibleBrowser(window: Window): boolean {
+export function isCompatibleBrowser(win: Window): boolean {
   const hasCryptoRandomImplementation =
-      window.hasOwnProperty('crypto') && 'getRandomValues' in window.crypto;
-  const hasCryptoSubtleImplementation = window.hasOwnProperty('crypto') &&
-      ('subtle' in window.crypto || 'webkitSubtle' in window.crypto);
+      win.hasOwnProperty('crypto') && 'getRandomValues' in win.crypto;
+  const hasCryptoSubtleImplementation = win.hasOwnProperty('crypto') &&
+      ('subtle' in win.crypto || 'webkitSubtle' in win.crypto);
   return hasCryptoRandomImplementation && hasCryptoSubtleImplementation;
 }
 
