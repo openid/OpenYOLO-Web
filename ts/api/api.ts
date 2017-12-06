@@ -565,4 +565,61 @@ export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
   }
 }
 
-export const openyolo: OnDemandOpenYoloApi = new InitializeOnDemandApi();
+/**
+ * API implementation that immediately rejects all requests.
+ */
+export class FakeOpenYoloApi implements OnDemandOpenYoloApi {
+  private readonly unsupportedBrowserPromise = Promise.reject(
+      OpenYoloInternalError.unsupportedBrowser().toExposedError());
+
+  setProviderUrlBase(providerUrlBase: string) {}
+  setRenderMode(renderMode: RenderMode|null) {}
+  setTimeouts(timeout: number): void {}
+  reset() {}
+
+  hintsAvailable(options: OpenYoloCredentialHintOptions): Promise<boolean> {
+    return this.unsupportedBrowserPromise;
+  }
+
+  hint(options: OpenYoloCredentialHintOptions): Promise<OpenYoloCredential> {
+    return this.unsupportedBrowserPromise;
+  }
+
+  retrieve(options: OpenYoloCredentialRequestOptions):
+      Promise<OpenYoloCredential> {
+    return this.unsupportedBrowserPromise;
+  }
+
+  save(credential: OpenYoloCredential): Promise<void> {
+    return this.unsupportedBrowserPromise;
+  }
+
+  disableAutoSignIn(): Promise<void> {
+    return this.unsupportedBrowserPromise;
+  }
+
+  cancelLastOperation(): Promise<void> {
+    return this.unsupportedBrowserPromise;
+  }
+
+  proxyLogin(credential: OpenYoloCredential):
+      Promise<OpenYoloProxyLoginResponse> {
+    return this.unsupportedBrowserPromise;
+  }
+}
+
+/**
+ * Checks whether the core browser functionality required for OpenYOLO is
+ * supported in the current context.
+ */
+export function isCompatibleBrowser(win: Window): boolean {
+  const hasCryptoRandomImplementation =
+      win.hasOwnProperty('crypto') && 'getRandomValues' in win.crypto;
+  const hasCryptoSubtleImplementation = win.hasOwnProperty('crypto') &&
+      ('subtle' in win.crypto || 'webkitSubtle' in win.crypto);
+  return hasCryptoRandomImplementation && hasCryptoSubtleImplementation;
+}
+
+export const openyolo: OnDemandOpenYoloApi = isCompatibleBrowser(window) ?
+    new InitializeOnDemandApi() :
+    new FakeOpenYoloApi();
