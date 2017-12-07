@@ -16,7 +16,7 @@
 
 import {OpenYoloError} from '../protocol/errors';
 
-import {InitializeOnDemandApi, openyolo} from './api';
+import {FakeOpenYoloApi, InitializeOnDemandApi, openyolo} from './api';
 
 // re-export all the data types
 export * from '../protocol/data';
@@ -43,6 +43,23 @@ InitializeOnDemandApi.prototype['proxyLogin'] =
     InitializeOnDemandApi.prototype.proxyLogin;
 InitializeOnDemandApi.prototype['cancelLastOperation'] =
     InitializeOnDemandApi.prototype.cancelLastOperation;
+// No-Op API.
+FakeOpenYoloApi.prototype['setProviderUrlBase'] =
+    FakeOpenYoloApi.prototype.setProviderUrlBase;
+FakeOpenYoloApi.prototype['setRenderMode'] =
+    FakeOpenYoloApi.prototype.setRenderMode;
+FakeOpenYoloApi.prototype['setTimeouts'] =
+    FakeOpenYoloApi.prototype.setTimeouts;
+FakeOpenYoloApi.prototype['hintsAvailable'] =
+    FakeOpenYoloApi.prototype.hintsAvailable;
+FakeOpenYoloApi.prototype['hint'] = FakeOpenYoloApi.prototype.hint;
+FakeOpenYoloApi.prototype['retrieve'] = FakeOpenYoloApi.prototype.retrieve;
+FakeOpenYoloApi.prototype['save'] = FakeOpenYoloApi.prototype.save;
+FakeOpenYoloApi.prototype['disableAutoSignIn'] =
+    FakeOpenYoloApi.prototype.disableAutoSignIn;
+FakeOpenYoloApi.prototype['proxyLogin'] = FakeOpenYoloApi.prototype.proxyLogin;
+FakeOpenYoloApi.prototype['cancelLastOperation'] =
+    FakeOpenYoloApi.prototype.cancelLastOperation;
 
 // Export the exposed errors.
 windowAsAny['OpenYoloError'] = OpenYoloError;
