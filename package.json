@@ -14,7 +14,7 @@
   "bugs": {
     "url": "https://github.com/openid/OpenYOLO-Web/issues"
   },
-  "main": "es5/openyolo-api.cjs.js",
+  "main": "es5/openyolo-api.js",
   "module": "es6/openyolo-api.js",
   "typings": "es6/api/api.d.ts",
   "files": [
