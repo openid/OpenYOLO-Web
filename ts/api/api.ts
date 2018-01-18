@@ -615,8 +615,21 @@ export class FakeOpenYoloApi implements OnDemandOpenYoloApi {
 export function isCompatibleBrowser(win: Window): boolean {
   const hasCryptoRandomImplementation =
       win.hasOwnProperty('crypto') && 'getRandomValues' in win.crypto;
+  if (!hasCryptoRandomImplementation) {
+    console.warn(
+        'The current browser does not provide ' +
+        'window.crypto.getRandomValues. This is required by the API to work.' +
+        ' This is likely due to an old browser.');
+  }
   const hasCryptoSubtleImplementation = win.hasOwnProperty('crypto') &&
       ('subtle' in win.crypto || 'webkitSubtle' in win.crypto);
+  if (!hasCryptoSubtleImplementation) {
+    console.warn(
+        'The current environment does not provide window.crypto.subtle. This ' +
+        'is required by the API to work. This is likely due to an old ' +
+        'browser, or running the API in an unsecure origin - only secure ' +
+        'origins (https: and localhost) provide crypto.subtle.');
+  }
   return hasCryptoRandomImplementation && hasCryptoSubtleImplementation;
 }
 
