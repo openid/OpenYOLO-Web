@@ -22,49 +22,36 @@ import {DisplayOptions} from '../protocol/rpc_messages';
 export const HIDDEN_FRAME_CLASS = 'openyolo-hidden';
 export const VISIBLE_FRAME_CLASS = 'openyolo-visible';
 
-const DEFAULT_FRAME_CSS = `
-.openyolo-hidden {
-  display: none;
-}
+type UpdatableStyle = 'bottom'|'top'|'right'|'left'|'width'|'height';
 
-.openyolo-visible {
-  position: fixed;
-  border: none;
-  z-index: 9999;
-}
+type StyleDeclaration = {
+  [key in UpdatableStyle]?: string
+};
 
-.openyolo-visible.bottomSheet {
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 320px;
-}
-
-.openyolo-visible.navPopout {
-  top: 0;
-  right: 0;
-  width: 320px;
-  height: 320px;
-}
-
-.openyolo-visible.fullScreen {
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-`;
-
-let defaultCssNode: HTMLStyleElement|null;
-
-function injectDefaultFrameCss() {
-  if (defaultCssNode) return;
-
-  defaultCssNode = document.createElement('style');
-  defaultCssNode.type = 'text/css';
-  defaultCssNode.appendChild(document.createTextNode(DEFAULT_FRAME_CSS));
-  document.getElementsByTagName('head')[0].appendChild(defaultCssNode);
-}
+// Use a mapping of style to use the style attribute of the IFrame element. This
+// is to avoid CSP issue with style injection. See:
+// https://stackoverflow.com/questions/48449246/google-yolo-custom-styles-csp-support
+const FRAME_RENDER_MODE_STYLE_MAPPING: {[key in RenderMode]: StyleDeclaration}&
+    {[key: string]: StyleDeclaration} = {
+      'bottomSheet': {
+        'bottom': '0',
+        'left': '0',
+        'width': '100%',
+        'height': '320px',
+      },
+      'navPopout': {
+        'top': '0',
+        'right': '0',
+        'width': '320px',
+        'height': '320px',
+      },
+      'fullScreen': {
+        'top': '0',
+        'left': '0',
+        'width': '100%',
+        'height': '100%',
+      },
+    };
 
 /**
  * Defines the interface for a valid OpenYolo Relay container that will hold
@@ -82,7 +69,6 @@ export class ProviderFrameElement {
       private renderMode: RenderMode,
       providerUrlBase: string,
       preloadRequest?: PreloadRequest) {
-    injectDefaultFrameCss();
     this.frameElem = this.clientDocument.createElement('iframe');
     this.frameElem.src = `${providerUrlBase}` +
         `?client=${encodeURIComponent(clientOrigin)}` +
@@ -94,8 +80,12 @@ export class ProviderFrameElement {
       this.frameElem.src += `&preloadRequest=${encodedRequest}`;
     }
 
-    this.frameElem.className = HIDDEN_FRAME_CLASS;
-    this.frameElem.hidden = true;
+    // Generic style.
+    this.frameElem.style.border = 'none';
+    this.frameElem.style.position = 'fixed';
+    this.frameElem.style.zIndex = '9999';
+
+    this.hide();
     this.clientDocument.body.appendChild(this.frameElem);
   }
 
@@ -110,10 +100,9 @@ export class ProviderFrameElement {
    * Displays the container.
    */
   display(options: DisplayOptions): void {
-    this.frameElem.className = '';
+    this.resetStyle();
+    this.applyStyle(FRAME_RENDER_MODE_STYLE_MAPPING[this.renderMode]);
     this.frameElem.hidden = false;
-    this.frameElem.classList.add(VISIBLE_FRAME_CLASS);
-    this.frameElem.classList.add(this.renderMode);
     if ((options.height || options.width) &&
         this.renderMode !== RenderMode.fullScreen) {
       if (options.height) this.frameElem.style.height = `${options.height}px`;
@@ -125,10 +114,9 @@ export class ProviderFrameElement {
    * Hides the container.
    */
   hide(): void {
-    this.frameElem.className = HIDDEN_FRAME_CLASS;
+    this.resetStyle();
+    this.frameElem.style.display = 'none';
     this.frameElem.hidden = true;
-    this.frameElem.style.height = '';
-    this.frameElem.style.width = '';
   }
 
   /**
@@ -136,5 +124,30 @@ export class ProviderFrameElement {
    */
   dispose(): void {
     this.clientDocument.body.removeChild(this.frameElem);
+  }
+
+  /**
+   * Resets the IFrame updatable style.
+   */
+  private resetStyle(): void {
+    this.frameElem.style.display = '';
+    this.frameElem.style.height = '';
+    this.frameElem.style.width = '';
+    this.frameElem.style.top = '';
+    this.frameElem.style.left = '';
+    this.frameElem.style.right = '';
+    this.frameElem.style.bottom = '';
+  }
+
+  /**
+   * Applies the given style on the IFrame elemeent.
+   */
+  private applyStyle(style: StyleDeclaration): void {
+    if (style.bottom) this.frameElem.style.bottom = style.bottom;
+    if (style.top) this.frameElem.style.top = style.top;
+    if (style.right) this.frameElem.style.right = style.right;
+    if (style.left) this.frameElem.style.left = style.left;
+    if (style.width) this.frameElem.style.width = style.width;
+    if (style.height) this.frameElem.style.height = style.height;
   }
 }
