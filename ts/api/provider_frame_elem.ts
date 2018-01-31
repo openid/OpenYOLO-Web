@@ -140,7 +140,7 @@ export class ProviderFrameElement {
   }
 
   /**
-   * Applies the given style on the IFrame elemeent.
+   * Applies the given style on the IFrame element.
    */
   private applyStyle(style: StyleDeclaration): void {
     if (style.bottom) this.frameElem.style.bottom = style.bottom;
