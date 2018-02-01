@@ -113,8 +113,35 @@ describe('ProviderFrameElement', () => {
         expect(iframeElement.hidden).toBe(false);
       });
 
+      it('displays with default after displayed and hidden', () => {
+        providerFrame.display({height: 300, width: 400});
+        providerFrame.hide();
+        providerFrame.display({});
+        expect(iframeElement.style.display).toEqual('');
+        expect(iframeElement.style.height).toEqual('320px');
+        expect(iframeElement.style.width).toEqual('320px');
+        expect(iframeElement.style.bottom).toEqual('');
+        expect(iframeElement.style.left).toEqual('');
+        expect(iframeElement.style.right).toEqual('0px');
+        expect(iframeElement.style.top).toEqual('0px');
+        expect(iframeElement.hidden).toBe(false);
+      });
+
       it('displays with the given height and width', () => {
         providerFrame.display({height: 300, width: 400});
+        expect(iframeElement.style.display).toEqual('');
+        expect(iframeElement.style.height).toEqual('300px');
+        expect(iframeElement.style.width).toEqual('400px');
+        expect(iframeElement.style.bottom).toEqual('');
+        expect(iframeElement.style.left).toEqual('');
+        expect(iframeElement.style.right).toEqual('0px');
+        expect(iframeElement.style.top).toEqual('0px');
+        expect(iframeElement.hidden).toBe(false);
+      });
+
+      it('displays with the given height, and then width', () => {
+        providerFrame.display({height: 300});
+        providerFrame.display({width: 400});
         expect(iframeElement.style.display).toEqual('');
         expect(iframeElement.style.height).toEqual('300px');
         expect(iframeElement.style.width).toEqual('400px');
