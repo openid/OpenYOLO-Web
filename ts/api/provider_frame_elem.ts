@@ -100,9 +100,11 @@ export class ProviderFrameElement {
    * Displays the container.
    */
   display(options: DisplayOptions): void {
-    this.resetStyle();
-    this.applyStyle(FRAME_RENDER_MODE_STYLE_MAPPING[this.renderMode]);
-    this.frameElem.hidden = false;
+    if (this.frameElem.hidden) {
+      this.resetStyle();
+      this.applyStyle(FRAME_RENDER_MODE_STYLE_MAPPING[this.renderMode]);
+      this.frameElem.hidden = false;
+    }
     if ((options.height || options.width) &&
         this.renderMode !== RenderMode.fullScreen) {
       if (options.height) this.frameElem.style.height = `${options.height}px`;
