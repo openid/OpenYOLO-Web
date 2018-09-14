@@ -247,6 +247,16 @@ export class OpenYoloInternalError implements CustomError {
     });
   }
 
+  static requestTimeoutOnInitialization() {
+    return new OpenYoloInternalError({
+      code: InternalErrorCode.requestTimeout,
+      exposedErrorType: OpenYoloErrorType.requestFailed,
+      message: 'The API request timed out. This may occur for requsts from ' +
+          'unregistered origin. Please check current origin has been ' +
+          'registered on your OAuth client.'
+    });
+  }
+
   static illegalConcurrentRequestError() {
     return new OpenYoloInternalError({
       code: InternalErrorCode.illegalConcurrentRequest,

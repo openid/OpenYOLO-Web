@@ -438,7 +438,8 @@ export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
           }
           timeoutRacer.rethrowUnlessTimeoutError(e);
           // Convert the timeout error.
-          throw OpenYoloInternalError.requestTimeout().toExposedError();
+          throw OpenYoloInternalError.requestTimeoutOnInitialization()
+              .toExposedError();
         });
   }
 
