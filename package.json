@@ -71,7 +71,7 @@
   "devDependencies": {
     "@angular/animations": ">=4.0.0-beta <5.0.0",
     "@angular/cdk": "^2.0.0-beta.10",
-    "@angular/cli": "^1.0.1",
+    "@angular/cli": "^6.2.2",
     "@angular/common": ">=4.0.0-beta <5.0.0",
     "@angular/compiler": ">=4.0.0-beta <5.0.0",
     "@angular/compiler-cli": ">=4.0.0-beta <5.0.0",
@@ -86,22 +86,22 @@
     "@types/text-encoding": "0.0.30",
     "@types/webappsec-credential-management": "^0.3.1",
     "clang-format": "^1.0.46",
-    "codecov": "^2.1.0",
+    "codecov": "^3.1.0",
     "codelyzer": "~2.0.0",
     "core-js": "^2.4.1",
     "google-closure-compiler": "^20170423.0.0",
     "hammerjs": "^2.0.8",
     "jasmine-core": "^2.5.2",
     "jasmine-spec-reporter": "~3.2.0",
-    "karma": "^1.5.0",
+    "karma": "^3.0.0",
     "karma-chrome-launcher": "^2.0.0",
     "karma-cli": "~1.0.1",
     "karma-jasmine": "^1.1.0",
     "karma-jasmine-html-reporter": "^0.2.2",
-    "karma-typescript": "^3.0.0",
+    "karma-typescript": "^3.0.13",
     "karma-verbose-reporter": "0.0.5",
     "pre-commit": "^1.2.2",
-    "protractor": "~5.1.0",
+    "protractor": "^5.4.1",
     "rollup": "^0.41.4",
     "rollup-plugin-node-resolve": "^2.0.0",
     "rxjs": "^5.1.0",
@@ -110,14 +110,14 @@
     "tslint": "^4.4.2",
     "tslint-microsoft-contrib": "^4.0.0",
     "typescript": "^2.4.2",
-    "typescript-formatter": "^4.1.1",
+    "typescript-formatter": "^7.2.2",
     "web-animations-js": "^2.2.2",
     "zone.js": "^0.8.11"
   },
   "optionalDependencies": {
     "karma-firefox-launcher": "^1.0.0",
     "karma-safari-launcher": "^1.0.0",
-    "karma-sauce-launcher": "^1.1.0"
+    "karma-sauce-launcher": "^1.2.0"
   },
   "engines": {
     "node": ">=7.2.0"
