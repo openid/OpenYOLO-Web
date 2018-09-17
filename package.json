@@ -48,7 +48,7 @@
     "lint-core-fix": "./node_modules/.bin/tslint --project tsconfig.json --fix",
     "lint-demo": "./node_modules/.bin/tslint --project demo/tsconfig.json",
     "lint-demo-fix": "./node_modules/.bin/tslint --project demo/tsconfig.json --fix",
-    "prepublish": "npm run-script compile-es5 && npm run-script compile-es6 && npm run-script rollup-api && npm run-script rollup-spi && npm run gzip-size-api && npm run gzip-size-spi",
+    "prepare": "npm run-script compile-es5 && npm run-script compile-es6 && npm run-script rollup-api && npm run-script rollup-spi && npm run gzip-size-api && npm run gzip-size-spi",
     "type-check": "./node_modules/.bin/tsc -p tsconfig.json --noemit",
     "test": "./node_modules/.bin/karma start",
     "test-debug": "./node_modules/.bin/karma start karma.debug.conf.js",
