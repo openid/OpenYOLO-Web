@@ -22,6 +22,6 @@ before_install:
 # Ensures that test passes and that it correctly compiles.
 script:
   - npm test
-  - npm run prepublish
+  - npm run prepare
 
 after_success: npm run codecov
