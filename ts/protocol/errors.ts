@@ -251,9 +251,10 @@ export class OpenYoloInternalError implements CustomError {
     return new OpenYoloInternalError({
       code: InternalErrorCode.requestTimeout,
       exposedErrorType: OpenYoloErrorType.requestFailed,
-      message: 'The API request timed out. This may occur for requsts from ' +
-          'unregistered origin. Please check current origin has been ' +
-          'registered on your OAuth client.'
+      message: 'The API request timed out. This may occur when error is ' +
+          'returned upon initialization. If you are using Google Yolo, ' +
+          'this error could happen if you haven\'t registered the origin ' +
+          'with your OAuth client.'
     });
   }
 
