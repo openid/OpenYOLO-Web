@@ -153,4 +153,27 @@ describe('ProviderFrameElement', () => {
       });
     });
   });
+
+  describe('PropagateFeatureConfig', () => {
+    let expectedUrl: string;
+
+    beforeEach(() => {
+      const featureConfig = {feature: ['DISPLAY_CLICKJACKING_POPUP']};
+      providerFrame = new ProviderFrameElement(
+          clientDocument,
+          instanceIdHash,
+          clientOrigin,
+          RenderMode.bottomSheet,
+          providerUrlBase,
+          featureConfig);
+      expectedUrl =
+          `${providerUrlBase}?client=${encodeURIComponent(clientOrigin)}` +
+          `&id=hashId&renderMode=bottomSheet` +
+          `&featureConfig=${encodeURIComponent(JSON.stringify(featureConfig))}`;
+    });
+
+    it('propagate the correct feature config', () => {
+      expect(iframeElement.getAttribute('src')).toEqual(expectedUrl);
+    });
+  });
 });

@@ -17,6 +17,7 @@
 import {OpenYoloCredential, OpenYoloCredentialHintOptions, OpenYoloCredentialRequestOptions, OpenYoloProxyLoginResponse} from '../protocol/data';
 import {RenderMode} from '../protocol/data';
 import {OpenYoloErrorType, OpenYoloInternalError} from '../protocol/errors';
+import {FeatureConfig} from '../protocol/feature_config';
 import {PreloadRequest, PreloadRequestType} from '../protocol/preload_request';
 import {SecureChannel} from '../protocol/secure_channel';
 import {generateId, sha256, startTimeoutRacer, TimeoutRacer} from '../protocol/utils';
@@ -356,6 +357,10 @@ export interface OnDemandOpenYoloApi extends OpenYoloApi {
    */
   setProviderUrlBase(providerUrlBase: string): void;
   /**
+   * Sets the features to enable for the current session.
+   */
+  setFeatureConfig(featuresToEnable: string[]): void;
+  /**
    * Sets the render mode, or null if the default one should be used.
    */
   setRenderMode(renderMode: RenderMode|null): void;
@@ -377,6 +382,7 @@ export interface OnDemandOpenYoloApi extends OpenYoloApi {
  */
 export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
   private providerUrlBase: string = 'https://provider.openyolo.org';
+  private featuresToEnable: string[] = [];
   private implPromise: Promise<OpenYoloWithTimeoutApi>|null = null;
   private renderMode: RenderMode|null = null;
   /**
@@ -398,6 +404,7 @@ export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
   static createOpenYoloApi(
       timeoutRacer: TimeoutRacer,
       providerUrlBase: string,
+      featuresToEnable: string[],
       renderMode: RenderMode|null,
       preloadRequest?: PreloadRequest): Promise<OpenYoloWithTimeoutApi> {
     let frameManager: ProviderFrameElement|null = null;
@@ -414,12 +421,17 @@ export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
           return timeoutRacer.race(sha256(instanceId));
         })
         .then((instanceIdHash) => {
+          let featureConfig: FeatureConfig|undefined = undefined;
+          if (featuresToEnable.length > 0) {
+            featureConfig = {feature: featuresToEnable};
+          }
           frameManager = new ProviderFrameElement(
               document,
               instanceIdHash,
               window.location.origin,
               renderModeSanitized,
               providerUrlBase,
+              featureConfig,
               preloadRequest);
 
           return timeoutRacer.race(SecureChannel.clientConnect(
@@ -445,6 +457,11 @@ export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
 
   setProviderUrlBase(providerUrlBase: string) {
     this.providerUrlBase = providerUrlBase;
+    this.reset();
+  }
+
+  setFeatureConfig(featuresToEnable: string[]) {
+    this.featuresToEnable = featuresToEnable;
     this.reset();
   }
 
@@ -496,7 +513,11 @@ export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
       Promise<OpenYoloWithTimeoutApi> {
     if (!this.implPromise) {
       this.implPromise = InitializeOnDemandApi.createOpenYoloApi(
-          timeoutRacer, this.providerUrlBase, this.renderMode, preloadRequest);
+          timeoutRacer,
+          this.providerUrlBase,
+          this.featuresToEnable,
+          this.renderMode,
+          preloadRequest);
     }
     this.implPromise.catch((e) => {
       // If the initialization failed, reset so the next call could work.
@@ -574,6 +595,7 @@ export class FakeOpenYoloApi implements OnDemandOpenYoloApi {
       OpenYoloInternalError.unsupportedBrowser().toExposedError());
 
   setProviderUrlBase(providerUrlBase: string) {}
+  setFeatureConfig(featuresToEnable: string[]) {}
   setRenderMode(renderMode: RenderMode|null) {}
   setTimeouts(timeout: number): void {}
   reset() {}
