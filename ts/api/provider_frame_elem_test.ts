@@ -169,7 +169,7 @@ describe('ProviderFrameElement', () => {
       expectedUrl =
           `${providerUrlBase}?client=${encodeURIComponent(clientOrigin)}` +
           `&id=hashId&renderMode=bottomSheet` +
-          `&featureConfig=${encodeURIComponent(JSON.stringify(featureConfig))}`;
+          `&features=${encodeURIComponent(JSON.stringify(featureConfig))}`;
     });
 
     it('propagate the correct feature config', () => {

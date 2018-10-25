@@ -84,7 +84,7 @@ export class ProviderFrameElement {
 
     if (featureConfig) {
       let encodedFeatures = encodeURIComponent(JSON.stringify(featureConfig));
-      this.frameElem.src += `&featureConfig=${encodedFeatures}`;
+      this.frameElem.src += `&features=${encodedFeatures}`;
     }
 
     // Generic style.
