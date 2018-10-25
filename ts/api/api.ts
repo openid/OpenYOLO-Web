@@ -423,7 +423,7 @@ export class InitializeOnDemandApi implements OnDemandOpenYoloApi {
         .then((instanceIdHash) => {
           let featureConfig: FeatureConfig|undefined = undefined;
           if (featuresToEnable.length > 0) {
-            featureConfig = {feature: featuresToEnable};
+            featureConfig = {'feature': featuresToEnable};
           }
           frameManager = new ProviderFrameElement(
               document,
