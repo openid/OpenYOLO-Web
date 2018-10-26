@@ -27,6 +27,8 @@ const windowAsAny = window as any;
 windowAsAny['openyolo'] = openyolo;
 InitializeOnDemandApi.prototype['setProviderUrlBase'] =
     InitializeOnDemandApi.prototype.setProviderUrlBase;
+InitializeOnDemandApi.prototype['setFeatureConfig'] =
+    InitializeOnDemandApi.prototype.setFeatureConfig;
 InitializeOnDemandApi.prototype['setRenderMode'] =
     InitializeOnDemandApi.prototype.setRenderMode;
 InitializeOnDemandApi.prototype['setTimeouts'] =
@@ -46,6 +48,8 @@ InitializeOnDemandApi.prototype['cancelLastOperation'] =
 // No-Op API.
 FakeOpenYoloApi.prototype['setProviderUrlBase'] =
     FakeOpenYoloApi.prototype.setProviderUrlBase;
+FakeOpenYoloApi.prototype['setFeatureConfig'] =
+    FakeOpenYoloApi.prototype.setFeatureConfig;
 FakeOpenYoloApi.prototype['setRenderMode'] =
     FakeOpenYoloApi.prototype.setRenderMode;
 FakeOpenYoloApi.prototype['setTimeouts'] =

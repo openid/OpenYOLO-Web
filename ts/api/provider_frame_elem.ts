@@ -16,6 +16,7 @@
 
 import {WindowLike} from '../protocol/comms';
 import {RenderMode} from '../protocol/data';
+import {FeatureConfig} from '../protocol/feature_config';
 import {PreloadRequest} from '../protocol/preload_request';
 import {DisplayOptions} from '../protocol/rpc_messages';
 
@@ -68,6 +69,7 @@ export class ProviderFrameElement {
       clientOrigin: string,
       private renderMode: RenderMode,
       providerUrlBase: string,
+      featureConfig?: FeatureConfig,
       preloadRequest?: PreloadRequest) {
     this.frameElem = this.clientDocument.createElement('iframe');
     this.frameElem.src = `${providerUrlBase}` +
@@ -78,6 +80,11 @@ export class ProviderFrameElement {
     if (preloadRequest) {
       let encodedRequest = encodeURIComponent(JSON.stringify(preloadRequest));
       this.frameElem.src += `&preloadRequest=${encodedRequest}`;
+    }
+
+    if (featureConfig) {
+      let encodedFeatures = encodeURIComponent(JSON.stringify(featureConfig));
+      this.frameElem.src += `&features=${encodedFeatures}`;
     }
 
     // Generic style.
