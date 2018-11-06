@@ -519,6 +519,10 @@ export class ProviderFrame {
       copy.idToken = credential.idToken;
     }
 
+    if (credential.newGrant) {
+      copy.newGrant = credential.newGrant;
+    }
+
     if (!redact && 'password' in credential) {
       copy.password = credential.password;
     }

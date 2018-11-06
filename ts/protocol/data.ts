@@ -96,8 +96,15 @@ export interface OpenYoloCredential {
    * be directly dispatched from the requester.
    */
   proxiedAuthRequired?: boolean;
-}
 
+  /**
+   * Specifies whether the returned ID token is granted through a new consent.
+   * This is true when the specific account hasn't logged into this client
+   * before and now agrees to the consent message to log in. This field is only
+   * set for hint() requests.
+   */
+  newGrant?: boolean;
+}
 
 /**
  * Encapsulates the response from the authentication system to a proxy login.
