@@ -16,7 +16,8 @@
  *   exchangeToken: (string|undefined),
  *   idToken: (string|undefined),
  *   generatedPassword: (string|undefined),
- *   proxiedAuthRequired: (boolean|undefined)
+ *   proxiedAuthRequired: (boolean|undefined),
+ *   newGrant: (boolean|undefined)
  * }}
  */
 let Credential;
