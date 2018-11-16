@@ -606,7 +606,8 @@ describe('ProviderFrame', () => {
           selection: OpenYoloCredential|null,
           expectedResult: msg.RpcMessage<msg.RpcMessageType.credential>|
           msg.RpcMessage<msg.RpcMessageType.error>,
-          neverResolve: boolean = false) {
+          neverResolve: boolean = false,
+          userCanceledErrorMsg?: string) {
         let promiseResolver = new PromiseResolver<void>();
         let expectFinalResult = false;
 
@@ -627,8 +628,8 @@ describe('ProviderFrame', () => {
                     if (selection) {
                       return Promise.resolve(selection);
                     } else {
-                      return Promise.reject(
-                          OpenYoloInternalError.userCanceled());
+                      return Promise.reject(OpenYoloInternalError.userCanceled(
+                          userCanceledErrorMsg));
                     }
                   }
                 });
@@ -725,6 +726,23 @@ describe('ProviderFrame', () => {
             .then(done);
         clientChannel.send(msg.hintMessage(requestId, pwdOrFbHintOptions));
       });
+
+      it('should notify the client of user cancellation with custom message',
+         async function(done) {
+           const customMsg = 'Custom error message';
+           credentialDataProvider.credentials = [deliaFbCred];
+           expectPickFromHints(
+               [deliaFbCred],
+               null,
+               msg.errorMessage(
+                   requestId,
+                   OpenYoloInternalError.userCanceled(customMsg)
+                       .toExposedError()),
+               false,
+               customMsg)
+               .then(done);
+           clientChannel.send(msg.hintMessage(requestId, pwdOrFbHintOptions));
+         });
 
       it('should notify the client when an hint operation is cancelled',
          async function(done) {
