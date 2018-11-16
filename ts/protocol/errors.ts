@@ -197,11 +197,11 @@ export class OpenYoloInternalError implements CustomError {
 
   /* Flow errors. */
 
-  static userCanceled() {
+  static userCanceled(message?: string) {
     return new OpenYoloInternalError({
       code: InternalErrorCode.userCanceled,
       exposedErrorType: OpenYoloErrorType.userCanceled,
-      message: 'The user canceled the operation.'
+      message: message || 'The user canceled the operation.'
     });
   }
 
