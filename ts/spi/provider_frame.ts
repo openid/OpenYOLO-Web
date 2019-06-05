@@ -365,7 +365,7 @@ export class ProviderFrame {
           const credential = pertinentCredentials[0];
           // Display the auto sign in screen and send the message.
           await this.cancellablePromise(this.interactionProvider.showAutoSignIn(
-              credential, this.createDisplayCallbacks(requestId)));
+              credential, this.createDisplayCallbacks(requestId), options));
           this.clientChannel.send(msg.credentialResultMessage(
               requestId, this.storeForProxyLogin(credential)));
           return;

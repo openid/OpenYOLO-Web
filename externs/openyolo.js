@@ -244,11 +244,12 @@ let InteractionProvider = function() {};
 /**
  * @param {!Credential} credential
  * @param {!DisplayCallbacks} displayCallbacks
+ * @param {!CredentialRequestOptions=} options
  * @return {!Promise<undefined>}
  * @export
  */
 InteractionProvider.prototype.showAutoSignIn = function(
-    credential, displayCallbacks) {};
+    credential, displayCallbacks, options) {};
 
 /**
  * @param {!Array<!Credential>} credentials

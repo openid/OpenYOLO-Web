@@ -165,7 +165,8 @@ export interface InteractionProvider {
    */
   showAutoSignIn(
       credential: OpenYoloCredential,
-      displayCallbacks: DisplayCallbacks): Promise<any>;
+      displayCallbacks: DisplayCallbacks,
+      options: OpenYoloCredentialRequestOptions): Promise<any>;
 
   /**
    * Requests the immediate tear down of any presently active UI.
