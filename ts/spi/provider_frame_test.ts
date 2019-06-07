@@ -310,7 +310,8 @@ describe('ProviderFrame', () => {
            (interactionProvider.showAutoSignIn as jasmine.Spy)
                .and.callFake(
                    (credential: OpenYoloCredential,
-                    displayCallbacks: DisplayCallbacks) => {
+                    displayCallbacks: DisplayCallbacks,
+                    options: OpenYoloCredentialRequestOptions) => {
                      expect(credential).toBe(alicePwdCred);
                      return Promise.resolve();
                    });
@@ -331,7 +332,8 @@ describe('ProviderFrame', () => {
         (interactionProvider.showAutoSignIn as jasmine.Spy)
             .and.callFake(
                 (credential: OpenYoloCredential,
-                 displayCallbacks: DisplayCallbacks) => {
+                 displayCallbacks: DisplayCallbacks,
+                 options: OpenYoloCredentialRequestOptions) => {
                   expect(credential).toBe(alicePwdCred);
                   // return a promise that's not going to resolve
                   return new Promise<void>((resolve, reject) => {});
