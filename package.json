@@ -98,7 +98,7 @@
     "karma-cli": "~1.0.1",
     "karma-jasmine": "^1.1.0",
     "karma-jasmine-html-reporter": "^0.2.2",
-    "karma-typescript": "^3.0.13",
+    "karma-typescript": "^5.5.3",
     "karma-verbose-reporter": "0.0.5",
     "pre-commit": "^1.2.2",
     "protractor": "^5.4.1",
